@@ -1,0 +1,45 @@
+name: research-core-ci
+
+on:
+  push:
+    branches: [main, "feat/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Reject PII in tracked sources and commit metadata
+        run: python -m scripts.privacy_audit --git
+      - name: Compile Python sources
+        run: python -m compileall -q neurogenesis tests
+      - name: Run isolated deterministic unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Check project provenance metadata
+        run: python -m neurogenesis origin
+      - name: Run growth control experiment
+        run: python -m neurogenesis compare --steps 128
+      - name: Run self-supervised prediction control
+        run: python -m neurogenesis predict --steps 200
+      - name: Run continual learning A-B-A benchmark
+        run: python -m neurogenesis benchmark --seeds 10 --steps-per-phase 128 --probe-steps 48
+      - name: Run save and inspect smoke test
+        run: |
+          python -m neurogenesis demo --steps 64 --state "$RUNNER_TEMP/brain.json"
+          python -m neurogenesis status --state "$RUNNER_TEMP/brain.json"
+          python -m neurogenesis observe "test observation" --state "$RUNNER_TEMP/brain.json"
