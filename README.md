@@ -1,6 +1,6 @@
 # NeuroGenesis
 
-**Experimental, self-reorganizing artificial neural substrate — research prototype v0.5.4 (merged PR #10).**
+**Experimental, self-reorganizing artificial neural substrate — research prototype v0.5.4.**
 
 NeuroGenesis is a long-term research project investigating whether online structural plasticity can measurably improve an artificial agent's learning and adaptation. The central mechanism is **changing the computational network itself**, not merely appending text to a conversation history.
 
