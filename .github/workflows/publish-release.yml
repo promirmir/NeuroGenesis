@@ -1,0 +1,100 @@
+name: Publish verified Windows release
+
+on:
+  workflow_run:
+    workflows: ['Windows standalone EXE']
+    types: [completed]
+
+# This trusted default-branch workflow alone can publish releases.
+# PR test jobs retain only read permissions; PR source is never executed here.
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Verify build corresponds to latest main commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          current="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')"
+          if [[ "$SOURCE_SHA" != "$current" ]]; then
+            echo '::notice::A newer main commit exists. Skipping outdated build.'
+            echo 'PUBLISH=false' >> "$GITHUB_ENV"
+          else
+            echo 'PUBLISH=true' >> "$GITHUB_ENV"
+          fi
+      - name: Download artifact from successful Windows run
+        if: env.PUBLISH == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --name NeuroGenesis-Windows-x64 --dir release
+          test -s release/NeuroGenesis.exe
+          test -s release/NeuroGenesis.exe.sha256
+          (cd release && sha256sum --check NeuroGenesis.exe.sha256)
+          file release/NeuroGenesis.exe | grep -E 'PE32\+' | grep -F 'x86-64'
+          test "$(stat -c%s release/NeuroGenesis.exe)" -ge 1000000
+      - uses: actions/checkout@v4
+        if: env.PUBLISH == 'true'
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - name: Publish immutable SHA-bound GitHub Release
+        if: env.PUBLISH == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Never silently re-tag an older release or publish a superseded main build.
+          current="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')"
+          if [[ "$SOURCE_SHA" != "$current" ]]; then
+            echo '::notice::Main advanced during verification; skipping release.'
+            exit 0
+          fi
+          version="$(python3 - <<'PY'
+          import pathlib, re, tomllib
+          version=tomllib.loads(pathlib.Path('pyproject.toml').read_text(encoding='utf-8'))['project']['version']
+          if not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+', version):
+              raise SystemExit('Invalid project release version')
+          print(version)
+          PY
+          )"
+          short="${SOURCE_SHA:0:8}"
+          tag="v${version}-main.${short}"
+          cat > release-notes.md <<EOF
+          Experimental NeuroGenesis v${version} Windows x64 executable built from verified main commit \`${SOURCE_SHA}\`.
+
+          - Source: https://github.com/${GITHUB_REPOSITORY}/commit/${SOURCE_SHA}
+          - Passed full Windows regression tests and packaged EXE SQLite smoke test in run ${RUN_ID}.
+          - The SHA-256 checksum is attached as NeuroGenesis.exe.sha256.
+          - No Python installation required. Local data persists in the user's private application folder.
+          - This unsigned research binary is not a human-level AI, semantic chatbot, or live Internet agent.
+          - Public credit: Miron przy pomocy AI.
+          EOF
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::notice::Release $tag already exists. Do not replace published binaries."
+            exit 0
+          fi
+          gh release create "$tag" release/NeuroGenesis.exe release/NeuroGenesis.exe.sha256 \
+            --repo "$GITHUB_REPOSITORY" --target "$SOURCE_SHA" \
+            --title "NeuroGenesis v${version} — Windows x64 (${short})" \
+            --notes-file release-notes.md --latest
+          echo "Published release $tag from $SOURCE_SHA"

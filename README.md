@@ -1,5 +1,12 @@
 # NeuroGenesis
 
+### Windows — pobierz najnowszą wersję EXE
+
+[**Pobierz NeuroGenesis.exe — Windows x64**](https://github.com/promirmir/NeuroGenesis/releases/latest/download/NeuroGenesis.exe) · [SHA-256](https://github.com/promirmir/NeuroGenesis/releases/latest/download/NeuroGenesis.exe.sha256) · [Strona najnowszego wydania](https://github.com/promirmir/NeuroGenesis/releases/latest)
+
+**Jedno kliknięcie, bez instalowania Pythona.** Program jest eksperymentalny i niepodpisany cyfrowo. Zweryfikuj pochodzenie i SHA-256; lokalna pamięć pozostaje w katalogu użytkownika po aktualizacji. **Internet pozostaje wyłączony**, a panel nie jest jeszcze rozumiejącą język AI.
+
+
 **Experimental, self-reorganizing artificial neural substrate — research prototype v0.5.5.**
 
 NeuroGenesis is a long-term research project investigating whether online structural plasticity can measurably improve an artificial agent's learning and adaptation. The central mechanism is **changing the computational network itself**, not merely appending text to a conversation history.
@@ -24,12 +31,12 @@ NeuroGenesis is a long-term research project investigating whether online struct
 
 ## Windows: one-click executable
 
-1. Open the [Windows build workflow](https://github.com/promirmir/NeuroGenesis/actions/workflows/windows-exe.yml), choose the latest successful run for `main` and download the **NeuroGenesis-Windows-x64** artifact (GitHub sign-in may be required).
-2. Unzip it and double-click `NeuroGenesis.exe`. **Python is not required**. The bundle includes `NeuroGenesis.exe.sha256`; verify it against `Get-FileHash .\\NeuroGenesis.exe -Algorithm SHA256`.
-3. The program stores its private brain/experience database under `%LOCALAPPDATA%\\NeuroGenesis\\experiences.sqlite3`. Do not delete that folder if you want to retain learned state. Keep private backups. Full text is saved only when explicitly enabled.
-4. The app currently records sensory observations and reports factual brain statistics; it does not generate natural-language answers by understanding text, and the Internet tab is OFF.
+1. Download the latest verified [**NeuroGenesis.exe**](https://github.com/promirmir/NeuroGenesis/releases/latest/download/NeuroGenesis.exe) from [GitHub Releases](https://github.com/promirmir/NeuroGenesis/releases/latest). No Python installation or terminal required.
+2. Optionally download the [SHA-256 checksum](https://github.com/promirmir/NeuroGenesis/releases/latest/download/NeuroGenesis.exe.sha256) and compare it with `Get-FileHash .\\NeuroGenesis.exe -Algorithm SHA256` in PowerShell.
+3. Double-click `NeuroGenesis.exe`. The native app provides Rozmowa / Mózg / Internet tabs, including optional bounded self-tuning (AUTO is OFF by default). Text is treated as sensory input, not demonstrated semantic comprehension. Internet is OFF.
+4. The database lives under `%LOCALAPPDATA%\\NeuroGenesis\\experiences.sqlite3` independently of the EXE. Do not delete it during upgrades; maintain private backups. It is not encrypted.
 
-Windows CI uses PyInstaller, runs the whole regression suite, smoke-tests the frozen executable and publishes the artifact with its checksum. Artifacts expire after 14 days; the workflow is **not** a permanent GitHub Release. The binary is unsigned and may receive Windows reputation warnings; verify the source, build and SHA-256, and do not bypass OS warnings blindly. See [Polish quickstart](URUCHOMIENIE_PL.md) and [build notes](docs/WINDOWS_EXE.md).
+After successful Windows build+SQLite smoke tests on **main**, a separate, minimally scoped GitHub Actions workflow verifies the SHA-256 checksum and publishes the binary plus checksum as a versioned GitHub Release, without executing pull-request code with release-write privileges. Release tags include the source commit prefix for reproducibility. Temporary Actions artifacts remain available for debugging. The Windows EXE is **unsigned and experimental**; verify its checksum and security warnings. See [Polish quickstart](URUCHOMIENIE_PL.md) and [build notes](docs/WINDOWS_EXE.md).
 
 ## GitHub publication and privacy
 

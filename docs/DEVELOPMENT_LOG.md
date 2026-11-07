@@ -56,3 +56,8 @@ Added a controlled periodic trial loop based on fresh private SQLite sensory obs
 ## 2026-11-07 — v0.5.5 merged and missing-state fail-closed hardening
 
 The first opt-in local self-development supervisor was merged to main in PR #12 (bbd9c00c557a2e87621cf81c598195109f8e7716). Original and newly added tests passed on Linux Python 3.11–3.13 and Windows, including frozen EXE smoke. A subsequent narrowly scoped hardening change prevents silent reinitialization of a missing brain snapshot in a database retaining experiences, and adds corruption regressions. No self-modifying source code or unconsented Internet access is enabled.
+
+
+## 2026-11-07 — Persistent GitHub Releases for Windows binary (publication automation)
+
+Added a dedicated `workflow_run` GitHub Actions release pipeline. Only successful Windows binary builds triggered by a push to the **latest main** can publish; the publishing job has isolated `contents:write` and `actions:read` permissions. It downloads the verified build artifact, checks `sha256sum --check`, confirms a Windows PE x64 executable, then creates a unique commit-bound release tag with EXE and SHA-256 assets. No manual archive browsing is required: latest EXE is linked prominently from README, the Polish setup guide and the project state document. Release publishing is still pending until verified on GitHub after merge; do not confuse a workflow definition with an actual release.
