@@ -51,3 +51,8 @@ User-approved Git email publication unblocked Git work; author display names wer
 ## 2026-11-07 — v0.5.5 opt-in supervisor integration (PR candidate)
 
 Added a controlled periodic trial loop based on fresh private SQLite sensory observations. It uses the existing bounded self-development algorithm on a clone, distinguishes training/selection/audit/retention, persists a successful candidate readout and the *same neural brain* in one transaction, and records decisions with a rollback checkpoint. Default UI mode is OFF. No external actions, self-written code or unbounded execution. Windows and Linux CI must still validate this candidate before it can be called a released milestone.
+
+
+## 2026-11-07 — v0.5.5 merged and missing-state fail-closed hardening
+
+The first opt-in local self-development supervisor was merged to main in PR #12 (bbd9c00c557a2e87621cf81c598195109f8e7716). Original and newly added tests passed on Linux Python 3.11–3.13 and Windows, including frozen EXE smoke. A subsequent narrowly scoped hardening change prevents silent reinitialization of a missing brain snapshot in a database retaining experiences, and adds corruption regressions. No self-modifying source code or unconsented Internet access is enabled.

@@ -85,6 +85,11 @@ class ExperienceMemory:
     def _brain_from_connection(self, con: sqlite3.Connection) -> Brain:
         row = con.execute("SELECT brain_json FROM neural_state WHERE id=1").fetchone()
         if row is None:
+            # A database with recorded experiences but no neural snapshot
+            # is corrupt or partially erased. Never replace learned state
+            # with a fresh random brain while keeping the old event ledger.
+            if con.execute("SELECT 1 FROM observations LIMIT 1").fetchone() is not None:
+                raise ValueError("stored brain state missing for existing observations")
             return Brain()
         raw = row[0]
         if not isinstance(raw, str) or len(raw.encode('utf-8')) > Brain.MAX_STATE_BYTES:

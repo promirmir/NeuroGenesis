@@ -2,13 +2,13 @@
 
 Last documentation review: **2026-11-07**. This file is intended to survive chat interruptions and model/context changes.
 
-## Candidate v0.5.5 — bounded live self-development, subject to CI and merge
+## Verified main v0.5.5 — bounded opt-in local self-development
 
 - New neurogenesis/autonomy.py adds an opt-in supervisor using **the same private SQLite brain** as the native Windows app. Every 40 fresh observations are assigned once to separate guard/training/selection/audit roles.
 - Successful *measured* candidate adaptation persists the associated trained neural readout and underlying spiking brain atomically to SQLite, with audit record, checkpoint and rollback allowed only before intervening new learning. Rejected candidates preserve the original brain.
 - Existing v0.4/v0.5.4 memory files remain compatible; no internet, code-writing, GPU or automatic use of third-party machines. AUTO is OFF by default and only checks while the app is open. See docs/AUTONOMY_SUPERVISOR.md.
 - This is a bounded local self-tuning mechanism, **not evidence of autonomous general cognitive development or human-brain equivalence**. Independent OOD and resource/retention benchmarks remain open.
-- This section describes the **feature candidate** until the associated PR and tests are green and merged; do not treat this section alone as verified release proof.
+- **Merged PR #12**, main merge commit bbd9c00c557a2e87621cf81c598195109f8e7716. All three Linux CI Python versions and Windows full tests and standalone EXE smoke test passed before merge. Verify fresh main runs before distributing the latest EXE. A follow-up hardening test explicitly refuses databases that contain experiences but lack a neural snapshot.
 
 ## Current verified main: v0.5.4 (2026-11-07)
 

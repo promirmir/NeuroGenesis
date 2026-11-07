@@ -141,6 +141,34 @@ class AutonomyTests(unittest.TestCase):
         self.assertEqual(self.memory.status()["observations"], WINDOW)
         self.assertEqual(self.supervisor.cycle()["reason"], "not_enough_new_experiences")
 
+
+    def test_missing_persisted_brain_fails_closed(self):
+        self.fill(1)
+        with closing(self.memory._connect()) as con, con:
+            con.execute("DELETE FROM neural_state WHERE id=1")
+        with self.assertRaisesRegex(ValueError, "state missing"):
+            self.memory.status()
+        with self.assertRaisesRegex(ValueError, "state missing"):
+            self.memory.remember("must not reset damaged brain")
+        with self.assertRaisesRegex(ValueError, "state missing"):
+            self.supervisor.cycle()
+        with closing(self.memory._connect()) as con:
+            self.assertEqual(con.execute("SELECT COUNT(*) FROM observations").fetchone()[0], 1)
+            self.assertIsNone(con.execute("SELECT brain_json FROM neural_state").fetchone())
+
+    def test_invalid_persisted_predictor_blocks_new_observations(self):
+        self.fill()
+        with patch("neurogenesis.autonomy.run_self_development_cycle",
+                   side_effect=self.promoted):
+            self.supervisor.cycle()
+        original = self.memory.brain().to_dict()
+        with closing(self.memory._connect()) as con, con:
+            con.execute("UPDATE predictor_state SET predictor_json='invalid json' WHERE id=1")
+        with self.assertRaisesRegex(ValueError, "predictor"):
+            self.memory.remember("must remain unchanged")
+        self.assertEqual(self.memory.brain().to_dict(), original)
+        self.assertEqual(self.memory.status()["observations"], WINDOW)
+
     def test_stop_signal_prevents_any_periodic_run(self):
         stop = threading.Event()
         stop.set()
