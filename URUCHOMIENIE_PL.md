@@ -1,4 +1,4 @@
-# NeuroGenesis v0.5.6 — uruchomienie na Windows
+# NeuroGenesis v0.5.7 — uruchomienie na Windows
 
 **Autorstwo: Miron przy pomocy AI.** Aktualny kod znajduje się w [repozytorium GitHub](https://github.com/promirmir/NeuroGenesis). Nie trzeba instalować Pythona, aby uruchomić gotowy EXE.
 
@@ -18,11 +18,17 @@
 ## Co naprawdę działa
 
 - Rozmowa: **działające jawne uczenie odpowiedzi**. Wpisz pytanie, niżej swoją odpowiedź i kliknij **Naucz odpowiedzi**. Przy wysłaniu tego samego pytania program odtworzy zapisaną odpowiedź. Możesz ją poprawić lub usunąć. Równolegle pytania są bodźcami dla małej sieci neuronowej. Tekst odpowiedzi pochodzi z lokalnej bazy, a nie z rozumowania neuronów.
-- Mózg: podgląd kroków, neuronów, synaps i lokalnych doświadczeń.
+- Mózg: podgląd kroków, neuronów, synaps, lokalnych doświadczeń i samodzielnego uczenia kontekstu (MSE).
 - Pamięć: transakcyjny zapis stanu mózgu, obserwacji i (po jawnym przycisku uczenia) par pytanie–odpowiedź w prywatnej bazie SQLite. Zwykłe wiadomości nie przechowują pełnego tekstu bez zaznaczenia opcji. [Szczegóły uczenia](docs/TEACHABLE_DIALOGUE.md).
 - Internet: **wyłączony**; wersja v0.5.4 nie czyta samodzielnie stron ani nie wysyła rozmów.
 - Samorozwój: w zakładce **Mózg** dostępny jest ręczny przycisk i opcja **AUTO** (domyślnie wyłączona). Po 40 nowych obserwacjach program testuje ograniczone warianty uczenia i zapisuje tylko propozycje, które przejdą kontrolę niezależnego zbioru i poprzedniej umiejętności. Zapisy są atomowe, a niepowodzenie nie usuwa wcześniejszych doświadczeń. Nie jest to swobodna samomodyfikacja algorytmów.
 - Homeostaza, naprawa synaps i automatyczne powiększanie sieci pozostają oddzielnymi funkcjami badawczymi, nie są jeszcze autonomicznym procesem produkcyjnym.
+
+## Samouczenie kontekstu (bez klikania nauki)
+
+Po każdej wiadomości system przetwarza bodziec przez mózg neuronowy i automatycznie aktualizuje odczyt przewidujący kolejny bodziec na podstawie sekwencji oraz śladów neuronów. Zakładka **Mózg** pokazuje liczbę ocenionych przejść i średni błąd MSE. Stan numeryczny przechowywany jest w tej samej prywatnej bazie SQLite. Nie trzeba uruchamiać przycisku **Naucz odpowiedzi**, by uczyć ten model sekwencji.
+
+**Ograniczenie:** rozpoznawanie prawidłowości w ciągu bodźców nie oznacza jeszcze rozumienia znaczenia polskich zdań. Tekstowe odpowiedzi nadal pochodzą z jawnie nauczonych skojarzeń, nie z samodzielnie generowanych zdań. Szczegóły: [CONTEXT_LEARNING](docs/CONTEXT_LEARNING.md).
 
 ## Jak nauczyć pierwszej odpowiedzi?
 

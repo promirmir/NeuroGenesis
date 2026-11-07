@@ -7,11 +7,15 @@
 **Jedno kliknięcie, bez instalowania Pythona.** Program jest eksperymentalny i niepodpisany cyfrowo. Zweryfikuj pochodzenie i SHA-256; lokalna pamięć pozostaje w katalogu użytkownika po aktualizacji. **Internet pozostaje wyłączony**, a panel nie jest jeszcze rozumiejącą język AI.
 
 
-**Experimental, self-reorganizing artificial neural substrate — research prototype v0.5.6.**
+**Experimental, self-reorganizing artificial neural substrate — research prototype v0.5.7.**
 
 NeuroGenesis is a long-term research project investigating whether online structural plasticity can measurably improve an artificial agent's learning and adaptation. The central mechanism is **changing the computational network itself**, not merely appending text to a conversation history.
 
-> **Research status:** v0.5.6 includes the original small deterministic CPU spiking brain, local SQLite persistence, a native Windows desktop application and optional experimental neural regulation/repair/capacity experiments. The self-development controller now supports **opt-in periodic local trials with transactional promotion and rollback**, but it is not a self-coding agent or general-intelligence system. Capacity experiments remain bounded offline trials. This is **not** a conscious entity, a human brain emulator, a natural-language conversational AI, a working internet crawler, a GPU neural implementation or a claim of general intelligence.
+> **Research status:** v0.5.7 includes the original small deterministic CPU spiking brain, local SQLite persistence, a native Windows desktop application and optional experimental neural regulation/repair/capacity experiments. The self-development controller now supports **opt-in periodic local trials with transactional promotion and rollback**, but it is not a self-coding agent or general-intelligence system. Capacity experiments remain bounded offline trials. This is **not** a conscious entity, a human brain emulator, a natural-language conversational AI, a working internet crawler, a GPU neural implementation or a claim of general intelligence.
+
+## Automatyczne uczenie kontekstu (v0.5.7)
+
+Każda nowa wiadomość uruchamia **samodzielne uczenie przewidywania następnego bodźca** na podstawie bieżących i poprzednich danych sensorycznych oraz rzeczywistych śladów neuronów impulsowych. Nie trzeba ręcznie podawać odpowiedzi, żeby model ten aktualizował własne wagi. Na zakładce **Mózg** widać liczbę przejść i błąd MSE. Uczenie kontekstu i stan mózgu zapisują się w tej samej lokalnej transakcji SQLite, bez zapisu surowego tekstu przy zwykłych wiadomościach. Kontrolowane eksperymenty porównują warianty z pamięcią, bez pamięci oraz z odłączonym odczytem neuronowym. **To uczenie sekwencji, nie semantyczne rozumienie języka ani autonomiczne generowanie odpowiedzi.** [Opis matematyczny i ograniczenia](docs/CONTEXT_LEARNING.md).
 
 ## Pierwsze działające uczenie dialogowe (v0.5.6)
 
@@ -29,7 +33,7 @@ W zakładce **Rozmowa** wpisz pytanie, poniżej podaj odpowiedź i kliknij **Nau
 - A/B structural control experiment (growth ON vs. OFF) on an identical stimulus sequence.
 - **Self-supervised next-input prediction**: a small online learning head predicts the next sensory pattern before seeing it, then corrects itself from prediction error; persistence of learner state and matched fixed-structure comparison.
 - Additive v0.5.4 research modules: bounded homeostasis, experimental memory-guided rewiring, held-out task-recovery evaluation, simple Markov control, resource budgets and selection/audit-gated self-development experiments. These are **not automatically running** in the GUI or current persistent memory loop.
-- Native Tkinter Windows interface with real learned, explicitly taught question/answer recall, neural sensory state, brain statistics and Internet OFF; PyInstaller single-EXE workflow.
+- Native Tkinter Windows interface with automatically adapting temporal-context prediction readout over real spiking-neuron traces, plus explicitly taught question/answer recall, brain statistics and Internet OFF; PyInstaller single-EXE workflow.
 - **v0.5.5:** opt-in bounded periodic self-development supervisor, 40 fresh sensory events per trial, separate training/selection/audit/retention inputs, atomic preservation of a single brain + predictor in SQLite, failure rollback and checkpoint safeguard. This is not evidence of semantic conversation; see [implementation and limitations](docs/AUTONOMY_SUPERVISOR.md).
 - Zero mandatory third-party dependencies when running the Python research core; automated tests and reproducible CLI.
 

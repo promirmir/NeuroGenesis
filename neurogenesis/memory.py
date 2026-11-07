@@ -18,6 +18,7 @@ import sqlite3
 from typing import Any
 
 from .brain import Brain
+from .context import ContextualNextInputPredictor
 from .sensory import TextSensor
 
 
@@ -78,6 +79,12 @@ class ExperienceMemory:
                     answer_text TEXT NOT NULL,
                     neural_step INTEGER NOT NULL,
                     learned_utc TEXT NOT NULL
+                )""")
+                # Online temporal predictor is optional/additive on existing
+                # schema-1 databases; it contains no raw text or user strings.
+                con.execute("""CREATE TABLE IF NOT EXISTS contextual_state (
+                    id INTEGER PRIMARY KEY CHECK (id=1),
+                    predictor_json TEXT NOT NULL
                 )""")
 
     def _connect(self) -> sqlite3.Connection:
@@ -191,6 +198,36 @@ class ExperienceMemory:
                         raise ValueError('updated predictor exceeds size limit')
                     con.execute('UPDATE predictor_state SET predictor_json=? WHERE id=1',
                                 (packed_predictor,))
+                # Online context learning uses actual post-stimulus neural
+                # traces and previous sensory context, with its own bounded
+                # readout. All learning, brain and text-event persistence is
+                # protected by the same SQLite IMMEDIATE transaction.
+                contextual_row = con.execute(
+                    'SELECT predictor_json FROM contextual_state WHERE id=1'
+                ).fetchone()
+                if contextual_row is None:
+                    context_model = ContextualNextInputPredictor(brain.config.input_size)
+                else:
+                    packed = contextual_row[0]
+                    if (type(packed) is not str or
+                            len(packed.encode('utf-8')) > ContextualNextInputPredictor.MAX_SNAPSHOT_BYTES):
+                        raise ValueError('contextual predictor snapshot exceeds size limit')
+                    def reject_context_constant(value: str) -> None:
+                        raise ValueError('non-finite contextual predictor constant')
+                    try:
+                        context_model = ContextualNextInputPredictor.from_dict(
+                            json.loads(packed, parse_constant=reject_context_constant))
+                    except (TypeError, json.JSONDecodeError) as exc:
+                        raise ValueError('invalid stored contextual predictor') from exc
+                    if context_model.width != brain.config.input_size:
+                        raise ValueError('contextual predictor/brain width mismatch')
+                context_model.observe(features, brain.traces)
+                contextual_json = json.dumps(
+                    context_model.to_dict(), allow_nan=False, separators=(',', ':'))
+                if len(contextual_json.encode('utf-8')) > ContextualNextInputPredictor.MAX_SNAPSHOT_BYTES:
+                    raise ValueError('updated contextual predictor exceeds size limit')
+                con.execute('INSERT OR REPLACE INTO contextual_state(id,predictor_json)'
+                            ' VALUES(1, ?)', (contextual_json,))
                 con.execute('INSERT OR REPLACE INTO neural_state(id, brain_json) VALUES(1, ?)',
                             (serialized,))
                 cur = con.execute('''INSERT INTO observations
@@ -273,9 +310,30 @@ class ExperienceMemory:
         with closing(self._connect()) as con:
             n, raw = con.execute('SELECT COUNT(*), SUM(raw_text IS NOT NULL) FROM observations').fetchone()
             taught_count = con.execute("SELECT COUNT(*) FROM taught_responses").fetchone()[0]
+            brain = self._brain_from_connection(con)
+            context_row = con.execute('SELECT predictor_json FROM contextual_state WHERE id=1').fetchone()
+            if context_row is None:
+                # Empty or pre-v0.5.7 database; no secret data is created
+                # by a read-only status inspection.
+                context_stats = ContextualNextInputPredictor(brain.config.input_size).stats()
+            else:
+                packed = context_row[0]
+                if (type(packed) is not str or
+                        len(packed.encode('utf-8')) > ContextualNextInputPredictor.MAX_SNAPSHOT_BYTES):
+                    raise ValueError('contextual predictor snapshot exceeds size limit')
+                try:
+                    model = ContextualNextInputPredictor.from_dict(
+                        json.loads(packed, parse_constant=lambda value: (
+                            _ for _ in ()).throw(ValueError('invalid context constant'))))
+                except (TypeError, json.JSONDecodeError) as exc:
+                    raise ValueError('invalid stored contextual predictor') from exc
+                if model.width != brain.config.input_size:
+                    raise ValueError('contextual predictor/brain width mismatch')
+                context_stats = model.stats()
             return {'observations': n, 'records_with_raw_text': raw or 0,
                     'taught_responses': taught_count,
-                    'brain': self._brain_from_connection(con).stats()}
+                    'context_learning': context_stats,
+                    'brain': brain.stats()}
 
     def recall(self, query: str, *, limit: int = 5,
                show_text: bool = False) -> list[dict[str, Any]]:

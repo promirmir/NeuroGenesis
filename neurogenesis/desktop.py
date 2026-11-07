@@ -91,6 +91,13 @@ def self_test() -> int:
             return 7
         if fresh.status()["records_with_raw_text"] != 0:
             return 8
+        # Frozen Windows executable must exercise autonomous temporal
+        # learning, not only neural snapshots and manually taught answers.
+        context = fresh.status()["context_learning"]
+        if context["observations"] != 3 or context["scored"] != 2:
+            return 10
+        if not context["uses_temporal_context"] or not context["uses_real_neural_traces"]:
+            return 11
         if not fresh.forget_teaching("czym jest neurogenesis"):
             return 9
     return 0
@@ -179,7 +186,9 @@ def launch(db_path: Path) -> int:
              justify="left", anchor="nw", font=("Consolas", 12)).pack(fill="x", padx=24, pady=(24, 14))
     canvas = tk.Canvas(brain_tab, bg="#172237", highlightthickness=0, height=205)
     canvas.pack(fill="x", padx=24, pady=(0, 16))
-    ttk.Label(brain_tab, text="Wykres przedstawia aktualne ślady aktywności neuronów; nie jest miarą świadomości.",
+    ttk.Label(brain_tab, text=("Uczenie sekwencji odbywa się automatycznie przy każdym bodźcu. "
+                               "MSE ocenia przewidywanie kolejnego bodźca, nie rozumienie języka. "
+                               "Wykres przedstawia ślady aktywności neuronów."),
               wraplength=730).pack(anchor="w", padx=24)
     autonomy_controls = tk.Frame(brain_tab, bg="#111827")
     autonomy_controls.pack(fill="x", padx=24, pady=(12, 4))
@@ -213,7 +222,11 @@ def launch(db_path: Path) -> int:
                 f"Utworzone neurony: {bs['total_grown']}\nUsunięte synapsy: {bs['total_pruned']}\n"
                 f"Zapisane doświadczenia: {st['observations']}\n"
                 f"Doświadczenia z pełnym tekstem: {st['records_with_raw_text']}\n"
-                f"Ręcznie nauczone odpowiedzi: {st['taught_responses']}"
+                f"Ręcznie nauczone odpowiedzi: {st['taught_responses']}\n"
+                f"Automatyczna nauka kontekstu: {st['context_learning']['scored']} "
+                f"porównań sekwencji\n"
+                f"Średni błąd predykcji MSE: "
+                f"{st['context_learning']['mean_prequential_mse'] if st['context_learning']['scored'] else 'brak danych'}"
             )
             health = supervisor.status()
             autonomy_info.set(
