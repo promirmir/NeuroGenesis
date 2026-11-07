@@ -1,0 +1,222 @@
+"""Native Windows-first desktop shell for the existing NeuroGenesis v0.4 brain.
+
+A text input is a sensory observation, not evidence of language understanding.
+Internet and autonomous execution remain disabled until implemented and verified.
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+from pathlib import Path
+import tempfile
+from typing import Any
+
+from .memory import ExperienceMemory
+
+APP_NAME = "NeuroGenesis"
+
+
+def _is_windows() -> bool:
+    return os.name == "nt"
+
+
+def default_data_dir() -> Path:
+    """Persist memory outside a PyInstaller one-file extraction directory."""
+    local = os.environ.get("LOCALAPPDATA")
+    if _is_windows() and local:
+        return Path(local) / APP_NAME
+    return Path.home() / ".local" / "share" / APP_NAME
+
+
+def default_db_path() -> Path:
+    return default_data_dir() / "experiences.sqlite3"
+
+
+def process_message(memory: ExperienceMemory, message: str, *, store_text: bool = False) -> dict[str, Any]:
+    """Call the actual brain/memory transaction, without fabricating conversation."""
+    if type(message) is not str or not message.strip():
+        raise ValueError("Wiadomość nie może być pusta")
+    if type(store_text) is not bool:
+        raise ValueError("store_text must be boolean")
+    result = memory.remember(message, source="desktop", store_text=store_text)
+    return {
+        "reply": ("Odebrano bodziec i zaktualizowano stan sieci. "
+                  "Nie mam jeszcze zweryfikowanego rozumienia języka naturalnego. "
+                  "Nie generuję odpowiedzi na podstawie znaczenia tej wiadomości."),
+        "event_id": result["event_id"],
+        "brain_step": result["brain_step"],
+        "neurons": result["neurons"],
+        "synapses": result["synapses"],
+        "stored_raw_text": result["stored_raw_text"],
+    }
+
+
+def self_test() -> int:
+    """Non-GUI integration smoke test for Windows EXE build CI."""
+    with tempfile.TemporaryDirectory(prefix="neurogenesis-exe-check-") as directory:
+        db = Path(directory) / "memory.sqlite3"
+        first = ExperienceMemory(db)
+        if first.status()["observations"] != 0:
+            return 1
+        result = process_message(first, "Bodziec próbny")
+        reopened = ExperienceMemory(db)
+        status = reopened.status()
+        if not (result["brain_step"] == 4 and status["observations"] == 1
+                and status["records_with_raw_text"] == 0
+                and status["brain"]["steps"] == 4):
+            return 2
+        if not reopened.recall("Bodziec próbny")[0]["exact_hash_match"]:
+            return 3
+    return 0
+
+
+def launch(db_path: Path) -> int:
+    """Create a real native window; keep SQLite local and network OFF."""
+    import tkinter as tk
+    from tkinter import messagebox, ttk
+
+    try:
+        memory = ExperienceMemory(db_path)
+        memory.status()  # do not silently reset malformed persisted brains
+    except Exception as exc:
+        # This error is shown locally. Never overwrite or discard corrupted DB.
+        root = tk.Tk()
+        root.withdraw()
+        messagebox.showerror("NeuroGenesis — pamięć", f"Nie można otworzyć pamięci. Dane nie zostały zresetowane.\n\n{exc}")
+        root.destroy()
+        return 1
+
+    root = tk.Tk()
+    root.title("NeuroGenesis — cyfrowy mózg")
+    root.geometry("900x640")
+    root.minsize(690, 520)
+    root.configure(bg="#111827")
+
+    style = ttk.Style(root)
+    style.theme_use("clam")
+    style.configure("TNotebook", background="#111827", borderwidth=0)
+    style.configure("TNotebook.Tab", padding=(20, 11), font=("Segoe UI", 10))
+    style.configure("TFrame", background="#111827")
+    style.configure("TLabel", background="#111827", foreground="#e5e7eb", font=("Segoe UI", 10))
+    style.configure("TCheckbutton", background="#111827", foreground="#cbd5e1")
+    style.configure("TButton", font=("Segoe UI", 10), padding=(13, 8))
+
+    header = tk.Frame(root, bg="#111827")
+    header.pack(fill="x", padx=18, pady=(16, 8))
+    tk.Label(header, text="NeuroGenesis", bg="#111827", fg="#f8fafc",
+             font=("Segoe UI", 21, "bold")).pack(side="left")
+    tk.Label(header, text="Miron przy pomocy AI  •  LOKALNIE  •  INTERNET WYŁĄCZONY",
+             bg="#111827", fg="#93a4bc", font=("Segoe UI", 9)).pack(side="right", padx=(10, 0))
+    tabs = ttk.Notebook(root)
+    tabs.pack(fill="both", expand=True, padx=14, pady=(0, 14))
+    chat_tab = ttk.Frame(tabs)
+    brain_tab = ttk.Frame(tabs)
+    web_tab = ttk.Frame(tabs)
+    tabs.add(chat_tab, text="Rozmowa")
+    tabs.add(brain_tab, text="Mózg")
+    tabs.add(web_tab, text="Internet")
+
+    tk.Label(chat_tab, text="Wiadomości są bodźcami dla sieci — nie jest to jeszcze inteligentna rozmowa.",
+             bg="#111827", fg="#a6b6c9", anchor="w", font=("Segoe UI", 10)).pack(fill="x", padx=12, pady=(12, 8))
+    history = tk.Text(chat_tab, font=("Segoe UI", 11), bg="#172237", fg="#e2e8f0",
+                      insertbackground="#e2e8f0", wrap="word", relief="flat",
+                      padx=14, pady=12, state="disabled")
+    history.pack(fill="both", expand=True, padx=12, pady=(0, 10))
+    tk.Label(chat_tab, text="Napisz obserwację:", bg="#111827", fg="#e5e7eb").pack(anchor="w", padx=12)
+    message = tk.Text(chat_tab, height=3, font=("Segoe UI", 11), bg="#172237", fg="#f1f5f9",
+                      insertbackground="#e2e8f0", wrap="word", relief="flat", padx=10, pady=8)
+    message.pack(fill="x", padx=12, pady=(5, 8))
+    controls = tk.Frame(chat_tab, bg="#111827")
+    controls.pack(fill="x", padx=12, pady=(0, 10))
+    store_text = tk.BooleanVar(value=False)
+    ttk.Checkbutton(controls, text="Zapisuj pełną treść prywatnie (opcjonalnie)", variable=store_text).pack(side="left")
+    info = ttk.Label(controls, text="Tekst nie jest wysyłany do internetu")
+    info.pack(side="left", padx=18)
+
+    status_text = tk.StringVar(value="Odczytywanie stanu...")
+    tk.Label(brain_tab, textvariable=status_text, bg="#111827", fg="#e2e8f0",
+             justify="left", anchor="nw", font=("Consolas", 12)).pack(fill="x", padx=24, pady=(24, 14))
+    canvas = tk.Canvas(brain_tab, bg="#172237", highlightthickness=0, height=205)
+    canvas.pack(fill="x", padx=24, pady=(0, 16))
+    ttk.Label(brain_tab, text="Wykres przedstawia aktualne ślady aktywności neuronów; nie jest miarą świadomości.",
+              wraplength=730).pack(anchor="w", padx=24)
+
+    tk.Label(web_tab, text="Internet jest wyłączony", bg="#111827", fg="#f8fafc",
+             font=("Segoe UI", 18, "bold")).pack(anchor="w", padx=26, pady=(30, 10))
+    ttk.Label(web_tab, text=("Kontrolowany moduł internetowy jest w fazie badań. "
+                             "Ta wersja EXE nie pobiera stron, nie przesyła rozmów i nie działa jako agent sieciowy."),
+              wraplength=680).pack(anchor="w", padx=26, pady=(0, 10))
+
+    def append(role: str, text: str) -> None:
+        history.configure(state="normal")
+        history.insert("end", f"{role}: {text}\n\n")
+        history.configure(state="disabled")
+        history.see("end")
+
+    def refresh() -> None:
+        try:
+            st = memory.status()
+            bs = st["brain"]
+            status_text.set(
+                f"Kroki: {bs['steps']}\nNeurony: {bs['neurons']}\nSynapsy: {bs['synapses']}\n"
+                f"Wzorce sensoryczne: {bs['stored_patterns']}\n"
+                f"Utworzone neurony: {bs['total_grown']}\nUsunięte synapsy: {bs['total_pruned']}\n"
+                f"Zapisane doświadczenia: {st['observations']}\n"
+                f"Doświadczenia z pełnym tekstem: {st['records_with_raw_text']}"
+            )
+            traces = memory.brain().traces
+            canvas.delete("all")
+            canvas.update_idletasks()
+            width = max(200, canvas.winfo_width())
+            for i, t in enumerate(traces[:96]):
+                bw = width / max(1, len(traces[:96]))
+                height = min(180, max(1, 180 * float(t) / 5))
+                canvas.create_rectangle(i*bw+1, 195-height, (i+1)*bw-1, 195,
+                                        fill="#34d399", outline="")
+        except (ValueError, OSError, KeyError) as exc:
+            status_text.set(f"Błąd odczytu stanu: {exc}")
+
+    send_button = ttk.Button(controls, text="Przekaż do mózgu")
+    send_button.pack(side="right")
+
+    def send() -> None:
+        content = message.get("1.0", "end-1c").strip()
+        if not content:
+            return
+        send_button.configure(state="disabled")
+        root.update_idletasks()
+        try:
+            result = process_message(memory, content, store_text=store_text.get())
+        except (ValueError, OSError) as exc:
+            messagebox.showerror("NeuroGenesis", f"Nie udało się zapisać obserwacji: {exc}")
+        else:
+            append("Ty", content)
+            append("NeuroGenesis", result["reply"])
+            message.delete("1.0", "end")
+            refresh()
+        finally:
+            send_button.configure(state="normal")
+
+    send_button.configure(command=send)
+    message.bind("<Control-Return>", lambda _event: (send(), "break")[1])
+    ttk.Label(chat_tab, text="Ctrl+Enter — przekaż bodziec • baza w prywatnym katalogu użytkownika",
+              wraplength=770).pack(anchor="w", padx=12, pady=(0, 8))
+    refresh()
+
+    def on_close() -> None:
+        root.destroy()
+
+    root.protocol("WM_DELETE_WINDOW", on_close)
+    root.mainloop()
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="NeuroGenesis desktop client")
+    parser.add_argument("--self-test", action="store_true", help="test brain/SQLite persistence without GUI")
+    parser.add_argument("--db", type=Path, default=None, help="explicit private database path")
+    args = parser.parse_args(argv)
+    if args.self_test:
+        return self_test()
+    return launch(args.db if args.db is not None else default_db_path())
