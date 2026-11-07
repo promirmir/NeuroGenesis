@@ -7,7 +7,9 @@
 **Jedno kliknięcie, bez instalowania Pythona.** Program jest eksperymentalny i niepodpisany cyfrowo. Zweryfikuj pochodzenie i SHA-256; lokalna pamięć pozostaje w katalogu użytkownika po aktualizacji. **Internet pozostaje wyłączony do chwili jawnej zgody użytkownika**, a panel nie jest jeszcze rozumiejącą język AI. Wersja 0.6.0 dodaje kontrolowany odczyt publicznych stron HTTPS; domyślnie nie nawiązuje połączeń.
 
 
-**Experimental, self-reorganizing artificial neural substrate — research prototype v0.6.0 (web-perception candidate).**
+**Experimental, self-reorganizing artificial neural substrate — research prototype v0.6.0.**
+
+Web-perception release candidate; version metadata and tests must pass before publishing.
 
 NeuroGenesis is a long-term research project investigating whether online structural plasticity can measurably improve an artificial agent's learning and adaptation. The central mechanism is **changing the computational network itself**, not merely appending text to a conversation history.
 
