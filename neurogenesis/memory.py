@@ -229,6 +229,10 @@ class ExperienceMemory:
         This is a private symbolic association attached to a real neural event,
         NOT a claim that the neurons have learned to generate this answer.
         """
+        # None is the *internal* default for remember(), never a valid
+        # answer supplied to the explicit teaching API. Reject before any
+        # SQLite write or neural step.
+        self._check_answer(answer)
         return self.remember(question, source="desktop-teaching",
                              store_text=False, taught_answer=answer)
 
