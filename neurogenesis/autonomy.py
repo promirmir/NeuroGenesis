@@ -181,6 +181,10 @@ class AutonomicSupervisor:
                 out = dict(report)
                 out.update({"last_event_id": end_id, "window_events": WINDOW,
                             "input_type": "local hashed sensory features",
+                            "audit_scope": ("not reused for supervisor selection; however the "
+                                            "live neural substrate previously processed all events "
+                                            "during remember(), so this is not a strictly unseen "
+                                            "substrate holdout or OOD generalization test"),
                             "brain_unchanged": not accepted,
                             "no_raw_text_read": True})
                 if accepted:

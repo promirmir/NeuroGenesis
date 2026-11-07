@@ -15,7 +15,7 @@ Validation failures roll back the entire transaction and do not erase observatio
 ## Safety and limitations
 
 - No unsupervised Internet, external processes, source edits or cloud charges. Each trial uses at most 40 observed feature vectors and 3 candidate configurations by default.
-- Every event ID is used in only one trial window; audit inputs are never recycled. These are local hashed input patterns, not genuinely out-of-distribution tasks.
+- Every event ID is used in only one *supervisor trial* window; audit inputs are not recycled by the trial selector. **Important leakage limitation:** the live neural substrate already processed these events when they were recorded, before the supervisor took its snapshot. Therefore the audit is independent of the subsequent parameter-search procedure but NOT a genuinely unseen substrate test, and any apparent gain can be optimistic. A strict prospective evaluation must collect an unused future holdout after selecting a parameter policy, with safe rollback or a pre-window brain snapshot.
 - SQLite writes are guarded by an IMMEDIATE transaction, snapshots are size validated, and supervisor reports contain only metrics, not raw text.
 - This learns next-input predictions from a toy hashed sensory encoder. It is not proof of natural-language understanding, general intelligence or biological fidelity.
 - Existing isolated evaluation probes may continue synaptic STDP while freezing their readout; fully frozen probes are a distinct research gate.
