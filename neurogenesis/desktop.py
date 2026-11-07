@@ -13,6 +13,7 @@ import tempfile
 from typing import Any
 
 from .memory import ExperienceMemory
+from .autonomy import AutonomicSupervisor, WINDOW
 
 APP_NAME = "NeuroGenesis"
 
@@ -68,6 +69,12 @@ def self_test() -> int:
             return 2
         if not reopened.recall("Bodziec próbny")[0]["exact_hash_match"]:
             return 3
+        # Frozen EXE must include the autonomy implementation without requiring a GUI.
+        supervisor = AutonomicSupervisor(reopened)
+        if supervisor.status()["new_events"] != 1:
+            return 4
+        if supervisor.cycle()["reason"] != "not_enough_new_experiences":
+            return 5
     return 0
 
 
@@ -79,6 +86,8 @@ def launch(db_path: Path) -> int:
     try:
         memory = ExperienceMemory(db_path)
         memory.status()  # do not silently reset malformed persisted brains
+        supervisor = AutonomicSupervisor(memory)
+        supervisor.status()
     except Exception as exc:
         # This error is shown locally. Never overwrite or discard corrupted DB.
         root = tk.Tk()
@@ -141,6 +150,15 @@ def launch(db_path: Path) -> int:
     canvas.pack(fill="x", padx=24, pady=(0, 16))
     ttk.Label(brain_tab, text="Wykres przedstawia aktualne ślady aktywności neuronów; nie jest miarą świadomości.",
               wraplength=730).pack(anchor="w", padx=24)
+    autonomy_controls = tk.Frame(brain_tab, bg="#111827")
+    autonomy_controls.pack(fill="x", padx=24, pady=(12, 4))
+    autonomy_enabled = tk.BooleanVar(value=False)
+    ttk.Checkbutton(autonomy_controls,
+                    text="AUTO: testuj ulepszenia co 30 s (wymaga nowych doświadczeń)",
+                    variable=autonomy_enabled).pack(side="left")
+    autonomy_info = tk.StringVar(value="Automatyczny samorozwój wyłączony")
+    ttk.Label(brain_tab, textvariable=autonomy_info, wraplength=750).pack(
+        fill="x", padx=24, pady=(4, 8))
 
     tk.Label(web_tab, text="Internet jest wyłączony", bg="#111827", fg="#f8fafc",
              font=("Segoe UI", 18, "bold")).pack(anchor="w", padx=26, pady=(30, 10))
@@ -165,6 +183,11 @@ def launch(db_path: Path) -> int:
                 f"Zapisane doświadczenia: {st['observations']}\n"
                 f"Doświadczenia z pełnym tekstem: {st['records_with_raw_text']}"
             )
+            health = supervisor.status()
+            autonomy_info.set(
+                f"Samorozwój: {'AUTO' if autonomy_enabled.get() else 'ręczny'}; "
+                f"nowe doświadczenia {health['new_events']}/{WINDOW}; "
+                f"próby {health['cycles']}; zatwierdzone {health['promotions']}")
             traces = memory.brain().traces
             canvas.delete("all")
             canvas.update_idletasks()
@@ -177,6 +200,31 @@ def launch(db_path: Path) -> int:
         except (ValueError, OSError, KeyError) as exc:
             status_text.set(f"Błąd odczytu stanu: {exc}")
 
+    def try_improve() -> None:
+        try:
+            result = supervisor.cycle()
+            if result["reason"] == "not_enough_new_experiences":
+                summary = f"Brakuje obserwacji: {result['available']}/{result['required']}"
+            else:
+                summary = ("Ulepszenie zatwierdzone" if result["promoted"]
+                           else "Zmiana odrzucona: " + result["reason"])
+            refresh()
+            autonomy_info.set(summary)
+        except (ValueError, OSError, RuntimeError, KeyError) as exc:
+            autonomy_enabled.set(False)
+            autonomy_info.set("Samorozwój zatrzymany: problem z pamięcią lub walidacją")
+            messagebox.showerror("NeuroGenesis — samorozwój",
+                                 f"Nie zmieniono danych po nieudanej próbie: {exc}")
+
+    ttk.Button(autonomy_controls, text="Przetestuj ulepszenie",
+               command=try_improve).pack(side="right")
+
+    def autonomy_tick() -> None:
+        if autonomy_enabled.get():
+            try_improve()
+        root.after(30_000, autonomy_tick)
+
+    root.after(30_000, autonomy_tick)
     send_button = ttk.Button(controls, text="Przekaż do mózgu")
     send_button.pack(side="right")
 
