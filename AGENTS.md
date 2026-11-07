@@ -17,32 +17,26 @@
 3. Run `python -m unittest discover -s tests -v`, CLI smoke tests and relevant reproduction experiments **before modifying code**.
 4. Work on focused feature branches. Include tests for new features, old snapshot compatibility and explicit failure cases.
 5. No regression: maintain old public commands/API/serialized state or implement tested migrations; preserve deterministic seeds, resource budgets and fixed-structure controls. Quantify improvement and verify performance claims against independent baselines.
-6. Verify **no family name** appears in source or commit author/committer identity; run `python -m scripts.privacy_audit --git` and require green GitHub Actions on Python 3.11, 3.12 and 3.13; merge only verified changes. Record commit SHA, benchmark conditions and known limitations.
+6. Verify privacy of commit authors/committers (public GitHub noreply only), run `python -m scripts.privacy_audit --git` and require green GitHub Actions on Python 3.11, 3.12 and 3.13; merge only verified changes. Record commit SHA, benchmark conditions and known limitations.
 7. Update `docs/PROJECT_STATE.md` and append to `docs/DEVELOPMENT_LOG.md` after each merged milestone so the next conversation resumes from verified facts, not promises.
 8. If interrupted, leave a branch and PR with explicit state, failed checks, next actions and rollback notes. Never claim completion of unmerged or untested work.
 
 ## Current verified foundation
 
-- **v0.2**: deterministic CPU-only sparse spiking neuron simulation, structural growth/pruning, JSON snapshots, sensory hashing, self-state telemetry and a basic self-supervised next-input prediction control.
+- **v0.4**: deterministic CPU-only sparse spiking neuron simulation, structural growth/pruning, JSON snapshots, sensory hashing, self-state telemetry and a basic self-supervised next-input prediction control; synthetic A-B-A benchmark and SQLite episodic memory with atomic brain-state persistence.
 - No semantic comprehension, natural conversation, open internet reading, autonomous source edits, GPU training or validated consciousness.
 - Follow-up work: `#3` out-of-distribution and retention tests, `#4` read-only web sensory inputs, `#5` grounded language and functional self-modeling.
 
 For the latest authoritative status and reproduction commands see **`docs/PROJECT_STATE.md`**. Do not change experimental methodology silently.
 
-## Privacy / continuity policy
+## Privacy / fresh-history policy
 
-Public credit is **Miron przy pomocy AI**, with no family name. The old public
-repository was deleted; this is its reconstructed replacement. An initial
-README commit may retain the GitHub account's chosen email in public commit
-metadata; do not claim that a source edit removes it. Set GitHub noreply for
-future local commits where possible. The privacy scan blocks private family-name
-patterns, secrets and personal contact details in files, plus name patterns
-in Git commit identities. E-mail disclosures in existing commit metadata are
-reported separately and are not a blocker under the current operator priority.
-Do **not** rewrite Git history or force-push without verifying the exact remote
-SHA, protecting prior work and user approval of that destructive action.
+The previous public repository was deleted after private commit-author metadata became visible. This reconstruction must publish a **single fresh root commit** using only a valid GitHub noreply address. Never use a connector write method that chooses an unverified account email implicitly. Check remote commit metadata before any subsequent write; review PR diffs and CI logs for personal information. If a privacy check fails, stop rather than publish. Public credit: **Miron przy pomocy AI**. See `docs/PRIVACY_AND_AUTH.md`.
 
-Current implementation: v0.3 A-B-A benchmark; run `python -m neurogenesis
-benchmark --seeds 10 --steps-per-phase 128 --probe-steps 48`. No evidence of
-structural growth outperforming fixed architecture. Update benchmark and
-recovery docs after every verified merged change.
+## Durable memory caution
+
+The local SQLite experience database is **not on GitHub**; a new computer or
+chat restores the code but not personal local experience data. Back it up
+privately if continuity of learned neural state matters. `forget-event` is not
+neural unlearning. Do not claim meaningful language understanding or mental
+awareness because the database can recall exact hashes.

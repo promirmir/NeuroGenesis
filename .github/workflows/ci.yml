@@ -38,6 +38,11 @@ jobs:
         run: python -m neurogenesis predict --steps 200
       - name: Run continual learning A-B-A benchmark
         run: python -m neurogenesis benchmark --seeds 10 --steps-per-phase 128 --probe-steps 48
+      - name: Check local episodic memory persistence
+        run: |
+          python -m neurogenesis remember "synthetic observation" --db "$RUNNER_TEMP/experiences.sqlite3"
+          python -m neurogenesis recall "synthetic observation" --db "$RUNNER_TEMP/experiences.sqlite3"
+          python -m neurogenesis memory-status --db "$RUNNER_TEMP/experiences.sqlite3"
       - name: Run save and inspect smoke test
         run: |
           python -m neurogenesis demo --steps 64 --state "$RUNNER_TEMP/brain.json"

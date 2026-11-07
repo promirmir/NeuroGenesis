@@ -1,6 +1,6 @@
 # NeuroGenesis
 
-**Experimental, self-reorganizing artificial neural substrate — research prototype v0.3.0.**
+**Experimental, self-reorganizing artificial neural substrate — research prototype v0.4.0.**
 
 NeuroGenesis is a long-term research project investigating whether online structural plasticity can measurably improve an artificial agent's learning and adaptation. The central mechanism is **changing the computational network itself**, not merely appending text to a conversation history.
 
@@ -19,18 +19,9 @@ NeuroGenesis is a long-term research project investigating whether online struct
 - **Self-supervised next-input prediction**: a small online learning head predicts the next sensory pattern before seeing it, then corrects itself from prediction error; persistence of learner state and matched fixed-structure comparison.
 - Zero mandatory third-party runtime dependencies; automated tests and reproducible CLI.
 
-## Public code and attribution
+## Secure publication / new repository
 
-**Miron przy pomocy AI.** The public source contains first-name-only project
-attribution; never add full names, phone numbers, private contact details or
-credentials. The CI privacy gate rejects full-name patterns and known secret
-signatures in source and commit author names. A private e-mail in existing Git
-commit metadata remains a separate disclosure; GitHub account settings can
-hide it on future commits. No test can guarantee removal from clones/caches.
-
-The repository is the authoritative source of truth for future conversations:
-read [AGENTS.md](AGENTS.md) and [Project state](docs/PROJECT_STATE.md) before
-changing code.
+This release is prepared as a **privacy-reviewed source bundle**, not automatically pushed by an assistant connector. The new public repo initially contained a commit with an account email in its author metadata. Unpack the ZIP and double-click `URUCHOM_BEZPIECZNA_PUBLIKACJE.cmd` (or run `SAFE_PUBLISH.ps1` in PowerShell) to replace that initial history with a single verified noreply commit, subject to an exact remote-head safety check. This operation requires Git credentials on your own computer and will **replace the initial public branch history**; it cannot delete earlier third-party copies or GitHub caches. The script stops if the remote changed. Do not upload this bundle with GitHub web UI until the account email privacy setting is enabled.
 
 ## Run (Windows / Linux / macOS)
 
@@ -42,8 +33,10 @@ python -m neurogenesis status --state brain.snapshot.json
 python -m neurogenesis observe "To jest pierwszy bodziec tekstowy" --state brain.snapshot.json
 python -m neurogenesis compare --steps 160
 python -m neurogenesis predict --steps 600
-python -m neurogenesis benchmark --seeds 10 --steps-per-phase 128 --probe-steps 48
 python -m neurogenesis origin
+python -m neurogenesis remember "Moja pierwsza obserwacja" --db local-data/experiences.sqlite3
+python -m neurogenesis memory-status --db local-data/experiences.sqlite3
+python -m neurogenesis recall "Moja pierwsza obserwacja" --db local-data/experiences.sqlite3
 python -m unittest discover -s tests -v
 ```
 
@@ -69,25 +62,28 @@ This shows **online learning of this simple, repeated sequence**. Growth has not
 
 The predictor also supports versioned atomic snapshots through `NextInputPredictor.save/load` as a Python API. The CLI's `predict` command is a reproducible evaluation and does not keep an agent running in the background.
 
-## Third experiment: continual learning / retention (v0.3)
+## Fourth milestone: persistent local experiences (v0.4)
 
-`python -m neurogenesis benchmark --seeds 10 --steps-per-phase 128 --probe-steps 48`
-trains A, switches to B, then retrains A across **10 paired deterministic seeds**.
-An isolated snapshot copy is tested on a separate noisy A sequence with the
-prediction readout frozen. The neural substrate itself remains plastic during
-probes; this is a controlled pilot, **not** a fully frozen or compute-matched
-comparison, and is not generalization to unseen concepts.
+A local SQLite-based episodic ledger now records text observations as **hashed
+features and a SHA-256 fingerprint**, updates the spiking brain and saves its
+full state **within the same database transaction**. Restart and reopen the
+same database to continue the learned state. Without an explicit `--store-text`
+flag, the raw message is **not saved**. Recall uses exact fingerprint matches
+and coarse hashed-feature similarity; it is not semantic memory, natural
+conversation or subjective autobiographical experience.
 
-| After B, on A probe (MSE; lower better) | Growth ON | Fixed architecture |
-| --- | ---: | ---: |
-| Mean across 10 seeds | 0.14877 | 0.14565 |
-| Forgetting delta vs. A before B | +0.03403 | +0.03091 |
-| After training A again | 0.11175 | 0.11160 |
+```bash
+python -m neurogenesis remember "Pierwsza obserwacja" --db local-data/experiences.sqlite3
+python -m neurogenesis recall "Pierwsza obserwacja" --db local-data/experiences.sqlite3
+python -m neurogenesis memory-status --db local-data/experiences.sqlite3
+```
 
-In this **specific synthetic benchmark**, structural growth performed slightly
-worse, not better. This result must be repeated on more tasks, equal-capacity
-controls and stronger hold-outs before any scientific conclusion. The CLI
-outputs full per-seed metrics and a paired bootstrap interval, not only means.
+The database is private by default and ignored by Git. Feature hashes and text
+fingerprints still permit some inference and **are not anonymous encryption**.
+Deletion through `forget-event ID` deletes the observation record but **cannot
+undo neuron changes** already caused by it. To remove all learned traces, also
+discard/reset the associated local database. Do not put private databases on
+GitHub; even opt-in raw storage is local only.
 
 ## Research architecture
 
@@ -104,7 +100,7 @@ controlled sensory input (0..1)
                                       JSON snapshot
 
 Future, NOT implemented: semantic text / language generation,
-read-only web sensors, long-term memory consolidation, calibrated
+read-only web sensors, semantic memory consolidation, calibrated
 self-model, GPU acceleration, distributed simulation.
 ```
 

@@ -23,3 +23,14 @@ Avoid posting exploit details and secrets in public issues. Contact repository m
 ## Public source and Git metadata gate
 
 Every commit must use the public GitHub noreply address; source files are scanned for contact data, credentials and local user paths by `python -m scripts.privacy_audit --git`. A source clean-up cannot erase old commit objects or external copies. Do not publish through GitHub write connectors that do not allow explicit commit author/committer identity. The fresh-root publish tool checks the existing remote SHA and refuses unexpected changes.
+
+## Local SQLite experiences (v0.4)
+
+Memory databases are local files; their names are ignored by Git, but this is
+not encryption. The default storage retains hashed features and unsalted
+SHA-256 text fingerprints, which may leak guesses about short/low-entropy
+inputs if someone obtains the DB. The `--store-text` option explicitly stores
+plaintext and should not be used for sensitive data. Transactions commit brain
+state and record together. `forget-event` deletes a record but not learned
+weights; to remove all stored evidence, securely discard the entire local DB,
+not merely the corresponding event. Protect filesystem/backup access.

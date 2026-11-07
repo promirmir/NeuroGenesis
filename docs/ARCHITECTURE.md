@@ -1,4 +1,4 @@
-# Architecture — v0.2 research core
+# Architecture — v0.4 research core
 
 ## Scope and scientific assumptions
 
@@ -46,7 +46,9 @@ This format is not encrypted, authenticated or a secure place for sensitive info
 - `self_model.py`: auditable state description, never claims of subjective experience.
 - `experiment.py`: matched-input structural comparison.
 - `predictor.py`: causal online prediction head trained by its own next-input error, an A/B control, and a separate versioned learner snapshot.
-- `__main__.py`: local offline commands for demonstration and state inspection.
+- `benchmark.py`: deterministic A-B-A task-switching retention pilot with paired seeds.
+- `memory.py`: SQLite episodic observations with optional raw text, private content fingerprints, and latest neural state in the same SQL transaction.
+- `__main__.py`: local offline commands for demonstrations, inspection and memory.
 
 ## Development boundaries
 
@@ -57,3 +59,17 @@ Language, self-initiated research, browser access, lifelong generalization, mult
 After observation *t*, the network trace vector `q(t)` is clipped to `[0,1]` and used as the readout's feature vector. A logistic linear head predicts input *t+1*. On arrival, we compute its **pre-update mean squared error**, then take one bounded normalized gradient step on the head weights and bias. When the substrate adds a neuron, the corresponding new readout weights start at zero. The snapshot includes the readout and its pending prediction, allowing exact reproducible continuation.
 
 The online head is learned; the feature encoder remains simple and the recurrent substrate follows separate heuristic plasticity. This test demonstrates prediction on a tiny repeating sequence only. The growing and fixed-substrate variants have essentially equivalent prediction errors, so **this experiment does not establish an advantage from growth**. No language, reasoning or sentience is implied.
+
+## Persistent local episodic observations (v0.4)
+
+Each `remember` call encodes text to eight bounded hashed channels, advances the
+existing spiking brain four ticks, then stores the record plus the complete
+versioned neural checkpoint in **one SQLite transaction**. The database is
+created with owner-only permissions where supported and defaults under the
+ignored `local-data/` directory. Source text is only stored with explicit
+`--store-text`. Queries use exact text fingerprints or cosine similarity over
+8 hashed channels: collisions and false similarities are expected. This is not
+semantic retrieval, and the SHA-256 digest of low-entropy content can be
+guessed by an attacker with a copied database. Individual record deletion
+cannot erase its influence on neural weights; full reset requires discarding
+the local database. No web browsing, autonomous decisions, or real sentiments.

@@ -12,6 +12,7 @@ from .predictor import prediction_control
 from .sensory import TextSensor
 from .origin import origin_record
 from .benchmark import continual_learning_benchmark
+from .memory import ExperienceMemory
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -29,6 +30,21 @@ def main(argv: list[str] | None = None) -> int:
     benchmark.add_argument("--steps-per-phase", type=int, default=160)
     benchmark.add_argument("--probe-steps", type=int, default=64)
     benchmark.add_argument("--noise", type=float, default=0.15)
+    remember = commands.add_parser("remember", help="record local experience and advance saved brain")
+    remember.add_argument("text")
+    remember.add_argument("--db", type=Path, default=Path("local-data/experiences.sqlite3"))
+    remember.add_argument("--source", default="local")
+    remember.add_argument("--store-text", action="store_true", help="explicitly save raw text (private DB)")
+    recall = commands.add_parser("recall", help="local exact/hashed-feature experience retrieval")
+    recall.add_argument("text")
+    recall.add_argument("--db", type=Path, default=Path("local-data/experiences.sqlite3"))
+    recall.add_argument("--limit", type=int, default=5)
+    recall.add_argument("--show-text", action="store_true")
+    memory_status = commands.add_parser("memory-status", help="inspect private local experience store")
+    memory_status.add_argument("--db", type=Path, default=Path("local-data/experiences.sqlite3"))
+    forget = commands.add_parser("forget-event", help="delete event record; NOT neural unlearning")
+    forget.add_argument("id", type=int)
+    forget.add_argument("--db", type=Path, default=Path("local-data/experiences.sqlite3"))
     observe = commands.add_parser("observe", help="encode user text as sensory input (NOT conversation)")
     observe.add_argument("text", help="text to encode")
     observe.add_argument("--state", type=Path, required=True, help="state JSON to create/update")
@@ -37,7 +53,18 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("origin", help="show recorded initiator, contributors and mission")
     args = parser.parse_args(argv)
     try:
-        if args.command == "origin":
+        if args.command == "remember":
+            result = ExperienceMemory(args.db).remember(args.text, source=args.source,
+                                                      store_text=args.store_text)
+        elif args.command == "recall":
+            result = ExperienceMemory(args.db).recall(args.text, limit=args.limit,
+                                                    show_text=args.show_text)
+        elif args.command == "memory-status":
+            result = ExperienceMemory(args.db).status()
+        elif args.command == "forget-event":
+            result = {"record_deleted": ExperienceMemory(args.db).delete_event(args.id),
+                      "note": "Neural state is unchanged; deleting a record is not machine unlearning"}
+        elif args.command == "origin":
             result = origin_record()
         elif args.command == "benchmark":
             result = continual_learning_benchmark(seeds=args.seeds,

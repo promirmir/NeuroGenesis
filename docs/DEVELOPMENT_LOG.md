@@ -25,3 +25,13 @@ Added test cases for deterministic replay, probe isolation, input validation,
 family-name privacy checks and recovery documentation. The original GitHub repo
 was deleted and rebuilt; old references must not be mistaken for this repo's
 PR history. No consciousness or generalization claim.
+
+## 2026-11-07 — v0.4 private episodic memory and restart continuity
+
+Added SQLite experience store, atomic persistence of each sensory event and
+updated spiking neural state, optional raw text retention, fingerprint/hashed
+feature recall, explicit deletion with non-unlearning warning, and CLI
+commands `remember`, `recall`, `memory-status`, `forget-event`. Added 7
+regression tests and .gitignore rules for private databases. All prior
+simulator and prediction interfaces remain unchanged. No semantic or conscious
+memory is claimed.
