@@ -7,11 +7,15 @@
 **Jedno kliknięcie, bez instalowania Pythona.** Program jest eksperymentalny i niepodpisany cyfrowo. Zweryfikuj pochodzenie i SHA-256; lokalna pamięć pozostaje w katalogu użytkownika po aktualizacji. **Internet pozostaje wyłączony**, a panel nie jest jeszcze rozumiejącą język AI.
 
 
-**Experimental, self-reorganizing artificial neural substrate — research prototype v0.5.5.**
+**Experimental, self-reorganizing artificial neural substrate — research prototype v0.5.6.**
 
 NeuroGenesis is a long-term research project investigating whether online structural plasticity can measurably improve an artificial agent's learning and adaptation. The central mechanism is **changing the computational network itself**, not merely appending text to a conversation history.
 
-> **Research status:** v0.5.5 includes the original small deterministic CPU spiking brain, local SQLite persistence, a native Windows desktop application and optional experimental neural regulation/repair/capacity experiments. The self-development controller now supports **opt-in periodic local trials with transactional promotion and rollback**, but it is not a self-coding agent or general-intelligence system. Capacity experiments remain bounded offline trials. This is **not** a conscious entity, a human brain emulator, a natural-language conversational AI, a working internet crawler, a GPU neural implementation or a claim of general intelligence.
+> **Research status:** v0.5.6 includes the original small deterministic CPU spiking brain, local SQLite persistence, a native Windows desktop application and optional experimental neural regulation/repair/capacity experiments. The self-development controller now supports **opt-in periodic local trials with transactional promotion and rollback**, but it is not a self-coding agent or general-intelligence system. Capacity experiments remain bounded offline trials. This is **not** a conscious entity, a human brain emulator, a natural-language conversational AI, a working internet crawler, a GPU neural implementation or a claim of general intelligence.
+
+## Pierwsze działające uczenie dialogowe (v0.5.6)
+
+W zakładce **Rozmowa** wpisz pytanie, poniżej podaj odpowiedź i kliknij **Naucz odpowiedzi**. Przy kolejnym wysłaniu tego samego pytania NeuroGenesis odtworzy nauczoną odpowiedź z lokalnej bazy. Pytanie równocześnie aktualizuje własną sieć neuronową. Poprawiaj lub usuwaj odpowiedzi przyciskami w oknie. **To jawne zapamiętywanie skojarzeń, nie samodzielne rozumowanie neuronów ani generowanie języka.** Pełny tekst pytania i odpowiedzi jest zapisywany jedynie po jawnym kliknięciu przycisku nauki. Więcej: [instrukcja nauki](docs/TEACHABLE_DIALOGUE.md).
 
 ## What is implemented now
 
@@ -25,7 +29,7 @@ NeuroGenesis is a long-term research project investigating whether online struct
 - A/B structural control experiment (growth ON vs. OFF) on an identical stimulus sequence.
 - **Self-supervised next-input prediction**: a small online learning head predicts the next sensory pattern before seeing it, then corrects itself from prediction error; persistence of learner state and matched fixed-structure comparison.
 - Additive v0.5.4 research modules: bounded homeostasis, experimental memory-guided rewiring, held-out task-recovery evaluation, simple Markov control, resource budgets and selection/audit-gated self-development experiments. These are **not automatically running** in the GUI or current persistent memory loop.
-- Native Tkinter Windows interface (conversation-as-sensory-observations, brain statistics, explicitly OFF internet tab) and PyInstaller single-EXE workflow.
+- Native Tkinter Windows interface with real learned, explicitly taught question/answer recall, neural sensory state, brain statistics and Internet OFF; PyInstaller single-EXE workflow.
 - **v0.5.5:** opt-in bounded periodic self-development supervisor, 40 fresh sensory events per trial, separate training/selection/audit/retention inputs, atomic preservation of a single brain + predictor in SQLite, failure rollback and checkpoint safeguard. This is not evidence of semantic conversation; see [implementation and limitations](docs/AUTONOMY_SUPERVISOR.md).
 - Zero mandatory third-party dependencies when running the Python research core; automated tests and reproducible CLI.
 

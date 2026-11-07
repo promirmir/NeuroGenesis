@@ -40,11 +40,19 @@ def process_message(memory: ExperienceMemory, message: str, *, store_text: bool 
         raise ValueError("Wiadomość nie może być pusta")
     if type(store_text) is not bool:
         raise ValueError("store_text must be boolean")
+    # Look up only user-taught exact associations before advancing the brain.
+    # Long messages and punctuation-only stimuli remain valid observations.
+    taught = (memory.taught_answer(message)
+              if len(message) <= memory.MAX_QUESTION_LENGTH and message.strip(" ?!.")
+              else None)
     result = memory.remember(message, source="desktop", store_text=store_text)
+    reply = (taught["answer"] if taught is not None else
+             "Odebrano bodziec i zaktualizowano stan sieci. "
+             "Nie znam jeszcze odpowiedzi. Wpisz ją w polu nauki i kliknij "
+             "«Naucz odpowiedzi».")
     return {
-        "reply": ("Odebrano bodziec i zaktualizowano stan sieci. "
-                  "Nie mam jeszcze zweryfikowanego rozumienia języka naturalnego. "
-                  "Nie generuję odpowiedzi na podstawie znaczenia tej wiadomości."),
+        "reply": reply,
+        "response_kind": ("explicit_local_teaching" if taught else "sensory_acknowledgement"),
         "event_id": result["event_id"],
         "brain_step": result["brain_step"],
         "neurons": result["neurons"],
@@ -75,6 +83,16 @@ def self_test() -> int:
             return 4
         if supervisor.cycle()["reason"] != "not_enough_new_experiences":
             return 5
+        trained = reopened.teach("Czym jest NeuroGenesis?", "Eksperymentalny cyfrowy mózg.")
+        if not trained["teaching_saved"] or reopened.status()["taught_responses"] != 1:
+            return 6
+        fresh = ExperienceMemory(db)
+        if process_message(fresh, "CZYM JEST NEUROGENESIS??")["reply"] != "Eksperymentalny cyfrowy mózg.":
+            return 7
+        if fresh.status()["records_with_raw_text"] != 0:
+            return 8
+        if not fresh.forget_teaching("czym jest neurogenesis"):
+            return 9
     return 0
 
 
@@ -126,8 +144,10 @@ def launch(db_path: Path) -> int:
     tabs.add(brain_tab, text="Mózg")
     tabs.add(web_tab, text="Internet")
 
-    tk.Label(chat_tab, text="Wiadomości są bodźcami dla sieci — nie jest to jeszcze inteligentna rozmowa.",
-             bg="#111827", fg="#a6b6c9", anchor="w", font=("Segoe UI", 10)).pack(fill="x", padx=12, pady=(12, 8))
+    tk.Label(chat_tab, text=("Mózg przetwarza bodźce. Odpowiedzi możesz uczyć ręcznie; "
+                              "to zapamiętane skojarzenia, nie samodzielne rozumowanie."),
+             bg="#111827", fg="#a6b6c9", anchor="w", font=("Segoe UI", 10),
+             wraplength=840).pack(fill="x", padx=12, pady=(12, 8))
     history = tk.Text(chat_tab, font=("Segoe UI", 11), bg="#172237", fg="#e2e8f0",
                       insertbackground="#e2e8f0", wrap="word", relief="flat",
                       padx=14, pady=12, state="disabled")
@@ -142,6 +162,17 @@ def launch(db_path: Path) -> int:
     ttk.Checkbutton(controls, text="Zapisuj pełną treść prywatnie (opcjonalnie)", variable=store_text).pack(side="left")
     info = ttk.Label(controls, text="Tekst nie jest wysyłany do internetu")
     info.pack(side="left", padx=18)
+    teach_area = tk.Frame(chat_tab, bg="#111827")
+    teach_area.pack(fill="x", padx=12, pady=(0, 10))
+    tk.Label(teach_area,
+             text="Naucz odpowiedzi na pytanie z pola powyżej (zapis lokalny, tylko na żądanie):",
+             bg="#111827", fg="#cbd5e1", anchor="w").pack(fill="x")
+    answer_input = tk.Text(teach_area, height=2, font=("Segoe UI", 10),
+                           bg="#172237", fg="#f1f5f9", wrap="word",
+                           insertbackground="#e2e8f0", relief="flat", padx=8, pady=5)
+    answer_input.pack(fill="x", pady=(4, 5))
+    teaching_controls = tk.Frame(teach_area, bg="#111827")
+    teaching_controls.pack(fill="x")
 
     status_text = tk.StringVar(value="Odczytywanie stanu...")
     tk.Label(brain_tab, textvariable=status_text, bg="#111827", fg="#e2e8f0",
@@ -181,7 +212,8 @@ def launch(db_path: Path) -> int:
                 f"Wzorce sensoryczne: {bs['stored_patterns']}\n"
                 f"Utworzone neurony: {bs['total_grown']}\nUsunięte synapsy: {bs['total_pruned']}\n"
                 f"Zapisane doświadczenia: {st['observations']}\n"
-                f"Doświadczenia z pełnym tekstem: {st['records_with_raw_text']}"
+                f"Doświadczenia z pełnym tekstem: {st['records_with_raw_text']}\n"
+                f"Ręcznie nauczone odpowiedzi: {st['taught_responses']}"
             )
             health = supervisor.status()
             autonomy_info.set(
@@ -246,9 +278,43 @@ def launch(db_path: Path) -> int:
         finally:
             send_button.configure(state="normal")
 
+    def teach_answer() -> None:
+        question = message.get("1.0", "end-1c").strip()
+        answer = answer_input.get("1.0", "end-1c").strip()
+        try:
+            result = memory.teach(question, answer)
+        except (ValueError, OSError) as exc:
+            messagebox.showerror("NeuroGenesis — nauka", str(exc))
+        else:
+            append("Nauka", f"Zapisano odpowiedź po kroku mózgu {result['brain_step']}. "
+                   "Możesz teraz wysłać pytanie, aby ją odtworzyć.")
+            answer_input.delete("1.0", "end")
+            refresh()
+
+    def forget_answer() -> None:
+        question = message.get("1.0", "end-1c").strip()
+        if not question:
+            messagebox.showwarning("NeuroGenesis", "Wpisz pytanie, którego odpowiedź usunąć.")
+            return
+        if not messagebox.askyesno("NeuroGenesis — usuń naukę",
+                                   "Usunąć zapamiętaną odpowiedź na wpisane pytanie?"):
+            return
+        try:
+            deleted = memory.forget_teaching(question)
+        except (ValueError, OSError) as exc:
+            messagebox.showerror("NeuroGenesis", str(exc))
+        else:
+            append("Pamięć", "Usunięto odpowiedź." if deleted else
+                   "Brak takiej nauczonej odpowiedzi.")
+            refresh()
+
+    ttk.Button(teaching_controls, text="Naucz odpowiedzi",
+               command=teach_answer).pack(side="left")
+    ttk.Button(teaching_controls, text="Usuń nauczoną odpowiedź",
+               command=forget_answer).pack(side="left", padx=(10, 0))
     send_button.configure(command=send)
     message.bind("<Control-Return>", lambda _event: (send(), "break")[1])
-    ttk.Label(chat_tab, text="Ctrl+Enter — przekaż bodziec • baza w prywatnym katalogu użytkownika",
+    ttk.Label(chat_tab, text="Ctrl+Enter — zapytaj • przycisk Naucz: jawny zapis pary pytanie/odpowiedź w prywatnej bazie",
               wraplength=770).pack(anchor="w", padx=12, pady=(0, 8))
     refresh()
 

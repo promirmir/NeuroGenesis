@@ -1,4 +1,4 @@
-# NeuroGenesis v0.5.5 — uruchomienie na Windows
+# NeuroGenesis v0.5.6 — uruchomienie na Windows
 
 **Autorstwo: Miron przy pomocy AI.** Aktualny kod znajduje się w [repozytorium GitHub](https://github.com/promirmir/NeuroGenesis). Nie trzeba instalować Pythona, aby uruchomić gotowy EXE.
 
@@ -17,12 +17,22 @@
 
 ## Co naprawdę działa
 
-- Rozmowa: przekazywanie tekstu jako bodźca do **rzeczywistej małej sieci neuronowej**; to nie jest jeszcze rozumiejący język chatbot.
+- Rozmowa: **działające jawne uczenie odpowiedzi**. Wpisz pytanie, niżej swoją odpowiedź i kliknij **Naucz odpowiedzi**. Przy wysłaniu tego samego pytania program odtworzy zapisaną odpowiedź. Możesz ją poprawić lub usunąć. Równolegle pytania są bodźcami dla małej sieci neuronowej. Tekst odpowiedzi pochodzi z lokalnej bazy, a nie z rozumowania neuronów.
 - Mózg: podgląd kroków, neuronów, synaps i lokalnych doświadczeń.
-- Pamięć: transakcyjne zapisanie stanu mózgu i obserwacji w prywatnej bazie SQLite. Pełny tekst jest zapisywany wyłącznie po włączeniu opcji.
+- Pamięć: transakcyjny zapis stanu mózgu, obserwacji i (po jawnym przycisku uczenia) par pytanie–odpowiedź w prywatnej bazie SQLite. Zwykłe wiadomości nie przechowują pełnego tekstu bez zaznaczenia opcji. [Szczegóły uczenia](docs/TEACHABLE_DIALOGUE.md).
 - Internet: **wyłączony**; wersja v0.5.4 nie czyta samodzielnie stron ani nie wysyła rozmów.
 - Samorozwój: w zakładce **Mózg** dostępny jest ręczny przycisk i opcja **AUTO** (domyślnie wyłączona). Po 40 nowych obserwacjach program testuje ograniczone warianty uczenia i zapisuje tylko propozycje, które przejdą kontrolę niezależnego zbioru i poprzedniej umiejętności. Zapisy są atomowe, a niepowodzenie nie usuwa wcześniejszych doświadczeń. Nie jest to swobodna samomodyfikacja algorytmów.
 - Homeostaza, naprawa synaps i automatyczne powiększanie sieci pozostają oddzielnymi funkcjami badawczymi, nie są jeszcze autonomicznym procesem produkcyjnym.
+
+## Jak nauczyć pierwszej odpowiedzi?
+
+1. Otwórz zakładkę **Rozmowa**.
+2. Wpisz w głównym polu: **Co umiesz?**
+3. W dolnym polu wpisz: **Uczę się przez lokalne doświadczenia.**
+4. Kliknij **Naucz odpowiedzi**, a następnie **Przekaż do mózgu**. Program odpowie zapamiętanym tekstem.
+5. Aby zmienić odpowiedź, wpisz inną i ponownie kliknij **Naucz odpowiedzi**. Aby usunąć skojarzenie, kliknij **Usuń nauczoną odpowiedź**.
+
+Ten tryb nie jest dowodem rozumienia języka: to jawnie nauczone skojarzenie, zapisane lokalnie i powiązane ze stanem sieci. Limit to 512 różnych pytań. Nie wpisuj haseł ani innych sekretów.
 
 ## Gdzie jest pamięć?
 

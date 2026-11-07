@@ -12,6 +12,7 @@ import hashlib
 import json
 import math
 import os
+import re
 from pathlib import Path
 import sqlite3
 from typing import Any
@@ -30,6 +31,9 @@ class ExperienceMemory:
     SCHEMA_VERSION = 1
     MAX_EVENTS = 10_000
     MAX_QUERY_RESULTS = 20
+    MAX_TEACHINGS = 512
+    MAX_QUESTION_LENGTH = 512
+    MAX_ANSWER_LENGTH = 2000
 
     def __init__(self, path: str | Path) -> None:
         self.path = Path(path)
@@ -66,6 +70,15 @@ class ExperienceMemory:
                     brain_json TEXT NOT NULL
                 )""")
                 con.execute("CREATE INDEX IF NOT EXISTS ix_observations_digest ON observations(digest)")
+                # Explicitly taught, private response associations. Existing
+                # v0.4/v0.5.5 DB files remain schema-1 compatible.
+                con.execute("""CREATE TABLE IF NOT EXISTS taught_responses (
+                    question_digest TEXT PRIMARY KEY,
+                    question_normalized TEXT NOT NULL,
+                    answer_text TEXT NOT NULL,
+                    neural_step INTEGER NOT NULL,
+                    learned_utc TEXT NOT NULL
+                )""")
 
     def _connect(self) -> sqlite3.Connection:
         con = sqlite3.connect(self.path, timeout=5)
@@ -101,13 +114,34 @@ class ExperienceMemory:
         except (TypeError, json.JSONDecodeError) as exc:
             raise ValueError("invalid stored brain state") from exc
 
+    @classmethod
+    def _normalize_question(cls, question: str) -> str:
+        cls._check_text(question)
+        if len(question) > cls.MAX_QUESTION_LENGTH:
+            raise ValueError("taught question exceeds 512 characters")
+        normalized = " ".join(question.casefold().split()).rstrip(" ?!.")
+        if not normalized:
+            raise ValueError("question has no meaningful content")
+        return normalized
+
+    @classmethod
+    def _check_answer(cls, answer: str) -> None:
+        if (type(answer) is not str or not answer.strip()
+                or len(answer) > cls.MAX_ANSWER_LENGTH
+                or any(ord(c) < 32 and c not in "\n\t" for c in answer)):
+            raise ValueError("answer must contain 1..2000 printable characters")
+
     def remember(self, text: str, *, source: str = 'local',
-                 store_text: bool = False) -> dict[str, Any]:
+                 store_text: bool = False, taught_answer: str | None = None) -> dict[str, Any]:
         self._check_text(text)
         if type(source) is not str or not 1 <= len(source) <= 128 or any(ord(c) < 32 for c in source):
             raise ValueError('source must be a short printable string')
         if type(store_text) is not bool:
             raise ValueError('store_text must be a boolean')
+        taught_question = None
+        if taught_answer is not None:
+            self._check_answer(taught_answer)
+            taught_question = self._normalize_question(text)
         with closing(self._connect()) as con:
             with con:
                 con.execute("BEGIN IMMEDIATE")
@@ -164,9 +198,72 @@ class ExperienceMemory:
                     VALUES (?, ?, ?, ?, ?, ?)''',
                     (datetime.now(timezone.utc).isoformat(), brain.steps, source,
                      self._hash(text), json.dumps(features), text if store_text else None))
+                if taught_question is not None:
+                    key = self._hash(taught_question)
+                    found = con.execute(
+                        'SELECT question_normalized FROM taught_responses WHERE question_digest=?',
+                        (key,)).fetchone()
+                    if found is not None and found[0] != taught_question:
+                        raise ValueError("teaching digest collision or corrupted association")
+                    if found is None:
+                        n = con.execute('SELECT COUNT(*) FROM taught_responses').fetchone()[0]
+                        if n >= self.MAX_TEACHINGS:
+                            raise ValueError("taught response capacity exhausted")
+                    con.execute('''INSERT INTO taught_responses
+                        (question_digest, question_normalized, answer_text, neural_step, learned_utc)
+                        VALUES(?,?,?,?,?)
+                        ON CONFLICT(question_digest) DO UPDATE SET
+                        answer_text=excluded.answer_text,
+                        neural_step=excluded.neural_step,
+                        learned_utc=excluded.learned_utc''',
+                        (key, taught_question, taught_answer, brain.steps,
+                         datetime.now(timezone.utc).isoformat()))
                 return {'event_id': cur.lastrowid, 'brain_step': brain.steps,
                         'stored_raw_text': store_text, 'neurons': len(brain.voltages),
-                        'synapses': len(brain.synapses), 'observations': count + 1}
+                        'synapses': len(brain.synapses), 'observations': count + 1,
+                        'teaching_saved': taught_question is not None}
+
+    def teach(self, question: str, answer: str) -> dict[str, Any]:
+        """Explicit user-approved Q/A training, atomically with brain stimulus.
+
+        This is a private symbolic association attached to a real neural event,
+        NOT a claim that the neurons have learned to generate this answer.
+        """
+        # None is the *internal* default for remember(), never a valid
+        # answer supplied to the explicit teaching API. Reject before any
+        # SQLite write or neural step.
+        self._check_answer(answer)
+        return self.remember(question, source="desktop-teaching",
+                             store_text=False, taught_answer=answer)
+
+    def taught_answer(self, question: str) -> dict[str, Any] | None:
+        """Return only an exact, explicitly taught response; never guess."""
+        normalized = self._normalize_question(question)
+        key = self._hash(normalized)
+        with closing(self._connect()) as con:
+            row = con.execute('''SELECT question_normalized, answer_text, neural_step
+                                 FROM taught_responses WHERE question_digest=?''', (key,)).fetchone()
+        if row is None:
+            return None
+        if row[0] != normalized or type(row[2]) is not int or row[2] < 0:
+            raise ValueError("taught association corrupted")
+        self._check_answer(row[1])
+        return {"answer": row[1], "brain_step_at_teaching": row[2],
+                "response_kind": "explicit_local_teaching"}
+
+    def forget_teaching(self, question: str) -> bool:
+        """Forget private answer text; this does NOT undo neural plasticity."""
+        normalized = self._normalize_question(question)
+        key = self._hash(normalized)
+        with closing(self._connect()) as con:
+            with con:
+                con.execute("BEGIN IMMEDIATE")
+                row = con.execute("SELECT question_normalized FROM taught_responses "
+                                  "WHERE question_digest=?", (key,)).fetchone()
+                if row is not None and row[0] != normalized:
+                    raise ValueError("taught association corrupted")
+                return con.execute("DELETE FROM taught_responses WHERE question_digest=?",
+                                   (key,)).rowcount > 0
 
     def brain(self) -> Brain:
         with closing(self._connect()) as con:
@@ -175,7 +272,9 @@ class ExperienceMemory:
     def status(self) -> dict[str, Any]:
         with closing(self._connect()) as con:
             n, raw = con.execute('SELECT COUNT(*), SUM(raw_text IS NOT NULL) FROM observations').fetchone()
+            taught_count = con.execute("SELECT COUNT(*) FROM taught_responses").fetchone()[0]
             return {'observations': n, 'records_with_raw_text': raw or 0,
+                    'taught_responses': taught_count,
                     'brain': self._brain_from_connection(con).stats()}
 
     def recall(self, query: str, *, limit: int = 5,
