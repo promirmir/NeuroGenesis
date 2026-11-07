@@ -1,6 +1,8 @@
 name: Windows standalone EXE
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
   pull_request:
     paths:
@@ -37,8 +39,11 @@ jobs:
       - name: Smoke-test EXE with real SQLite
         shell: pwsh
         run: |
-          & .\dist\NeuroGenesis.exe --self-test
-          if ($LASTEXITCODE -ne 0) { throw "Standalone EXE self-test failed ($LASTEXITCODE)" }
+          $exe = (Resolve-Path '.\dist\NeuroGenesis.exe').Path
+          $proc = Start-Process -FilePath $exe -ArgumentList '--self-test' -Wait -PassThru
+          if ($null -eq $proc -or $proc.ExitCode -ne 0) {
+            throw "Standalone EXE self-test failed (exit=$($proc.ExitCode))"
+          }
       - name: Write SHA-256 checksum
         shell: pwsh
         run: |
