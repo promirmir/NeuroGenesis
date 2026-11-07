@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neurogenesis-research"
+version = "0.3.0"
+description = "Experimental spiking network with bounded structural neuroplasticity and auditable self-state"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "NeuroGenesis contributors" }]
+keywords = ["neuroscience", "spiking-neural-network", "plasticity", "research"]
+classifiers = ["Programming Language :: Python :: 3", "Development Status :: 2 - Pre-Alpha"]
+dependencies = []
+
+[project.scripts]
+neurogenesis = "neurogenesis.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["neurogenesis*"]

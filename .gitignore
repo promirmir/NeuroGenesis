@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+# local experiments / sensitive snapshots
+*.snapshot.json
+brain-state*.json
+local-data/
+.env
+.env.*
+!.env.example
+# workstation / IDE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
