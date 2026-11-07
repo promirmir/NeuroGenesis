@@ -61,3 +61,8 @@ The first opt-in local self-development supervisor was merged to main in PR #12 
 ## 2026-11-07 — Persistent GitHub Releases for Windows binary (publication automation)
 
 Added a dedicated `workflow_run` GitHub Actions release pipeline. Only successful Windows binary builds triggered by a push to the **latest main** can publish; the publishing job has isolated `contents:write` and `actions:read` permissions. It downloads the verified build artifact, checks `sha256sum --check`, confirms a Windows PE x64 executable, then creates a unique commit-bound release tag with EXE and SHA-256 assets. No manual archive browsing is required: latest EXE is linked prominently from README, the Polish setup guide and the project state document. Release publishing is still pending until verified on GitHub after merge; do not confuse a workflow definition with an actual release.
+
+
+## 2026-11-07 — v0.5.6 explicit teachable dialogue (candidate)
+
+Target user-facing gap: previous conversation always returned an acknowledgement and could not answer even directly taught questions. Added a clearly labeled, manually supervised local question/answer association table in the same SQLite brain database; teaching and four real neural steps share one transaction. GUI has Teach/Delete controls, corrects existing pairs, answers only exact normalized taught questions, otherwise acknowledges unknowns. No internet, unapproved auto-learning or generative language claim; no old raw observations converted into saved text. New tests cover restart, overwrite, privacy, rollback, corrupted data, long-message compatibility and predictor coupling. Full GitHub Actions CI/Windows EXE validation and merge are required before distribution.
