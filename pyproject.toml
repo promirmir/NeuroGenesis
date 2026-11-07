@@ -13,6 +13,9 @@ keywords = ["neuroscience", "spiking-neural-network", "plasticity", "research"]
 classifiers = ["Programming Language :: Python :: 3", "Development Status :: 2 - Pre-Alpha"]
 dependencies = []
 
+[project.optional-dependencies]
+foundation = ["torch>=2.5,<3"]
+
 [project.scripts]
 neurogenesis = "neurogenesis.__main__:main"
 

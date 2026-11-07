@@ -2,6 +2,14 @@
 
 Last documentation review: **2026-11-07**. This file is intended to survive chat interruptions and model/context changes.
 
+## 2026-11-07 — High-capacity Foundation Brain pivot (issue #18)
+
+- The user rejected the scientific and practical scale of earlier 24-neuron / 8-channel demonstrations. Those experiments are retained as baselines only; do not advertise them as a path to competitive language understanding.
+- PR #17 (eight-bin temporal prediction) is **closed without merge**, its feature branch retained for controls. Verified v0.5.6 remains the default Windows EXE; old SQLite schema must not change.
+- New research branch must implement a **trainable neural foundation** using ordered symbol representations, fast/slow context, gradient-trained predictive objectives, versioned checkpoints, optional PyTorch/CUDA and dedicated real dependency CI. See docs/FOUNDATION_BRAIN.md.
+- No human-like semantic understanding, long-term reasoning, GPU performance gain or general intelligence has been demonstrated by this architecture. Train on permissioned data and run independent, matched compute baselines first.
+- Separate foundation CPU CI must be green before merging; when merged, default Windows EXE remains unchanged. Later GUI inference requires actual usable trained weights and authorized local worker resource controls.
+
 ## Distribution — permanent latest Windows EXE link
 
 - Public entrypoint: [GitHub Releases — latest](https://github.com/promirmir/NeuroGenesis/releases/latest); direct asset: [NeuroGenesis.exe](https://github.com/promirmir/NeuroGenesis/releases/latest/download/NeuroGenesis.exe); [SHA-256](https://github.com/promirmir/NeuroGenesis/releases/latest/download/NeuroGenesis.exe.sha256).

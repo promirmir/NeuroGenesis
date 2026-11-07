@@ -13,6 +13,12 @@ NeuroGenesis is a long-term research project investigating whether online struct
 
 > **Research status:** v0.5.6 includes the original small deterministic CPU spiking brain, local SQLite persistence, a native Windows desktop application and optional experimental neural regulation/repair/capacity experiments. The self-development controller now supports **opt-in periodic local trials with transactional promotion and rollback**, but it is not a self-coding agent or general-intelligence system. Capacity experiments remain bounded offline trials. This is **not** a conscious entity, a human brain emulator, a natural-language conversational AI, a working internet crawler, a GPU neural implementation or a claim of general intelligence.
 
+## Foundation Brain — nowy trenowalny rdzeń (eksperymentalny)
+
+**Priorytet rozwoju został zmieniony.** Dotychczasowy 24-neuronowy układ i 8-kanałowy koder tekstu pozostają małą platformą badawczą, nie docelowym silnikiem zaawansowanej AI. Nowa, osobna ścieżka w neurogenesis/foundation.py używa **trenowanych reprezentacji kolejności tekstu, dwóch skal pamięci rekurencyjnej i przewidywania kolejnego tokenu oraz stanu utajonego**, działając z opcjonalnym PyTorch/CUDA. Nie wymaga ręcznego uczenia odpowiedzi ani zewnętrznego modelu językowego. Opis i uruchamianie: [Foundation Brain](docs/FOUNDATION_BRAIN.md), [priorytet #18](https://github.com/promirmir/NeuroGenesis/issues/18).
+
+**Ważne:** to na razie oddzielny moduł treningowy, nie wytrenowana AI ani nowa wersja Windows EXE. Stabilne wydanie v0.5.6 pozostaje dostępne bez zmian; nowe możliwości trafią do aplikacji po odrębnej ocenie jakości i zasobów.
+
 ## Pierwsze działające uczenie dialogowe (v0.5.6)
 
 W zakładce **Rozmowa** wpisz pytanie, poniżej podaj odpowiedź i kliknij **Naucz odpowiedzi**. Przy kolejnym wysłaniu tego samego pytania NeuroGenesis odtworzy nauczoną odpowiedź z lokalnej bazy. Pytanie równocześnie aktualizuje własną sieć neuronową. Poprawiaj lub usuwaj odpowiedzi przyciskami w oknie. **To jawne zapamiętywanie skojarzeń, nie samodzielne rozumowanie neuronów ani generowanie języka.** Pełny tekst pytania i odpowiedzi jest zapisywany jedynie po jawnym kliknięciu przycisku nauki. Więcej: [instrukcja nauki](docs/TEACHABLE_DIALOGUE.md).

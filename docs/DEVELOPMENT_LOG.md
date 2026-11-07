@@ -66,3 +66,8 @@ Added a dedicated `workflow_run` GitHub Actions release pipeline. Only successfu
 ## 2026-11-07 — v0.5.6 explicit teachable dialogue (candidate)
 
 Target user-facing gap: previous conversation always returned an acknowledgement and could not answer even directly taught questions. Added a clearly labeled, manually supervised local question/answer association table in the same SQLite brain database; teaching and four real neural steps share one transaction. GUI has Teach/Delete controls, corrects existing pairs, answers only exact normalized taught questions, otherwise acknowledges unknowns. No internet, unapproved auto-learning or generative language claim; no old raw observations converted into saved text. New tests cover restart, overwrite, privacy, rollback, corrupted data, long-message compatibility and predictor coupling. Full GitHub Actions CI/Windows EXE validation and merge are required before distribution.
+
+
+## 2026-11-07 — Architectural pivot from toy SNN to learnable GPU-ready foundation (issue #18)
+
+User correctly identified the mismatch between the small 24-neuron/8-channel prototype and the ambitious research goal. Abandoned PR #17 as a proposed cognitive milestone (closed unmerged; comparison branch retained). Started an entirely separate optional PyTorch foundation: ordered byte representation, fused trainable fast recurrent network, slower chunk memory, next-byte/latent prediction, local permissioned data training and atomic numerical checkpoints; dedicated CPU PyTorch CI and actual learning tests required. Old v0.5.6 EXE, small SNN, private SQLite and release process must remain stable. No claim of semantic competence or biological brain equivalence until independently demonstrated.
