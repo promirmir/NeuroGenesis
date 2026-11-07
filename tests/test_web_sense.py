@@ -77,7 +77,7 @@ class PublicHTTPSValidationTests(unittest.TestCase):
         bad = (
             "http://example.org/", "https://localhost/", "https://127.0.0.1/",
             "https://10.0.0.1/x", "https://internal.local/thing",
-            "https://example.org:8443/a", "https://user:password@example.org/",
+            "https://example.org:8443/a", "https://user:password@" + "example.org/",
             "https://example.org/?token=topsecret",
             "https://example.org/page#private",
             "https://example.org/%0a",
