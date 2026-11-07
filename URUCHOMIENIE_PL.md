@@ -37,7 +37,7 @@ Nie usuwaj tego katalogu przy aktualizowaniu EXE. Twórz prywatne kopie zapasowe
 
 ## Testy i rozwój
 
-Baza v0.5.4 została scalona przez [PR #10](https://github.com/promirmir/NeuroGenesis/pull/10). Wersja v0.5.5 dodaje ograniczony, opcjonalny mechanizm samorozwoju i wymaga osobnej zielonej weryfikacji CI Windows/Linux. Pobieraj najnowszy zielony artefakt z głównej gałęzi. Wyniki dotyczą działania prototypu, nie osiągnięcia inteligencji ogólnej.
+Baza v0.5.4 została scalona przez [PR #10](https://github.com/promirmir/NeuroGenesis/pull/10). Wersja v0.5.5 dodaje ograniczony, opcjonalny mechanizm samorozwoju i została scalona przez [PR #12](https://github.com/promirmir/NeuroGenesis/pull/12) po zielonych testach Windows/Linux. Pobieraj najnowszy zielony artefakt z głównej gałęzi. Wyniki dotyczą działania prototypu, nie osiągnięcia inteligencji ogólnej.
 
 Instrukcje pracy od kodu źródłowego: [README](README.md) i [stan projektu](docs/PROJECT_STATE.md).
 

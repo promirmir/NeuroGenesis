@@ -23,7 +23,7 @@
 
 ## Current verified foundation
 
-- **v0.5.4 on main (PR #10)**: preserves the v0.4 CPU-only sparse spiking neuron, prediction, JSON snapshots and transactional SQLite episodic memory. Adds experimentally evaluated but not continually running homeostasis, bounded memory-guided repair, self-development and capacity growth trials, and a native Windows EXE built and smoke-tested in Actions.
+- **v0.5.5 on main (PRs #10 and #12)**: preserves the v0.4 CPU-only sparse spiking neuron, prediction, JSON snapshots and transactional SQLite episodic memory. Adds experimental homeostasis and bounded memory-guided repair, self-development and capacity growth trials, a native Windows EXE, and an opt-in periodic self-development supervisor that atomically saves the real brain and predictor in SQLite; no autonomous source modification or internet.
 - No semantic comprehension, natural conversation, open internet reading, autonomous source edits, GPU training or validated consciousness.
 - Follow-up work: `#3` out-of-distribution and retention tests, `#4` read-only web sensory inputs, `#5` grounded language and functional self-modeling.
 
