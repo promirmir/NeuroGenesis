@@ -34,6 +34,11 @@ jobs:
           else
             echo 'PUBLISH=true' >> "$GITHUB_ENV"
           fi
+      - uses: actions/checkout@v4
+        if: env.PUBLISH == 'true'
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
       - name: Download artifact from successful Windows run
         if: env.PUBLISH == 'true'
         env:
@@ -49,11 +54,6 @@ jobs:
           (cd release && sha256sum --check NeuroGenesis.exe.sha256)
           file release/NeuroGenesis.exe | grep -E 'PE32\+' | grep -F 'x86-64'
           test "$(stat -c%s release/NeuroGenesis.exe)" -ge 1000000
-      - uses: actions/checkout@v4
-        if: env.PUBLISH == 'true'
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
-          persist-credentials: false
       - name: Publish immutable SHA-bound GitHub Release
         if: env.PUBLISH == 'true'
         env:
