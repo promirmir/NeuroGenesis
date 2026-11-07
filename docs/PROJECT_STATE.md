@@ -126,3 +126,8 @@ commit *names*; e-mail in prior Git metadata may remain visible. CI runs
 `python -m scripts.privacy_audit --git`. This is a scanner, not a guarantee
 that old Git history or third-party caches have been erased. No forced history
 rewrites without explicit verification.
+
+
+## 2026-11-08 — held-out Markov baseline PR (pending validation)
+
+Added dependency-free `neurogenesis/foundation_baselines.py` and `tests/test_foundation_baselines.py`: disjoint chronological 90/10 split, Laplace-smoothed unigram and first-order Markov next-byte cross-entropy (nats), no holdout fitting, no corpus upload or network. Run: `python -m unittest tests.test_foundation_baselines -v` and `python -m neurogenesis.foundation_baselines --input YOUR_OWN_CORPUS --confirm-corpus-rights`. This is an evaluation comparator, **not** a neural model or a demonstrated language gain. PR branch `research/markov-heldout-baseline`; no CI results or merge asserted. Next: validate Linux Python 3.11–3.13, actual foundation CPU, Windows EXE and privacy checks; compare identical independent holdout with FoundationBrain before reporting any performance claim.
