@@ -1,6 +1,6 @@
 # Security model
 
-## Current v0.1 attack surface
+## Current v0.5.4 attack surface
 
 - All commands are local and offline. No network permissions, crawling, arbitrary shell execution or automatic code modifications exist.
 - `observe` treats text as inert sensory data; it does **not** interpret instructions within it. It has no semantic understanding.
@@ -22,7 +22,7 @@ Avoid posting exploit details and secrets in public issues. Contact repository m
 
 ## Public source and Git metadata gate
 
-Every commit must use the public GitHub noreply address; source files are scanned for contact data, credentials and local user paths by `python -m scripts.privacy_audit --git`. A source clean-up cannot erase old commit objects or external copies. Do not publish through GitHub write connectors that do not allow explicit commit author/committer identity. The fresh-root publish tool checks the existing remote SHA and refuses unexpected changes.
+Source files and commit **display names** are scanned for identifying content by `python -m scripts.privacy_audit --git`. The operator explicitly accepted Git author email visibility; no private surnames are permitted in author/committer names or tracked source, and credentials, local user paths and private observations must never be published. Independently inspect new Git commit author/committer names and verify CI before merge. Do not run legacy fresh-root publishing tools or rewrite active history. A source clean-up cannot erase old commit objects or external copies.
 
 ## Local SQLite experiences (v0.4)
 
