@@ -111,11 +111,47 @@ class ExperienceMemory:
                     raise ValueError('episodic memory at capacity; export or clear records explicitly')
                 brain = self._brain_from_connection(con)
                 features = TextSensor(brain.config.input_size).encode(text)
-                for _ in range(4):
-                    brain.step(features)
+                # Preserve the legacy four-step brain path until a validated
+                # self-development candidate has installed a predictor. Once
+                # present, the predictor owns that *same* persisted brain: no
+                # duplicated neural updates or diverging brain copies.
+                has_predictor_table = con.execute(
+                    "SELECT 1 FROM sqlite_master WHERE type='table' AND name='predictor_state'"
+                ).fetchone()
+                predictor_row = (con.execute(
+                    "SELECT predictor_json FROM predictor_state WHERE id=1"
+                ).fetchone() if has_predictor_table else None)
+                predictor = None
+                if predictor_row is not None:
+                    from .predictor import NextInputPredictor
+                    raw = predictor_row[0]
+                    if not isinstance(raw, str) or len(raw.encode('utf-8')) > Brain.MAX_STATE_BYTES:
+                        raise ValueError('stored predictor exceeds size limit')
+                    def reject_number(x: str) -> None:
+                        raise ValueError('invalid numerical constant in stored predictor')
+                    try:
+                        predictor = NextInputPredictor.from_dict(
+                            json.loads(raw, parse_constant=reject_number))
+                    except (TypeError, json.JSONDecodeError) as exc:
+                        raise ValueError('invalid stored predictor') from exc
+                    if predictor.brain.to_dict() != brain.to_dict():
+                        raise ValueError('predictor/brain divergence; refusing to overwrite')
+                    for _ in range(4):
+                        predictor.step(features)
+                    brain = predictor.brain
+                else:
+                    for _ in range(4):
+                        brain.step(features)
                 serialized = json.dumps(brain.to_dict(), separators=(',', ':'), allow_nan=False)
                 if len(serialized.encode('utf-8')) > Brain.MAX_STATE_BYTES:
                     raise ValueError('updated neural state exceeds size limit')
+                if predictor is not None:
+                    packed_predictor = json.dumps(
+                        predictor.to_dict(), separators=(',', ':'), allow_nan=False)
+                    if len(packed_predictor.encode('utf-8')) > Brain.MAX_STATE_BYTES:
+                        raise ValueError('updated predictor exceeds size limit')
+                    con.execute('UPDATE predictor_state SET predictor_json=? WHERE id=1',
+                                (packed_predictor,))
                 con.execute('INSERT OR REPLACE INTO neural_state(id, brain_json) VALUES(1, ?)',
                             (serialized,))
                 cur = con.execute('''INSERT INTO observations

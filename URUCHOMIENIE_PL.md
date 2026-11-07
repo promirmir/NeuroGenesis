@@ -1,4 +1,4 @@
-# NeuroGenesis v0.5.4 — uruchomienie na Windows
+# NeuroGenesis v0.5.5 — uruchomienie na Windows
 
 **Autorstwo: Miron przy pomocy AI.** Aktualny kod znajduje się w [repozytorium GitHub](https://github.com/promirmir/NeuroGenesis). Nie trzeba instalować Pythona, aby uruchomić gotowy EXE.
 
@@ -22,7 +22,8 @@
 - Mózg: podgląd kroków, neuronów, synaps i lokalnych doświadczeń.
 - Pamięć: transakcyjne zapisanie stanu mózgu i obserwacji w prywatnej bazie SQLite. Pełny tekst jest zapisywany wyłącznie po włączeniu opcji.
 - Internet: **wyłączony**; wersja v0.5.4 nie czyta samodzielnie stron ani nie wysyła rozmów.
-- Homeostaza, samonaprawa, samodoskonalenie i skalowanie pojemności: zaimplementowane jako **oddzielne moduły badawcze i testy**. Nie działają jeszcze jako jeden automatyczny proces stale modyfikujący mózg.
+- Samorozwój: w zakładce **Mózg** dostępny jest ręczny przycisk i opcja **AUTO** (domyślnie wyłączona). Po 40 nowych obserwacjach program testuje ograniczone warianty uczenia i zapisuje tylko propozycje, które przejdą kontrolę niezależnego zbioru i poprzedniej umiejętności. Zapisy są atomowe, a niepowodzenie nie usuwa wcześniejszych doświadczeń. Nie jest to swobodna samomodyfikacja algorytmów.
+- Homeostaza, naprawa synaps i automatyczne powiększanie sieci pozostają oddzielnymi funkcjami badawczymi, nie są jeszcze autonomicznym procesem produkcyjnym.
 
 ## Gdzie jest pamięć?
 
@@ -36,7 +37,7 @@ Nie usuwaj tego katalogu przy aktualizowaniu EXE. Twórz prywatne kopie zapasowe
 
 ## Testy i rozwój
 
-Zmiany v0.5.4 są na `main` po [PR #10](https://github.com/promirmir/NeuroGenesis/pull/10). Przed scaleniem przeszło 125 testów Windows, trzy wersje Python w Linux CI oraz test uruchomienia samodzielnego EXE. Wyniki dotyczą działania prototypu, nie osiągnięcia inteligencji ogólnej.
+Baza v0.5.4 została scalona przez [PR #10](https://github.com/promirmir/NeuroGenesis/pull/10). Wersja v0.5.5 dodaje ograniczony, opcjonalny mechanizm samorozwoju i wymaga osobnej zielonej weryfikacji CI Windows/Linux. Pobieraj najnowszy zielony artefakt z głównej gałęzi. Wyniki dotyczą działania prototypu, nie osiągnięcia inteligencji ogólnej.
 
 Instrukcje pracy od kodu źródłowego: [README](README.md) i [stan projektu](docs/PROJECT_STATE.md).
 

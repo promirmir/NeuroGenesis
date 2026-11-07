@@ -46,3 +46,8 @@ Verified on actual GitHub Actions: `research-core-ci` passed on Python 3.11, 3.1
 User-approved Git email publication unblocked Git work; author display names were independently checked for safe aliases without surnames, and code privacy scans remained enabled. No history rewrite was used. Earlier claims of privacy-related source commit blocking are superseded by current policy in `docs/PRIVACY_AND_AUTH.md`.
 
 **Research limitations:** The native app is not an intelligent natural-language chatbot. Internet sensing remains OFF, no CUDA/distributed executor, and no continuous autonomous self-development supervisor. Most learning/repair evidence remains limited to synthetic experiments; some independent controls are stronger. Do not claim human-brain emulation, general intelligence, self-awareness or production reliability.
+
+
+## 2026-11-07 — v0.5.5 opt-in supervisor integration (PR candidate)
+
+Added a controlled periodic trial loop based on fresh private SQLite sensory observations. It uses the existing bounded self-development algorithm on a clone, distinguishes training/selection/audit/retention, persists a successful candidate readout and the *same neural brain* in one transaction, and records decisions with a rollback checkpoint. Default UI mode is OFF. No external actions, self-written code or unbounded execution. Windows and Linux CI must still validate this candidate before it can be called a released milestone.
