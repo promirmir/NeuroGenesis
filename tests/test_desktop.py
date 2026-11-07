@@ -1,4 +1,5 @@
 """Headless contract and actual brain/SQLite integration tests."""
+from contextlib import closing
 import os
 from pathlib import Path
 import subprocess
@@ -54,11 +55,11 @@ class DesktopContractTests(unittest.TestCase):
             db = Path(tmp) / "private.sqlite3"
             mem = ExperienceMemory(db)
             mem.remember("valid")
-            with sqlite3.connect(db) as conn:
+            with closing(sqlite3.connect(db)) as conn, conn:
                 conn.execute("UPDATE neural_state SET brain_json='invalid json' WHERE id=1")
             with self.assertRaises(ValueError):
                 process_message(mem, "should not overwrite")
-            with sqlite3.connect(db) as conn:
+            with closing(sqlite3.connect(db)) as conn, conn:
                 self.assertEqual(conn.execute("SELECT brain_json FROM neural_state WHERE id=1").fetchone()[0], "invalid json")
 
     def test_subprocess_without_gui(self):

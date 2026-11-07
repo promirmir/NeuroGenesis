@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from contextlib import closing
 from pathlib import Path
 import subprocess
 import sys
@@ -78,7 +79,7 @@ class ExperienceMemoryTests(unittest.TestCase):
             self.store.delete_event(-1)
 
     def test_schema_mismatch_cannot_silently_reset_database(self):
-        with self.store._connect() as con:
+        with closing(self.store._connect()) as con, con:
             con.execute("UPDATE metadata SET value='999' WHERE key='schema'")
         with self.assertRaisesRegex(ValueError, 'schema'):
             ExperienceMemory(self.path)

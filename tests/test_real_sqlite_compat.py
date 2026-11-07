@@ -1,4 +1,5 @@
 """Regulators do not touch the existing v0.4 SQLite experience format."""
+from contextlib import closing
 import tempfile
 import sqlite3
 from pathlib import Path
@@ -28,10 +29,10 @@ class SqliteCompatibilityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             filename=Path(tmp)/'experiences.sqlite3'
             m=ExperienceMemory(filename);m.remember('sample')
-            with sqlite3.connect(filename) as db:
+            with closing(sqlite3.connect(filename)) as db, db:
                 db.execute("UPDATE neural_state SET brain_json='{}'")
             with self.assertRaises(ValueError):ExperienceMemory(filename).remember('second sample')
-            with sqlite3.connect(filename) as db:
+            with closing(sqlite3.connect(filename)) as db, db:
                 self.assertEqual(db.execute('SELECT COUNT(*) FROM observations').fetchone()[0],1)
                 self.assertEqual(db.execute('SELECT brain_json FROM neural_state').fetchone()[0], '{}')
 
