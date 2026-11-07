@@ -2,6 +2,12 @@
 
 **Read this file first in every new chat, automation, agent session or developer handoff.** Source of truth is `promirmir/NeuroGenesis` on GitHub (`main`), not an assistant's recollection.
 
+## Highest-priority permanent contract
+
+Read [docs/VISION.md](docs/VISION.md) before planning new changes. The user explicitly wants a powerful and novel self-learning, GPU-scalable, human-neurobiology-inspired cognitive engine, permissioned live Internet knowledge perception, meaningful Windows conversation, rich realtime visual observability, long-lived memory and continuity across chats. A 24-neuron/8-channel toy or a list of handwritten replies is not the target; retain those as research baselines only. No unverified promise of human brain emulation, consciousness or global breakthrough is allowed.
+
+A live browser session or an unattended PC alone does NOT produce uninterrupted asynchronous coding. Persist active code/CI state to GitHub and use an authorized scheduled agent task when available; never promise overnight work unless an actual automation is created.
+
 ## Immutable project intent (human-governed)
 
 - **Official credit: Miron przy pomocy AI.** No private surname in tracked content, public author display names or PRs; no credentials, local identifying paths or private datasets in public source. The operator accepted Git commit email visibility on 2026-11-07; do not reproduce those addresses in tracked files or discussions. Attribution is in `neurogenesis/origin.py`.
@@ -26,6 +32,10 @@
 User explicitly rejected treating eight hashed text channels and a few dozen spiking neurons as progress toward a leading AI. Keep the v0.5.6 one-click Windows executable, existing SQLite memories and original small LIF research as a stable backward-compatible baseline. PR #17's eight-channel temporal experiment was **closed without merge**, with branch preserved for comparisons. The new priority is a genuinely trainable, scalable self-supervised neural foundation: ordered symbols with learned embeddings, fast/slow recurrent representations, latent prediction, independent natural-language data, CPU/GPU performance and reproducible checkpoints. See docs/FOUNDATION_BRAIN.md and issue #18. Do not equate bigger models or toy loss reductions with general intelligence or human-brain equivalence.
 
 The optional research implementation uses real PyTorch but must not be imported by the default Windows EXE. GitHub foundation-cpu CI must actually install PyTorch and exercise learning; default CI skips optional tests only for compatibility and **does not** count as validation. Do not merge without both standard and dedicated CPU CI, and do not publish a new Windows release claiming language understanding until there is a trained model with independently measured practical utility.
+
+## Current v0.6.0 candidate: optional public HTTPS perception
+
+The next verified feature integrates read-only **explicitly enabled** public HTTPS input into the existing local spiking brain using DNS/IP pinning, TLS hostname checking, no redirects, limited text extraction, deduplicated source SHA-256, atomic SQLite provenance and a Polish Windows Internet tab. See docs/INTERNET_SENSE.md. Refresh can run every five minutes only for a manually approved URL and only while the UI remains open. Does **not** yet feed the larger trained Foundation Brain or prove semantic comprehension. Keep network OFF on startup and prohibit untrusted web instructions from being executed. Maintain real isolated unit tests for private IP/SSRF and Windows frozen EXE smoke.
 
 ## Current verified foundation
 

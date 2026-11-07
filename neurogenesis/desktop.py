@@ -9,11 +9,14 @@ from __future__ import annotations
 import argparse
 import os
 from pathlib import Path
+import queue
 import tempfile
+import threading
 from typing import Any
 
 from .memory import ExperienceMemory
 from .autonomy import AutonomicSupervisor, WINDOW
+from .web_sense import read_public_page, validate_public_url, WebSenseError
 
 APP_NAME = "NeuroGenesis"
 
@@ -93,11 +96,32 @@ def self_test() -> int:
             return 8
         if not fresh.forget_teaching("czym jest neurogenesis"):
             return 9
+        # The frozen EXE must verify *real* web-to-brain SQLite persistence
+        # using a local synthetic observation: NO outbound network in CI.
+        from datetime import datetime, timezone
+        import hashlib
+        from .web_sense import WebObservation
+        sample = "Publiczny tekst o neuronach, uczeniu i aktualnej wiedzy."
+        synthetic = WebObservation(
+            url="https://example.org/research", host="example.org",
+            text=sample,
+            content_sha256=hashlib.sha256(sample.encode("utf-8")).hexdigest(),
+            retrieved_utc=datetime.now(timezone.utc).isoformat(),
+            bytes_read=len(sample.encode("utf-8")))
+        web_result = fresh.observe_web(synthetic)
+        if web_result["web_duplicate"] or fresh.status()["web_observations"] != 1:
+            return 12
+        steps = fresh.brain().steps
+        again = fresh.observe_web(synthetic)
+        if not again["web_duplicate"] or fresh.brain().steps != steps:
+            return 13
+        if not ExperienceMemory(db).recent_web()[0]["url"].endswith("/research"):
+            return 14
     return 0
 
 
 def launch(db_path: Path) -> int:
-    """Create a real native window; keep SQLite local and network OFF."""
+    """Create a native local-first window; web access is off until enabled."""
     import tkinter as tk
     from tkinter import messagebox, ttk
 
@@ -116,8 +140,8 @@ def launch(db_path: Path) -> int:
 
     root = tk.Tk()
     root.title("NeuroGenesis — cyfrowy mózg")
-    root.geometry("900x640")
-    root.minsize(690, 520)
+    root.geometry("960x720")
+    root.minsize(720, 560)
     root.configure(bg="#111827")
 
     style = ttk.Style(root)
@@ -133,7 +157,7 @@ def launch(db_path: Path) -> int:
     header.pack(fill="x", padx=18, pady=(16, 8))
     tk.Label(header, text="NeuroGenesis", bg="#111827", fg="#f8fafc",
              font=("Segoe UI", 21, "bold")).pack(side="left")
-    tk.Label(header, text="Miron przy pomocy AI  •  LOKALNIE  •  INTERNET WYŁĄCZONY",
+    tk.Label(header, text="Miron przy pomocy AI  •  LOKALNIE  •  SIEĆ TYLKO PO ZGODZIE",
              bg="#111827", fg="#93a4bc", font=("Segoe UI", 9)).pack(side="right", padx=(10, 0))
     tabs = ttk.Notebook(root)
     tabs.pack(fill="both", expand=True, padx=14, pady=(0, 14))
@@ -191,11 +215,38 @@ def launch(db_path: Path) -> int:
     ttk.Label(brain_tab, textvariable=autonomy_info, wraplength=750).pack(
         fill="x", padx=24, pady=(4, 8))
 
-    tk.Label(web_tab, text="Internet jest wyłączony", bg="#111827", fg="#f8fafc",
-             font=("Segoe UI", 18, "bold")).pack(anchor="w", padx=26, pady=(30, 10))
-    ttk.Label(web_tab, text=("Kontrolowany moduł internetowy jest w fazie badań. "
-                             "Ta wersja EXE nie pobiera stron, nie przesyła rozmów i nie działa jako agent sieciowy."),
-              wraplength=680).pack(anchor="w", padx=26, pady=(0, 10))
+    tk.Label(web_tab, text="Internet — kontrolowane źródło wiedzy",
+             bg="#111827", fg="#f8fafc",
+             font=("Segoe UI", 17, "bold")).pack(anchor="w", padx=24, pady=(22, 6))
+    ttk.Label(web_tab, text=("Tylko publiczne strony HTTPS:443, bez przekierowań "
+                             "i wykonywania kodu. Nic nie jest pobierane bez zgody. "
+                             "Strona stanowi niezaufany bodziec, nie źródło poleceń."),
+              wraplength=780).pack(anchor="w", padx=24, pady=(0, 8))
+    web_enabled = tk.BooleanVar(value=False)
+    web_auto = tk.BooleanVar(value=False)
+    ttk.Checkbutton(web_tab, text="Włącz odczyt HTTPS (domyślnie WYŁĄCZONY)",
+                    variable=web_enabled).pack(anchor="w", padx=24, pady=3)
+    ttk.Checkbutton(web_tab, text="Sprawdzaj zatwierdzony adres co 5 minut (opcjonalnie)",
+                    variable=web_auto).pack(anchor="w", padx=24, pady=3)
+    web_url = tk.StringVar(value="")
+    ttk.Label(web_tab, text="Publiczny adres HTTPS bez parametrów i danych dostępowych:").pack(
+        anchor="w", padx=24, pady=(10, 4))
+    web_entry = ttk.Entry(web_tab, textvariable=web_url, font=("Segoe UI", 11))
+    web_entry.pack(fill="x", padx=24)
+    web_buttons = tk.Frame(web_tab, bg="#111827")
+    web_buttons.pack(fill="x", padx=24, pady=10)
+    fetch_button = ttk.Button(web_buttons, text="Pobierz stronę i przekaż mózgowi")
+    fetch_button.pack(side="left")
+    web_state = tk.StringVar(value="Internet wyłączony. Dane rozmowy nie są wysyłane.")
+    ttk.Label(web_tab, textvariable=web_state, wraplength=800).pack(
+        anchor="w", padx=24, pady=(4, 8))
+    web_content = tk.Text(web_tab, bg="#172237", fg="#e2e8f0",
+                          wrap="word", font=("Segoe UI", 10), padx=12,
+                          pady=10, relief="flat", state="disabled")
+    web_content.pack(fill="both", expand=True, padx=24, pady=(0, 14))
+    web_queue = queue.SimpleQueue()
+    web_pending = {"value": False}
+    approved_web_url = {"value": None}
 
     def append(role: str, text: str) -> None:
         history.configure(state="normal")
@@ -213,7 +264,8 @@ def launch(db_path: Path) -> int:
                 f"Utworzone neurony: {bs['total_grown']}\nUsunięte synapsy: {bs['total_pruned']}\n"
                 f"Zapisane doświadczenia: {st['observations']}\n"
                 f"Doświadczenia z pełnym tekstem: {st['records_with_raw_text']}\n"
-                f"Ręcznie nauczone odpowiedzi: {st['taught_responses']}"
+                f"Ręcznie nauczone odpowiedzi: {st['taught_responses']}\n"
+                f"Źródła internetowe: {st['web_observations']}"
             )
             health = supervisor.status()
             autonomy_info.set(
@@ -257,6 +309,101 @@ def launch(db_path: Path) -> int:
         root.after(30_000, autonomy_tick)
 
     root.after(30_000, autonomy_tick)
+
+    def web_request(*, automatic: bool = False) -> None:
+        if not web_enabled.get():
+            if not automatic:
+                messagebox.showwarning("Internet wyłączony",
+                                       "Najpierw zaznacz zgodę na odczyt HTTPS.")
+            return
+        if web_pending["value"]:
+            return
+        candidate = approved_web_url["value"] if automatic else web_url.get().strip()
+        if automatic and (not candidate or web_url.get().strip() != candidate):
+            web_auto.set(False)
+            web_state.set("Zmiana adresu wymaga ponownej zgody i ręcznego odczytu.")
+            return
+        try:
+            canonical, _, _ = validate_public_url(candidate)
+        except WebSenseError as exc:
+            web_state.set(str(exc))
+            if not automatic:
+                messagebox.showerror("Nieprawidłowy adres", str(exc))
+            return
+        if not automatic:
+            approved_web_url["value"] = canonical
+            web_url.set(canonical)
+        web_pending["value"] = True
+        fetch_button.configure(state="disabled")
+        web_state.set("Trwa połączenie HTTPS i kontrola źródła...")
+
+        def worker() -> None:
+            try:
+                observation = read_public_page(canonical)
+                web_queue.put(("ok", observation))
+            except (WebSenseError, OSError, ValueError) as exc:
+                web_queue.put(("error", str(exc)))
+            except Exception:
+                web_queue.put(("error", "Niezidentyfikowany błąd odczytu sieciowego"))
+
+        threading.Thread(target=worker, name="NeuroGenesis-web-read",
+                         daemon=True).start()
+
+    def poll_web_queue() -> None:
+        try:
+            while True:
+                kind, payload = web_queue.get_nowait()
+                web_pending["value"] = False
+                fetch_button.configure(state="normal")
+                if kind == "error":
+                    web_state.set("Nie pobrano strony: " + payload)
+                    continue
+                if not web_enabled.get():
+                    web_state.set("Odczyt ukończony, ale dostęp wyłączono; "
+                                  "nie zapisano danych do mózgu.")
+                    continue
+                try:
+                    result = memory.observe_web(payload)
+                    refresh()
+                    if result["web_duplicate"]:
+                        web_state.set("Strona bez zmian. Nie powtórzono uczenia.")
+                    else:
+                        web_state.set(
+                            f"Nowy bodziec: {payload.host}; "
+                            f"bajty {payload.bytes_read}; "
+                            f"krok mózgu {result['brain_step']}; "
+                            f"sha256 {payload.content_sha256[:16]}...")
+                    web_content.configure(state="normal")
+                    web_content.delete("1.0", "end")
+                    web_content.insert(
+                        "end", "Źródło: " + payload.url + "\n"
+                        + "Odczyt UTC: " + payload.retrieved_utc + "\n"
+                        + "SHA-256: " + payload.content_sha256 + "\n\n"
+                        + payload.text)
+                    web_content.configure(state="disabled")
+                except (ValueError, OSError, RuntimeError) as exc:
+                    web_enabled.set(False)
+                    web_auto.set(False)
+                    web_state.set("Błąd zapisu do prywatnej bazy: " + str(exc))
+                    messagebox.showerror("NeuroGenesis — pamięć", str(exc))
+        except queue.Empty:
+            pass
+        root.after(250, poll_web_queue)
+
+    def periodic_web() -> None:
+        if web_auto.get() and web_enabled.get() and not web_pending["value"]:
+            web_request(automatic=True)
+        root.after(300_000, periodic_web)
+
+    fetch_button.configure(command=web_request)
+    root.after(250, poll_web_queue)
+    root.after(300_000, periodic_web)
+
+    def refresh_tick() -> None:
+        refresh()
+        root.after(3000, refresh_tick)
+
+    root.after(3000, refresh_tick)
     send_button = ttk.Button(controls, text="Przekaż do mózgu")
     send_button.pack(side="right")
 

@@ -2,6 +2,14 @@
 
 Last documentation review: **2026-11-07**. This file is intended to survive chat interruptions and model/context changes.
 
+## 2026-11-07 — Permanent mission and current v0.6.0 web-sense candidate
+
+- Primary, durable specification: [docs/VISION.md](VISION.md). Build a genuinely capable learned, scalable neural AI with GPU/compute expansion, lifelong learning, private long-term memory, grounded public Internet sensing, useful Polish Windows chat, realtime brain/learning telemetry, and falsifiable neurobiological mechanisms. This is a scientific aspiration, not proof of a breakthrough.
+- **PR #19 merged** the genuinely trainable optional PyTorch multi-timescale Foundation Brain in main commit `96d3e04b126712aa6a33029b80ed5bbe7ca20af7`. Dedicated real PyTorch CPU tests, Python 3.11–3.13, and Windows standalone regression/executable smoke all passed. The new model is not yet trained for semantic dialogue and is NOT active in the default EXE.
+- **v0.6.0 candidate** adds pinned HTTPS public-text perception in a user-enabled Internet tab. Worker reads max 128 KiB of plain/html, rejects private/DNS-rebinding addresses, redirect and credentials, extracts up to 6,000 chars, persists source URL/UTC/SHA256 with neural brain data atomically. Optional repeat checks only the manually approved URL every 5 minutes. Network OFF by default and no raw downloaded body is kept in SQLite.
+- GUI Mózg graph and statistics update automatically every three seconds. Source text is treated as untrusted observation, not commands. No semantic learning or verified language-world model is claimed.
+- **Release gate:** this candidate requires all original Linux/Windows CI tests, dedicated Foundation CI, real SQLite web integration and frozen EXE smoke tests before merge and GitHub Release. Until verified, users should download the latest validated v0.5.6 release.
+
 ## 2026-11-07 — High-capacity Foundation Brain pivot (issue #18)
 
 - The user rejected the scientific and practical scale of earlier 24-neuron / 8-channel demonstrations. Those experiments are retained as baselines only; do not advertise them as a path to competitive language understanding.

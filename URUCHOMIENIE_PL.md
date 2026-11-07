@@ -1,4 +1,4 @@
-# NeuroGenesis v0.5.6 — uruchomienie na Windows
+# NeuroGenesis v0.6.0 — uruchomienie na Windows
 
 **Autorstwo: Miron przy pomocy AI.** Aktualny kod znajduje się w [repozytorium GitHub](https://github.com/promirmir/NeuroGenesis). Nie trzeba instalować Pythona, aby uruchomić gotowy EXE.
 
@@ -20,7 +20,7 @@
 - Rozmowa: **działające jawne uczenie odpowiedzi**. Wpisz pytanie, niżej swoją odpowiedź i kliknij **Naucz odpowiedzi**. Przy wysłaniu tego samego pytania program odtworzy zapisaną odpowiedź. Możesz ją poprawić lub usunąć. Równolegle pytania są bodźcami dla małej sieci neuronowej. Tekst odpowiedzi pochodzi z lokalnej bazy, a nie z rozumowania neuronów.
 - Mózg: podgląd kroków, neuronów, synaps i lokalnych doświadczeń.
 - Pamięć: transakcyjny zapis stanu mózgu, obserwacji i (po jawnym przycisku uczenia) par pytanie–odpowiedź w prywatnej bazie SQLite. Zwykłe wiadomości nie przechowują pełnego tekstu bez zaznaczenia opcji. [Szczegóły uczenia](docs/TEACHABLE_DIALOGUE.md).
-- Internet: **wyłączony**; wersja v0.5.4 nie czyta samodzielnie stron ani nie wysyła rozmów.
+- Internet: **domyślnie wyłączony**. Po włączeniu przez użytkownika może pobrać jedną wskazaną publiczną stronę HTTPS, sprawdzić jej pochodzenie i przekazać tekst jako bodziec do istniejącego mózgu. Możliwe jest automatyczne odświeżanie tego samego ręcznie zatwierdzonego adresu co 5 minut. Dane rozmów nie są przesyłane na strony. To nie jest samodzielne rozumienie treści. [Zasady bezpieczeństwa](docs/INTERNET_SENSE.md).
 - Samorozwój: w zakładce **Mózg** dostępny jest ręczny przycisk i opcja **AUTO** (domyślnie wyłączona). Po 40 nowych obserwacjach program testuje ograniczone warianty uczenia i zapisuje tylko propozycje, które przejdą kontrolę niezależnego zbioru i poprzedniej umiejętności. Zapisy są atomowe, a niepowodzenie nie usuwa wcześniejszych doświadczeń. Nie jest to swobodna samomodyfikacja algorytmów.
 - Homeostaza, naprawa synaps i automatyczne powiększanie sieci pozostają oddzielnymi funkcjami badawczymi, nie są jeszcze autonomicznym procesem produkcyjnym.
 
@@ -33,6 +33,16 @@
 5. Aby zmienić odpowiedź, wpisz inną i ponownie kliknij **Naucz odpowiedzi**. Aby usunąć skojarzenie, kliknij **Usuń nauczoną odpowiedź**.
 
 Ten tryb nie jest dowodem rozumienia języka: to jawnie nauczone skojarzenie, zapisane lokalnie i powiązane ze stanem sieci. Limit to 512 różnych pytań. Nie wpisuj haseł ani innych sekretów.
+
+## Jak korzystać z internetu?
+
+1. W zakładce **Internet** zaznacz **Włącz odczyt HTTPS**.
+2. Wpisz publiczny adres w postaci https://domena.pl/strona (bez parametrów i danych logowania).
+3. Kliknij **Pobierz stronę i przekaż mózgowi**. Zobaczysz tekst strony, adres źródłowy, czas odczytu oraz SHA-256.
+4. Opcjonalnie zaznacz odświeżanie co pięć minut. Powtórzenie identycznej strony nie zwiększa liczby zdarzeń w pamięci.
+5. Wyłącz opcję HTTPS, kiedy nie chcesz pobierać danych. Dane rozmów nie są wysyłane na strony internetowe.
+
+Serwer zobaczy adres IP Twojego połączenia. Program nie otwiera stron wymagających logowania i nie wykonuje kodu ze stron. Odwiedzane adresy zostają zapisane w lokalnej pamięci; ich treść nie jest trwale przechowywana w postaci pełnego tekstu. To pierwszy zmysł internetowy; nie oznacza rozumienia zawartości.
 
 ## Gdzie jest pamięć?
 
