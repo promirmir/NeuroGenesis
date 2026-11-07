@@ -2,6 +2,12 @@
 
 Last documentation review: **2026-11-07**. This file is intended to survive chat interruptions and model/context changes.
 
+## Distribution — permanent latest Windows EXE link
+
+- Public entrypoint: [GitHub Releases — latest](https://github.com/promirmir/NeuroGenesis/releases/latest); direct asset: [NeuroGenesis.exe](https://github.com/promirmir/NeuroGenesis/releases/latest/download/NeuroGenesis.exe); [SHA-256](https://github.com/promirmir/NeuroGenesis/releases/latest/download/NeuroGenesis.exe.sha256).
+- Trusted `.github/workflows/publish-release.yml` runs only after a green, main-branch Windows standalone EXE build. It downloads the successful build artifact, rechecks its SHA-256 and PE x64 format, validates the main source SHA, and publishes an immutable SHA-tagged release with a separate **contents:write** permission. PRs retain read-only permissions.
+- **Status at documentation change:** this release pipeline is being introduced; do not claim a GitHub Release exists until the first completed publish run is verified. Standard Windows Actions artifact remains a fallback.
+
 ## Verified main v0.5.5 — bounded opt-in local self-development
 
 - New neurogenesis/autonomy.py adds an opt-in supervisor using **the same private SQLite brain** as the native Windows app. Every 40 fresh observations are assigned once to separate guard/training/selection/audit roles.

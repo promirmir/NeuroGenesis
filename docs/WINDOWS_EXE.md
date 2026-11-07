@@ -1,5 +1,7 @@
 # NeuroGenesis — Windows desktop EXE
 
+**Direct Windows download:** [NeuroGenesis.exe — latest verified GitHub Release](https://github.com/promirmir/NeuroGenesis/releases/latest/download/NeuroGenesis.exe) · [SHA-256](https://github.com/promirmir/NeuroGenesis/releases/latest/download/NeuroGenesis.exe.sha256). This is the preferred public download; workflow artifacts are transient engineering diagnostics. Releases are published automatically only after a successful main Windows build and binary checksum verification.
+
 A native Windows desktop application, not a command-line interface or a browser page.
 
 ## For users
@@ -10,11 +12,11 @@ Private neural/episodic memory is stored separately in `%LOCALAPPDATA%\NeuroGene
 
 ## Maintainer: build and verify on Windows
 
-This repository includes a Windows GitHub Actions workflow `.github/workflows/windows-exe.yml`, intended to generate the real Windows PE executable on a Windows runner using PyInstaller. It fails before packaging if Git history exposes non-noreply commit identities. **Issue #6 blocks publication until the existing historical metadata is fixed.** Do not disable this gate to get a green build.
+The Windows GitHub Actions workflow `.github/workflows/windows-exe.yml` builds the real Windows PE executable with PyInstaller. Before packaging it checks tracked source for sensitive data and author display-name safety using the current repository policy (issue #6 is closed; Git author email visibility is operator-approved).
 
-The workflow runs the existing regression suite plus the desktop's real SQLite smoke test, bundles with `--onefile --windowed`, and runs `NeuroGenesis.exe --self-test` before uploading the EXE as a short-lived GitHub Actions artifact. The workflow does not automatically create a public release or modify Git history. Manual publishing requires separate verified review.
+The build runs the full regression suite and local SQLite smoke test, packages with `--onefile --windowed`, and verifies the frozen `NeuroGenesis.exe --self-test` before publishing a temporary Actions artifact. A **separate, privileged, default-branch-only** `.github/workflows/publish-release.yml` reacts to completed successful `main` builds, independently validates the SHA-256 and executable format and creates an immutable commit-specific GitHub Release with the EXE and checksum. Pull-request builds cannot publish releases.
 
-Local Windows build (only after privacy remediation):
+Local Windows build (maintainers):
 
 ```powershell
 py -3.12 -m pip install "pyinstaller>=6,<7"

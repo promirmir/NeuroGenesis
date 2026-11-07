@@ -27,6 +27,8 @@
 - No semantic comprehension, natural conversation, open internet reading, autonomous source edits, GPU training or validated consciousness.
 - Follow-up work: `#3` out-of-distribution and retention tests, `#4` read-only web sensory inputs, `#5` grounded language and functional self-modeling.
 
+The permanent Windows binary download must be clearly visible at the top of `README.md` and `URUCHOMIENIE_PL.md`: `https://github.com/promirmir/NeuroGenesis/releases/latest/download/NeuroGenesis.exe`. Release publishing uses a **separate, main-only workflow** after Windows test/EXE verification, not write permission during PR builds. Verify release SHA-256 and source commit before claiming publication.
+
 For the latest authoritative status and reproduction commands see **`docs/PROJECT_STATE.md`**. Do not change experimental methodology silently.
 
 ## Privacy / fresh-history policy

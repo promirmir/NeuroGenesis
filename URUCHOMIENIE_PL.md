@@ -4,17 +4,16 @@
 
 ## Pobierz i uruchom
 
-1. Otwórz [GitHub Actions — Windows standalone EXE](https://github.com/promirmir/NeuroGenesis/actions/workflows/windows-exe.yml).
-2. Wybierz najnowszy przebieg zakończony na zielono na gałęzi `main`. W sekcji **Artifacts** pobierz `NeuroGenesis-Windows-x64` (GitHub może wymagać zalogowania).
-3. Rozpakuj ZIP. W środku są `NeuroGenesis.exe` oraz `NeuroGenesis.exe.sha256`. Sprawdź sumę kontrolną w PowerShell:
+1. Kliknij [**POBIERZ NAJNOWSZY NeuroGenesis.exe (Windows x64)**](https://github.com/promirmir/NeuroGenesis/releases/latest/download/NeuroGenesis.exe). Plik znajduje się w sekcji [GitHub Releases](https://github.com/promirmir/NeuroGenesis/releases/latest) i nie wymaga przeszukiwania GitHub Actions.
+2. Z tej samej strony pobierz [**sumę kontrolną SHA-256**](https://github.com/promirmir/NeuroGenesis/releases/latest/download/NeuroGenesis.exe.sha256). Aby porównać ją w PowerShell, wpisz:
 
    ```powershell
    Get-FileHash .\NeuroGenesis.exe -Algorithm SHA256
    ```
 
-4. Uruchom `NeuroGenesis.exe` dwukrotnym kliknięciem. Aplikacja otworzy własne okno z zakładkami **Rozmowa**, **Mózg**, **Internet**.
+3. Uruchom `NeuroGenesis.exe` dwukrotnym kliknięciem. Aplikacja otworzy własne okno z zakładkami **Rozmowa**, **Mózg**, **Internet**.
 
-**Uwaga:** program jest eksperymentalny i nie ma podpisu cyfrowego producenta. Nie ignoruj ostrzeżeń bezpieczeństwa bez sprawdzenia pochodzenia i sumy SHA-256. Artefakty Actions są przechowywane przez 14 dni; nowy udany przebieg zapewnia kolejny plik do pobrania.
+**Uwaga:** program jest eksperymentalny i nie ma podpisu cyfrowego producenta. Nie ignoruj ostrzeżeń bezpieczeństwa bez sprawdzenia pochodzenia i sumy SHA-256. Wydania GitHub Releases mają stałe odnośniki; tymczasowe artefakty GitHub Actions są przechowywane przez 14 dni.
 
 ## Co naprawdę działa
 
@@ -37,7 +36,7 @@ Nie usuwaj tego katalogu przy aktualizowaniu EXE. Twórz prywatne kopie zapasowe
 
 ## Testy i rozwój
 
-Baza v0.5.4 została scalona przez [PR #10](https://github.com/promirmir/NeuroGenesis/pull/10). Wersja v0.5.5 dodaje ograniczony, opcjonalny mechanizm samorozwoju i została scalona przez [PR #12](https://github.com/promirmir/NeuroGenesis/pull/12) po zielonych testach Windows/Linux. Pobieraj najnowszy zielony artefakt z głównej gałęzi. Wyniki dotyczą działania prototypu, nie osiągnięcia inteligencji ogólnej.
+Baza v0.5.4 została scalona przez [PR #10](https://github.com/promirmir/NeuroGenesis/pull/10). Wersja v0.5.5 dodaje ograniczony, opcjonalny mechanizm samorozwoju i została scalona przez [PR #12](https://github.com/promirmir/NeuroGenesis/pull/12) po zielonych testach Windows/Linux. Pobieraj najnowsze wydanie ze strony GitHub Releases; publikacja następuje po zielonej kompilacji i weryfikacji SHA-256 z głównej gałęzi. Wyniki dotyczą działania prototypu, nie osiągnięcia inteligencji ogólnej.
 
 Instrukcje pracy od kodu źródłowego: [README](README.md) i [stan projektu](docs/PROJECT_STATE.md).
 
