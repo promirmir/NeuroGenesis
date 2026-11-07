@@ -1,0 +1,45 @@
+name: Foundation Brain CPU proof
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'neurogenesis/foundation.py'
+      - 'neurogenesis/foundation_train.py'
+      - 'tests/test_foundation.py'
+      - 'pyproject.toml'
+      - '.github/workflows/foundation-cpu.yml'
+  pull_request:
+    paths:
+      - 'neurogenesis/foundation.py'
+      - 'neurogenesis/foundation_train.py'
+      - 'tests/test_foundation.py'
+      - 'pyproject.toml'
+      - '.github/workflows/foundation-cpu.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  foundation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install real CPU PyTorch (never silently skip)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+          python -c "import torch; print('Torch actual version:', torch.__version__); assert not torch.cuda.is_available()"
+      - name: Run dedicated, real learned foundation tests
+        run: |
+          python -m unittest discover -s tests -p test_foundation.py -v
+      - name: Regression of original CPU brain and Windows-independent code
+        run: |
+          python -m unittest discover -s tests -v

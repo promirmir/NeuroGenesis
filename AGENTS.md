@@ -21,6 +21,12 @@
 7. Update `docs/PROJECT_STATE.md` and append to `docs/DEVELOPMENT_LOG.md` after each merged milestone so the next conversation resumes from verified facts, not promises.
 8. If interrupted, leave a branch and PR with explicit state, failed checks, next actions and rollback notes. Never claim completion of unmerged or untested work.
 
+## Strategic reset — high-capacity Foundation Brain (issue #18)
+
+User explicitly rejected treating eight hashed text channels and a few dozen spiking neurons as progress toward a leading AI. Keep the v0.5.6 one-click Windows executable, existing SQLite memories and original small LIF research as a stable backward-compatible baseline. PR #17's eight-channel temporal experiment was **closed without merge**, with branch preserved for comparisons. The new priority is a genuinely trainable, scalable self-supervised neural foundation: ordered symbols with learned embeddings, fast/slow recurrent representations, latent prediction, independent natural-language data, CPU/GPU performance and reproducible checkpoints. See docs/FOUNDATION_BRAIN.md and issue #18. Do not equate bigger models or toy loss reductions with general intelligence or human-brain equivalence.
+
+The optional research implementation uses real PyTorch but must not be imported by the default Windows EXE. GitHub foundation-cpu CI must actually install PyTorch and exercise learning; default CI skips optional tests only for compatibility and **does not** count as validation. Do not merge without both standard and dedicated CPU CI, and do not publish a new Windows release claiming language understanding until there is a trained model with independently measured practical utility.
+
 ## Current verified foundation
 
 - **Verified v0.5.5 on main (PRs #10, #12 and #13)**: preserves the v0.4 CPU-only sparse spiking neuron, prediction, JSON snapshots and transactional SQLite episodic memory. Adds experimental homeostasis and bounded memory-guided repair, self-development and capacity growth trials, a native Windows EXE, and an opt-in periodic self-development supervisor that atomically saves the real brain and predictor in SQLite; no autonomous source modification or internet.
