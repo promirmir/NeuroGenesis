@@ -4,20 +4,26 @@
 
 [**Pobierz NeuroGenesis.exe — Windows x64**](https://github.com/promirmir/NeuroGenesis/releases/latest/download/NeuroGenesis.exe) · [SHA-256](https://github.com/promirmir/NeuroGenesis/releases/latest/download/NeuroGenesis.exe.sha256) · [Strona najnowszego wydania](https://github.com/promirmir/NeuroGenesis/releases/latest)
 
-**Jedno kliknięcie, bez instalowania Pythona.** Program jest eksperymentalny i niepodpisany cyfrowo. Zweryfikuj pochodzenie i SHA-256; lokalna pamięć pozostaje w katalogu użytkownika po aktualizacji. **Internet pozostaje wyłączony**, a panel nie jest jeszcze rozumiejącą język AI.
+**Jedno kliknięcie, bez instalowania Pythona.** Program jest eksperymentalny i niepodpisany cyfrowo. Zweryfikuj pochodzenie i SHA-256; lokalna pamięć pozostaje w katalogu użytkownika po aktualizacji. **Internet pozostaje wyłączony do chwili jawnej zgody użytkownika**, a panel nie jest jeszcze rozumiejącą język AI. Wersja 0.6.0 dodaje kontrolowany odczyt publicznych stron HTTPS; domyślnie nie nawiązuje połączeń.
 
 
-**Experimental, self-reorganizing artificial neural substrate — research prototype v0.5.6.**
+**Experimental, self-reorganizing artificial neural substrate — research prototype v0.6.0 (web-perception candidate).**
 
 NeuroGenesis is a long-term research project investigating whether online structural plasticity can measurably improve an artificial agent's learning and adaptation. The central mechanism is **changing the computational network itself**, not merely appending text to a conversation history.
 
-> **Research status:** v0.5.6 includes the original small deterministic CPU spiking brain, local SQLite persistence, a native Windows desktop application and optional experimental neural regulation/repair/capacity experiments. The self-development controller now supports **opt-in periodic local trials with transactional promotion and rollback**, but it is not a self-coding agent or general-intelligence system. Capacity experiments remain bounded offline trials. This is **not** a conscious entity, a human brain emulator, a natural-language conversational AI, a working internet crawler, a GPU neural implementation or a claim of general intelligence.
+> **Research status:** v0.6.0 includes the original small deterministic CPU spiking brain, local SQLite persistence, a native Windows desktop application and optional experimental neural regulation/repair/capacity experiments. The self-development controller now supports **opt-in periodic local trials with transactional promotion and rollback**, but it is not a self-coding agent or general-intelligence system. Capacity experiments remain bounded offline trials. This is **not** a conscious entity, a human brain emulator, a natural-language conversational AI, an autonomous web crawler, or a claim of general intelligence. A separate optional PyTorch Foundation Brain is trainable but not yet connected to a verified useful language model.
 
 ## Foundation Brain — nowy trenowalny rdzeń (eksperymentalny)
 
 **Priorytet rozwoju został zmieniony.** Dotychczasowy 24-neuronowy układ i 8-kanałowy koder tekstu pozostają małą platformą badawczą, nie docelowym silnikiem zaawansowanej AI. Nowa, osobna ścieżka w neurogenesis/foundation.py używa **trenowanych reprezentacji kolejności tekstu, dwóch skal pamięci rekurencyjnej i przewidywania kolejnego tokenu oraz stanu utajonego**, działając z opcjonalnym PyTorch/CUDA. Nie wymaga ręcznego uczenia odpowiedzi ani zewnętrznego modelu językowego. Opis i uruchamianie: [Foundation Brain](docs/FOUNDATION_BRAIN.md), [priorytet #18](https://github.com/promirmir/NeuroGenesis/issues/18).
 
 **Ważne:** to na razie oddzielny moduł treningowy, nie wytrenowana AI ani nowa wersja Windows EXE. Stabilne wydanie v0.5.6 pozostaje dostępne bez zmian; nowe możliwości trafią do aplikacji po odrębnej ocenie jakości i zasobów.
+
+## Internet jako kontrolowany zmysł (v0.6.0)
+
+Nowa zakładka **Internet** pozwala po jawnym włączeniu odczytać wskazaną publiczną stronę HTTPS i przekazać tekst jako bodziec do istniejącego neuronowego mózgu. Zapisuje **adres źródła, UTC i SHA-256** w tej samej transakcji SQLite, a identyczny materiał nie uruchamia ponownego uczenia. Można dodatkowo zaznaczyć sprawdzanie tego samego zatwierdzonego adresu co pięć minut. Wykres mózgu aktualizuje się okresowo. Strony są niezaufane: TLS i publiczny adres IP są weryfikowane, DNS jest przypięty do połączenia, przekierowania i prywatne IP są blokowane, a pobrane skrypty nie są wykonywane. Domyślnie nie ma ruchu sieciowego. [Opis i ograniczenia](docs/INTERNET_SENSE.md).
+
+**Ograniczenie:** na obecnym etapie pobrana strona trafia do starego mózgu LIF (8 kanałów), a nie bezpośrednio do trenowanego Foundation Brain. Sama ekspozycja na tekst nie jest jeszcze rozumieniem wiedzy ani tworzeniem prawdziwych odpowiedzi. [Stała wizja projektu](docs/VISION.md).
 
 ## Pierwsze działające uczenie dialogowe (v0.5.6)
 
@@ -35,7 +41,7 @@ W zakładce **Rozmowa** wpisz pytanie, poniżej podaj odpowiedź i kliknij **Nau
 - A/B structural control experiment (growth ON vs. OFF) on an identical stimulus sequence.
 - **Self-supervised next-input prediction**: a small online learning head predicts the next sensory pattern before seeing it, then corrects itself from prediction error; persistence of learner state and matched fixed-structure comparison.
 - Additive v0.5.4 research modules: bounded homeostasis, experimental memory-guided rewiring, held-out task-recovery evaluation, simple Markov control, resource budgets and selection/audit-gated self-development experiments. These are **not automatically running** in the GUI or current persistent memory loop.
-- Native Tkinter Windows interface with real learned, explicitly taught question/answer recall, neural sensory state, brain statistics and Internet OFF; PyInstaller single-EXE workflow.
+- Native Tkinter Windows interface with explicitly taught question/answer recall, neural activity graph, opt-in pinned HTTPS text perception with source/provenance and optional 5-minute approved-URL refresh (OFF by default); PyInstaller single-EXE workflow.
 - **v0.5.5:** opt-in bounded periodic self-development supervisor, 40 fresh sensory events per trial, separate training/selection/audit/retention inputs, atomic preservation of a single brain + predictor in SQLite, failure rollback and checkpoint safeguard. This is not evidence of semantic conversation; see [implementation and limitations](docs/AUTONOMY_SUPERVISOR.md).
 - Zero mandatory third-party dependencies when running the Python research core; automated tests and reproducible CLI.
 
@@ -43,7 +49,7 @@ W zakładce **Rozmowa** wpisz pytanie, poniżej podaj odpowiedź i kliknij **Nau
 
 1. Download the latest verified [**NeuroGenesis.exe**](https://github.com/promirmir/NeuroGenesis/releases/latest/download/NeuroGenesis.exe) from [GitHub Releases](https://github.com/promirmir/NeuroGenesis/releases/latest). No Python installation or terminal required.
 2. Optionally download the [SHA-256 checksum](https://github.com/promirmir/NeuroGenesis/releases/latest/download/NeuroGenesis.exe.sha256) and compare it with `Get-FileHash .\\NeuroGenesis.exe -Algorithm SHA256` in PowerShell.
-3. Double-click `NeuroGenesis.exe`. The native app provides Rozmowa / Mózg / Internet tabs, including optional bounded self-tuning (AUTO is OFF by default). Text is treated as sensory input, not demonstrated semantic comprehension. Internet is OFF.
+3. Double-click `NeuroGenesis.exe`. The native app provides Rozmowa / Mózg / Internet tabs, including optional bounded self-tuning (AUTO is OFF by default). Text is treated as sensory input, not demonstrated semantic comprehension. Internet access is OFF until the user explicitly enables a single read-only HTTPS source.
 4. The database lives under `%LOCALAPPDATA%\\NeuroGenesis\\experiences.sqlite3` independently of the EXE. Do not delete it during upgrades; maintain private backups. It is not encrypted.
 
 After successful Windows build+SQLite smoke tests on **main**, a separate, minimally scoped GitHub Actions workflow verifies the SHA-256 checksum and publishes the binary plus checksum as a versioned GitHub Release, without executing pull-request code with release-write privileges. Release tags include the source commit prefix for reproducibility. Temporary Actions artifacts remain available for debugging. The Windows EXE is **unsigned and experimental**; verify its checksum and security warnings. See [Polish quickstart](URUCHOMIENIE_PL.md) and [build notes](docs/WINDOWS_EXE.md).

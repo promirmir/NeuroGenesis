@@ -79,6 +79,13 @@ class ExperienceMemory:
                     neural_step INTEGER NOT NULL,
                     learned_utc TEXT NOT NULL
                 )""")
+                con.execute("""CREATE TABLE IF NOT EXISTS web_observations (
+                    event_id INTEGER PRIMARY KEY,
+                    source_url TEXT NOT NULL,
+                    content_sha256 TEXT NOT NULL,
+                    retrieved_utc TEXT NOT NULL,
+                    UNIQUE(source_url, content_sha256)
+                )""")
 
     def _connect(self) -> sqlite3.Connection:
         con = sqlite3.connect(self.path, timeout=5)
@@ -132,7 +139,8 @@ class ExperienceMemory:
             raise ValueError("answer must contain 1..2000 printable characters")
 
     def remember(self, text: str, *, source: str = 'local',
-                 store_text: bool = False, taught_answer: str | None = None) -> dict[str, Any]:
+                 store_text: bool = False, taught_answer: str | None = None,
+                 web_provenance: dict[str, str] | None = None) -> dict[str, Any]:
         self._check_text(text)
         if type(source) is not str or not 1 <= len(source) <= 128 or any(ord(c) < 32 for c in source):
             raise ValueError('source must be a short printable string')
@@ -142,10 +150,42 @@ class ExperienceMemory:
         if taught_answer is not None:
             self._check_answer(taught_answer)
             taught_question = self._normalize_question(text)
+        if web_provenance is not None:
+            from .web_sense import validate_public_url
+            if (type(web_provenance) is not dict
+                    or set(web_provenance) != {"url", "sha256", "retrieved_utc"}
+                    or type(web_provenance["sha256"]) is not str
+                    or type(web_provenance["retrieved_utc"]) is not str
+                    or len(web_provenance["retrieved_utc"]) > 48
+                    or not re.fullmatch(r"[0-9a-f]{64}", web_provenance["sha256"])):
+                raise ValueError("invalid internet provenance")
+            canonical, host, _ = validate_public_url(web_provenance["url"])
+            if (canonical != web_provenance["url"] or source != "internet"
+                    or store_text or taught_answer is not None):
+                raise ValueError("internet observations must be private and explicit")
+            try:
+                stamp = datetime.fromisoformat(web_provenance["retrieved_utc"])
+                if stamp.tzinfo is None or stamp.utcoffset() is None:
+                    raise ValueError("time must include zone")
+            except (TypeError, ValueError) as exc:
+                raise ValueError("invalid internet acquisition time") from exc
         with closing(self._connect()) as con:
             with con:
                 con.execute("BEGIN IMMEDIATE")
                 count = con.execute('SELECT COUNT(*) FROM observations').fetchone()[0]
+                if web_provenance is not None:
+                    old = con.execute(
+                        "SELECT event_id FROM web_observations "
+                        "WHERE source_url=? AND content_sha256=?",
+                        (web_provenance["url"], web_provenance["sha256"])
+                    ).fetchone()
+                    if old is not None:
+                        brain = self._brain_from_connection(con)
+                        return {"event_id": old[0], "brain_step": brain.steps,
+                                "neurons": len(brain.voltages),
+                                "synapses": len(brain.synapses),
+                                "observations": count, "stored_raw_text": False,
+                                "web_duplicate": True}
                 if count >= self.MAX_EVENTS:
                     raise ValueError('episodic memory at capacity; export or clear records explicitly')
                 brain = self._brain_from_connection(con)
@@ -218,10 +258,45 @@ class ExperienceMemory:
                         learned_utc=excluded.learned_utc''',
                         (key, taught_question, taught_answer, brain.steps,
                          datetime.now(timezone.utc).isoformat()))
+                if web_provenance is not None:
+                    con.execute(
+                        "INSERT INTO web_observations"
+                        "(event_id, source_url, content_sha256, retrieved_utc)"
+                        " VALUES(?,?,?,?)",
+                        (cur.lastrowid, web_provenance["url"],
+                         web_provenance["sha256"], web_provenance["retrieved_utc"]))
                 return {'event_id': cur.lastrowid, 'brain_step': brain.steps,
                         'stored_raw_text': store_text, 'neurons': len(brain.voltages),
                         'synapses': len(brain.synapses), 'observations': count + 1,
-                        'teaching_saved': taught_question is not None}
+                        'teaching_saved': taught_question is not None,
+                        'web_duplicate': False}
+
+    def observe_web(self, observation: Any) -> dict[str, Any]:
+        """Commit one verified web perception and its source atomically.
+
+        Caller explicitly authorizes a URL, then uses read_public_page()
+        to produce WebObservation. No raw page text is stored in SQLite:
+        hashed neural features influence the existing brain.
+        """
+        from .web_sense import WebObservation
+        if not isinstance(observation, WebObservation):
+            raise TypeError("observation must be a verified WebObservation")
+        return self.remember(
+            observation.text, source="internet", store_text=False,
+            web_provenance={"url": observation.url,
+                            "sha256": observation.content_sha256,
+                            "retrieved_utc": observation.retrieved_utc})
+
+    def recent_web(self, *, limit: int = 8) -> list[dict[str, Any]]:
+        if type(limit) is not int or not 1 <= limit <= 20:
+            raise ValueError("invalid provenance history limit")
+        with closing(self._connect()) as con:
+            rows = con.execute(
+                "SELECT w.event_id,w.source_url,w.content_sha256,w.retrieved_utc "
+                "FROM web_observations w JOIN observations o ON o.id=w.event_id "
+                "ORDER BY w.event_id DESC LIMIT ?", (limit,)).fetchall()
+        return [{"event_id": eid, "url": url, "sha256": digest,
+                 "retrieved_utc": stamp} for eid, url, digest, stamp in rows]
 
     def teach(self, question: str, answer: str) -> dict[str, Any]:
         """Explicit user-approved Q/A training, atomically with brain stimulus.
@@ -273,8 +348,9 @@ class ExperienceMemory:
         with closing(self._connect()) as con:
             n, raw = con.execute('SELECT COUNT(*), SUM(raw_text IS NOT NULL) FROM observations').fetchone()
             taught_count = con.execute("SELECT COUNT(*) FROM taught_responses").fetchone()[0]
+            web_count = con.execute("SELECT COUNT(*) FROM web_observations").fetchone()[0]
             return {'observations': n, 'records_with_raw_text': raw or 0,
-                    'taught_responses': taught_count,
+                    'taught_responses': taught_count, 'web_observations': web_count,
                     'brain': self._brain_from_connection(con).stats()}
 
     def recall(self, query: str, *, limit: int = 5,
@@ -317,5 +393,6 @@ class ExperienceMemory:
             raise ValueError('event_id must be positive integer')
         with closing(self._connect()) as con:
             with con:
+                con.execute('DELETE FROM web_observations WHERE event_id=?', (event_id,))
                 cursor = con.execute('DELETE FROM observations WHERE id=?', (event_id,))
                 return cursor.rowcount > 0
