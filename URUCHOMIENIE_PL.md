@@ -1,41 +1,43 @@
-# NeuroGenesis — bezpieczne przywrócenie nowego repozytorium
+# NeuroGenesis v0.5.4 — uruchomienie na Windows
 
-Oficjalne autorstwo: **Miron przy pomocy AI**.
+**Autorstwo: Miron przy pomocy AI.** Aktualny kod znajduje się w [repozytorium GitHub](https://github.com/promirmir/NeuroGenesis). Nie trzeba instalować Pythona, aby uruchomić gotowy EXE.
 
-Przygotowana paczka zawiera sprawdzony kod badawczy v0.2.2, a nie sam szablon dokumentacji. Poprzednie repozytorium zostało usunięte. Nie importujemy jego publicznej historii.
+## Pobierz i uruchom
 
-## Publikacja na Windows
+1. Otwórz [GitHub Actions — Windows standalone EXE](https://github.com/promirmir/NeuroGenesis/actions/workflows/windows-exe.yml).
+2. Wybierz najnowszy przebieg zakończony na zielono na gałęzi `main`. W sekcji **Artifacts** pobierz `NeuroGenesis-Windows-x64` (GitHub może wymagać zalogowania).
+3. Rozpakuj ZIP. W środku są `NeuroGenesis.exe` oraz `NeuroGenesis.exe.sha256`. Sprawdź sumę kontrolną w PowerShell:
 
-1. Rozpakuj całe archiwum ZIP do nowego katalogu (nie do starego katalogu Git).
-2. Upewnij się, że są zainstalowane Git for Windows i Python 3.11+.
-3. W ustawieniach GitHub **Settings → Emails** włącz „Keep my email addresses private” oraz blokowanie pushy ujawniających adres e-mail.
-4. Otwórz `URUCHOM_BEZPIECZNA_PUBLIKACJE.cmd` w rozpakowanym katalogu.
-5. Jeśli Git poprosi o logowanie, wykonaj je wyłącznie w standardowym oknie Git Credential Manager.
-6. Skrypt wykona audyt, testy, utworzy pojedynczy nowy commit pod publicznym adresem GitHub `noreply`, a następnie zastąpi tylko *dokładnie wskazany* początkowy commit nowego repozytorium.
+   ```powershell
+   Get-FileHash .\NeuroGenesis.exe -Algorithm SHA256
+   ```
 
-Weryfikacja na GitHubie: `https://github.com/promirmir/NeuroGenesis/commits/main`. Powinien być **jeden** nowy commit, którego autor i committer mają wyłącznie publiczny adres `noreply`.
+4. Uruchom `NeuroGenesis.exe` dwukrotnym kliknięciem. Aplikacja otworzy własne okno z zakładkami **Rozmowa**, **Mózg**, **Internet**.
 
-## Zabezpieczenia
+**Uwaga:** program jest eksperymentalny i nie ma podpisu cyfrowego producenta. Nie ignoruj ostrzeżeń bezpieczeństwa bez sprawdzenia pochodzenia i sumy SHA-256. Artefakty Actions są przechowywane przez 14 dni; nowy udany przebieg zapewnia kolejny plik do pobrania.
 
-- Jeżeli główna gałąź GitHuba zmieniła się w międzyczasie, skrypt **nie opublikuje** zmian.
-- Skrypt nie zawiera hasła ani tokenu i nie przesyła prywatnej poczty w metadanych commitów.
-- Nie kopiuje dawnej historii Git.
-- Zachowuje działające komendy `demo`, `status`, `observe`, `compare`, `predict`, `origin` oraz testy.
-- Automatyczny CI sprawdza również prywatność adresów autorów commitów.
+## Co naprawdę działa
 
-**Ograniczenie:** wymiana historii głównej gałęzi nie usuwa automatycznie starych odnośników, cache GitHuba ani kopii pobranych wcześniej. Zgłoszenie do GitHub Support może być nadal konieczne.
+- Rozmowa: przekazywanie tekstu jako bodźca do **rzeczywistej małej sieci neuronowej**; to nie jest jeszcze rozumiejący język chatbot.
+- Mózg: podgląd kroków, neuronów, synaps i lokalnych doświadczeń.
+- Pamięć: transakcyjne zapisanie stanu mózgu i obserwacji w prywatnej bazie SQLite. Pełny tekst jest zapisywany wyłącznie po włączeniu opcji.
+- Internet: **wyłączony**; wersja v0.5.4 nie czyta samodzielnie stron ani nie wysyła rozmów.
+- Homeostaza, samonaprawa, samodoskonalenie i skalowanie pojemności: zaimplementowane jako **oddzielne moduły badawcze i testy**. Nie działają jeszcze jako jeden automatyczny proces stale modyfikujący mózg.
 
-## Gdy publikacja się zatrzyma
+## Gdzie jest pamięć?
 
-Nie ponawiaj siłowo push z opcją `--force`. Najpierw sprawdź stan zdalnej gałęzi i skonfrontuj go z lokalnym; zabezpieczenie SHA jest celowe. Po poprawnej publikacji można kontynuować projekt w nowym czacie, każąc asystentowi przeczytać `AGENTS.md` i `docs/PROJECT_STATE.md`.
+Plik doświadczeń znajduje się w katalogu użytkownika:
 
-## Lokalna pamięć doświadczeń (v0.4)
-
-```powershell
-py -3 -m neurogenesis remember "Przykładowa obserwacja" --db local-data/experiences.sqlite3
-py -3 -m neurogenesis recall "Przykładowa obserwacja" --db local-data/experiences.sqlite3
-py -3 -m neurogenesis memory-status --db local-data/experiences.sqlite3
+```text
+%LOCALAPPDATA%\NeuroGenesis\experiences.sqlite3
 ```
 
-Pełna treść tekstu nie jest zapisywana bez `--store-text`. SQLite zachowuje
-stan neuronów i dane doświadczeń; nie wrzucaj pliku bazy na GitHub.
+Nie usuwaj tego katalogu przy aktualizowaniu EXE. Twórz prywatne kopie zapasowe, ponieważ GitHub przechowuje **kod programu**, a nie lokalną pamięć użytkownika. Baza nie jest szyfrowana; nie wprowadzaj do niej sekretów.
+
+## Testy i rozwój
+
+Zmiany v0.5.4 są na `main` po [PR #10](https://github.com/promirmir/NeuroGenesis/pull/10). Przed scaleniem przeszło 125 testów Windows, trzy wersje Python w Linux CI oraz test uruchomienia samodzielnego EXE. Wyniki dotyczą działania prototypu, nie osiągnięcia inteligencji ogólnej.
+
+Instrukcje pracy od kodu źródłowego: [README](README.md) i [stan projektu](docs/PROJECT_STATE.md).
+
+**Nie korzystaj ze starych instrukcji nadpisywania historii Git ani skryptów typu fresh-root.** Repozytorium posiada już rozwijane `main` i historię zmian.

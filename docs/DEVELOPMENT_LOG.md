@@ -35,3 +35,14 @@ commands `remember`, `recall`, `memory-status`, `forget-event`. Added 7
 regression tests and .gitignore rules for private databases. All prior
 simulator and prediction interfaces remain unchanged. No semantic or conscious
 memory is claimed.
+
+
+## 2026-11-07 — v0.5.4 GitHub merge and Windows EXE (PR #10)
+
+Merged the additive experimental neural homeostasis, bounded repair and memory-guided rewiring, non-neural control, task-level evaluation, bounded self-development/capacity search, native Polish Tkinter application, and Windows single-EXE build workflow. Main landing commit `ddf6d3aa9c878c6f2ec221289521cf00349f8cba`.
+
+Verified on actual GitHub Actions: `research-core-ci` passed on Python 3.11, 3.12, 3.13; Windows ran 125 tests, compiled the PyInstaller `--onefile --windowed` EXE, smoke-tested its SQLite self-test, generated SHA-256 and uploaded the `NeuroGenesis-Windows-x64` artifact. The first Windows CI attempt exposed SQLite handles left open in three tests, fixed by explicit connection cleanup. A subsequent EXE CI issue was caused by PowerShell not waiting for a windowed process; fixed via `Start-Process -Wait -PassThru`. Main rebuilds passed (Linux run `42414996746`; Windows run `42414996678`).
+
+User-approved Git email publication unblocked Git work; author display names were independently checked for safe aliases without surnames, and code privacy scans remained enabled. No history rewrite was used. Earlier claims of privacy-related source commit blocking are superseded by current policy in `docs/PRIVACY_AND_AUTH.md`.
+
+**Research limitations:** The native app is not an intelligent natural-language chatbot. Internet sensing remains OFF, no CUDA/distributed executor, and no continuous autonomous self-development supervisor. Most learning/repair evidence remains limited to synthetic experiments; some independent controls are stronger. Do not claim human-brain emulation, general intelligence, self-awareness or production reliability.

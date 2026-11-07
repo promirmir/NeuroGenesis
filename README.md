@@ -1,10 +1,10 @@
 # NeuroGenesis
 
-**Experimental, self-reorganizing artificial neural substrate — research prototype v0.4.0.**
+**Experimental, self-reorganizing artificial neural substrate — research prototype v0.5.4 (merged PR #10).**
 
 NeuroGenesis is a long-term research project investigating whether online structural plasticity can measurably improve an artificial agent's learning and adaptation. The central mechanism is **changing the computational network itself**, not merely appending text to a conversation history.
 
-> **Research status:** This release is a small, deterministic CPU-only *spiking network with a self-supervised prediction experiment*. It is **not** a conscious entity, a human brain emulator, an autonomous internet agent, or a conversational AI. None of these abilities is claimed or demonstrated. The longer-term goal is to explore functional self-modeling and continuous learning using controlled experiments.
+> **Research status:** v0.5.4 includes the original small deterministic CPU spiking brain, local SQLite persistence, a native Windows desktop application and optional experimental neural regulation/repair/capacity experiments. The self-development and capacity algorithms are bounded **offline trials**, not a continuous self-improving supervisor. This is **not** a conscious entity, a human brain emulator, a natural-language conversational AI, a working internet crawler, a GPU neural implementation or a claim of general intelligence.
 
 ## What is implemented now
 
@@ -17,11 +17,22 @@ NeuroGenesis is a long-term research project investigating whether online struct
 - Auditable introspection of measurable system state, explicitly without sentience claims.
 - A/B structural control experiment (growth ON vs. OFF) on an identical stimulus sequence.
 - **Self-supervised next-input prediction**: a small online learning head predicts the next sensory pattern before seeing it, then corrects itself from prediction error; persistence of learner state and matched fixed-structure comparison.
-- Zero mandatory third-party runtime dependencies; automated tests and reproducible CLI.
+- Additive v0.5.4 research modules: bounded homeostasis, experimental memory-guided rewiring, held-out task-recovery evaluation, simple Markov control, resource budgets and selection/audit-gated self-development experiments. These are **not automatically running** in the GUI or current persistent memory loop.
+- Native Tkinter Windows interface (conversation-as-sensory-observations, brain statistics, explicitly OFF internet tab) and PyInstaller single-EXE workflow.
+- Zero mandatory third-party dependencies when running the Python research core; automated tests and reproducible CLI.
 
-## Secure publication / new repository
+## Windows: one-click executable
 
-This release is prepared as a **privacy-reviewed source bundle**, not automatically pushed by an assistant connector. The new public repo initially contained a commit with an account email in its author metadata. Unpack the ZIP and double-click `URUCHOM_BEZPIECZNA_PUBLIKACJE.cmd` (or run `SAFE_PUBLISH.ps1` in PowerShell) to replace that initial history with a single verified noreply commit, subject to an exact remote-head safety check. This operation requires Git credentials on your own computer and will **replace the initial public branch history**; it cannot delete earlier third-party copies or GitHub caches. The script stops if the remote changed. Do not upload this bundle with GitHub web UI until the account email privacy setting is enabled.
+1. Open the [Windows build workflow](https://github.com/promirmir/NeuroGenesis/actions/workflows/windows-exe.yml), choose the latest successful run for `main` and download the **NeuroGenesis-Windows-x64** artifact (GitHub sign-in may be required).
+2. Unzip it and double-click `NeuroGenesis.exe`. **Python is not required**. The bundle includes `NeuroGenesis.exe.sha256`; verify it against `Get-FileHash .\\NeuroGenesis.exe -Algorithm SHA256`.
+3. The program stores its private brain/experience database under `%LOCALAPPDATA%\\NeuroGenesis\\experiences.sqlite3`. Do not delete that folder if you want to retain learned state. Keep private backups. Full text is saved only when explicitly enabled.
+4. The app currently records sensory observations and reports factual brain statistics; it does not generate natural-language answers by understanding text, and the Internet tab is OFF.
+
+Windows CI uses PyInstaller, runs the whole regression suite, smoke-tests the frozen executable and publishes the artifact with its checksum. Artifacts expire after 14 days; the workflow is **not** a permanent GitHub Release. The binary is unsigned and may receive Windows reputation warnings; verify the source, build and SHA-256, and do not bypass OS warnings blindly. See [Polish quickstart](URUCHOMIENIE_PL.md) and [build notes](docs/WINDOWS_EXE.md).
+
+## GitHub publication and privacy
+
+The working source is published on `main` through [PR #10](https://github.com/promirmir/NeuroGenesis/pull/10); **do not run old fresh-root history-rewrite instructions or force-push this repository**. Public attribution: **Miron przy pomocy AI**. Author/committer display names and sources must not expose a surname, credentials, local user paths or private content. The repository operator explicitly accepted account-email visibility in Git commit metadata; the optional strict-email audit is therefore not a merge prerequisite. Run `python -m scripts.privacy_audit --git` and review CI logs.
 
 ## Run (Windows / Linux / macOS)
 
