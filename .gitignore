@@ -21,3 +21,9 @@ local-data/
 .idea/
 .DS_Store
 Thumbs.db
+
+# local episodic memory (never publish)
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*

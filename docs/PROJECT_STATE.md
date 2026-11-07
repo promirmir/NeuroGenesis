@@ -10,7 +10,7 @@ Public project credit: **Miron przy pomocy AI** (first name only). Canonical exe
 
 ## Verified implementation and limits
 
-- **v0.3.0 reconstructed baseline** (v0.2 plus project origin/continuity): bounded sparse spiking LIF neurons; STDP-like local plasticity; novelty-triggered bounded growth; weak-synapse pruning; JSON checkpoint deterministic restart; offline text feature hashing (not semantics); observable telemetry.
+- **v0.4.0 reconstructed baseline** (v0.2 plus project origin/continuity): bounded sparse spiking LIF neurons; STDP-like local plasticity; novelty-triggered bounded growth; weak-synapse pruning; JSON checkpoint deterministic restart; offline text feature hashing (not semantics); observable telemetry.
 - Online next-input predictor trained by prediction error, tested on a toy alternating sequence; growth did **not** outperform fixed structure. Reproduce with `python -m neurogenesis predict --steps 600`.
 - `python -m neurogenesis compare --steps 128` tests growth/fixed structure under identical inputs (structural metric only).
 - `python -m neurogenesis origin` shows canonical attribution and mission. New snapshots include origin metadata; old v0.2 and v0.2.1 snapshots load and upgrade to short attribution on next save.
@@ -26,6 +26,15 @@ after B was **0.14877 (growth)** vs **0.14565 (fixed)**. The lower score for
 the fixed architecture means growth did not improve retention. Benchmark results
 are preliminary, from a narrow synthetic pattern family; do not generalize.
 
+## Persistent memory v0.4
+
+The `remember` command now saves hashed sensory features + corresponding
+spiking brain state atomically in one local SQLite DB, with exact/fuzzy
+feature recall and explicit opt-in raw text persistence. `forget-event` only
+deletes its log record; it does not reverse learned synaptic state. No semantic
+memory or language understanding is claimed. Memory data is not committed to
+GitHub: *.sqlite3 and local-data/ are excluded by .gitignore.
+
 ## Reproduction from a clean checkout
 
 ```bash
@@ -36,6 +45,8 @@ python -m neurogenesis compare --steps 128
 python -m neurogenesis predict --steps 600
 python -m neurogenesis benchmark --seeds 10 --steps-per-phase 128 --probe-steps 48
 python -m neurogenesis origin
+python -m neurogenesis remember "Pierwsza obserwacja" --db local-data/experiences.sqlite3
+python -m neurogenesis recall "Pierwsza obserwacja" --db local-data/experiences.sqlite3
 python -m neurogenesis demo --steps 64 --state brain.snapshot.json
 python -m neurogenesis status --state brain.snapshot.json
 ```
@@ -44,7 +55,7 @@ Python >=3.11, no third-party dependencies, runs offline on CPU. GitHub Actions 
 
 ## Progress / future work
 
-- Reconstructed v0.1 and v0.2 core plus v0.2.2 privacy handling from a deleted prior repository. v0.3 adds the A-B-A benchmark and readout-frozen isolated probes. Earlier PR numbers refer to the deleted repository, not this replacement.
+- Reconstructed v0.1 and v0.2 core plus v0.2.2 privacy handling from a deleted prior repository. v0.3 adds the A-B-A benchmark and readout-frozen isolated probes. v0.4 adds locally persistent event observations and brain state in one SQLite transaction. Earlier PR numbers refer to the deleted repository, not this replacement.
 - Issue #3: held-out generalization, retention, at least ten seeds and controlled growth ablations.
 - Issue #4: opt-in, read-only internet senses with provenance and SSRF protections.
 - Issue #5: grounded text-language interface and functional self-model with measured calibration.
