@@ -57,6 +57,8 @@ def parse_dialogues(text: str) -> list[tuple[str, str]]:
         raise ValueError("Plik kończy się pytaniem bez odpowiedzi.")
     if len(pairs) < 20:
         raise ValueError("LoRA wymaga minimum 20 par dialogowych.")
+    if len(pairs) > 1500:
+        raise ValueError("Ten pilotaż LoRA obsługuje maksymalnie 1500 par; rozdziel zbiór na części.")
     if len(set(pairs)) != len(pairs):
         raise ValueError("Duplikaty par muszą być usunięte przed ewaluacją.")
     if len({p[0] for p in pairs}) != len(pairs):
