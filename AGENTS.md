@@ -1,3 +1,9 @@
+## Active safe weight continuation (2026-11-08) — PR candidate
+
+- Main baseline `fd4ab6a723baad237d583d62991dbfdcd84b3f74`: PR #33 old/new retention audit merged after real PyTorch CPU, Linux Python 3.11–3.13/privacy and frozen Windows EXE. Synthetic audit **rejected** model candidate; this is the desired gate behavior.
+- Branch `feat/safe-foundation-continue-learning-20261108` adds explicit, bounded continuation of **trained Foundation Brain weights** from trusted private checkpoint on newly approved corpus, to a separate fresh .pt file; old weights/checkpoint and private SQLite preserved, no automatic chat model replacement. Optimizer state **resets**; only model weights/step counter resume. Qt Training has opt-in resume control. See `docs/KNOWLEDGE_TRAIN.md` and `docs/RETENTION_GATE.md`.
+- Candidate pending full CI (Python 3.11–3.13, privacy, actual PyTorch CPU, Qt Windows/Linux, old Tk frozen EXE, Qt frozen EXE). Do not call merged or released until tests verify. CUDA physical benchmark, semantic QA and Qt licensing distribution remain open.
+
 ## Active continuation — checkpoint retention and evaluation (November 8, 2026)
 
 - PR #32 **merged** to main `ec5bc9fcfdbc2fa7c940e33fc8b090a48ed610b7`; actual trained-weight candidate next-byte inference exists in `foundation_infer.py`, but **is not deployed as sourced conversation**. Current feature branch: `feat/foundation-candidate-retention-audit-20261108`.
