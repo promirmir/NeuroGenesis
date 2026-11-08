@@ -169,6 +169,53 @@ def self_test() -> int:
     return 0
 
 
+def ui_self_test() -> int:
+    """Run actual default Tk Mission Control widgets on isolated SQLite.
+
+    Distinct from the headless brain smoke: this verifies that a FROZEN
+    public Windows EXE contains and can initialize the new default GUI.
+    """
+    import tkinter as tk
+    from tkinter import ttk
+    from .tk_mission import MissionDashboard
+
+    with tempfile.TemporaryDirectory(prefix="ng-public-tk-ui-check-") as folder:
+        memory = ExperienceMemory(Path(folder) / "synthetic-private.sqlite3")
+        root = tk.Tk()
+        root.withdraw()
+        try:
+            root.geometry("1350x830")
+            tabs = ttk.Notebook(root)
+            tabs.pack(fill="both", expand=True)
+            dashboard = ttk.Frame(tabs)
+            tabs.add(dashboard, text="CENTRUM")
+            mission = MissionDashboard(
+                dashboard, memory, navigate=lambda _where: None,
+                network_enabled=lambda: False)
+            tabs.select(dashboard)
+            root.update_idletasks()
+            if mission.refresh() or mission.metrics["steps"].get() != "0":
+                return 31
+            before = tuple(mission._samples)
+            mission.refresh()
+            if tuple(mission._samples) != before:
+                return 32
+            result = process_message(memory, "Syntetyczny bodziec GUI")
+            if not mission.refresh():
+                return 33
+            if (mission._last is None or mission._last.step != result["brain_step"]
+                    or not mission.graph._latest
+                    or mission.graph._latest.step != result["brain_step"]):
+                return 34
+            if mission.modules["network"].get() != "WYŁĄCZONY":
+                return 35
+            if len(mission._samples) != len(before) + 1:
+                return 36
+        finally:
+            root.destroy()
+    return 0
+
+
 def launch(db_path: Path) -> int:
     """Create a native local-first window; web access is off until enabled."""
     import tkinter as tk
@@ -698,8 +745,12 @@ def launch(db_path: Path) -> int:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="NeuroGenesis desktop client")
     parser.add_argument("--self-test", action="store_true", help="test brain/SQLite persistence without GUI")
+    parser.add_argument("--ui-self-test", action="store_true",
+                        help="open real default Tk mission widgets against synthetic local data")
     parser.add_argument("--db", type=Path, default=None, help="explicit private database path")
     args = parser.parse_args(argv)
     if args.self_test:
         return self_test()
+    if args.ui_self_test:
+        return ui_self_test()
     return launch(args.db if args.db is not None else default_db_path())
