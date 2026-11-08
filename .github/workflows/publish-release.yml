@@ -2,7 +2,7 @@ name: Publish verified Windows release
 
 on:
   workflow_run:
-    workflows: ['Windows standalone EXE']
+    workflows: ['Windows Complete Offline AI EXE']
     types: [completed]
 
 # This trusted default-branch workflow alone can publish releases.
@@ -18,7 +18,7 @@ jobs:
       github.event.workflow_run.head_branch == 'main' &&
       github.event.workflow_run.event == 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 35
     steps:
       - name: Verify build corresponds to latest main commit
         env:
@@ -48,12 +48,14 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p release
-          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --name NeuroGenesis-Windows-x64 --dir release
+          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --name NeuroGenesis-Windows-FULL-x64 --dir release
           test -s release/NeuroGenesis.exe
           test -s release/NeuroGenesis.exe.sha256
+          test -s release/NeuroGenesis-MODEL-PROVENANCE.md
           (cd release && sha256sum --check NeuroGenesis.exe.sha256)
           file release/NeuroGenesis.exe | grep -E 'PE32\+' | grep -F 'x86-64'
-          test "$(stat -c%s release/NeuroGenesis.exe)" -ge 1000000
+          test "$(stat -c%s release/NeuroGenesis.exe)" -ge 1000000000
+          test "$(stat -c%s release/NeuroGenesis.exe)" -le 2000000000
       - name: Publish immutable SHA-bound GitHub Release
         if: env.PUBLISH == 'true'
         env:
@@ -83,17 +85,18 @@ jobs:
           Experimental NeuroGenesis v${version} Windows x64 executable built from verified main commit \`${SOURCE_SHA}\`.
 
           - Source: https://github.com/${GITHUB_REPOSITORY}/commit/${SOURCE_SHA}
-          - Passed full Windows regression tests and packaged EXE SQLite smoke test in run ${RUN_ID}.
-          - The SHA-256 checksum is attached as NeuroGenesis.exe.sha256.
-          - No Python installation required. Local data persists in the user's private application folder.
-          - This unsigned research binary is not a human-level AI, semantic chatbot, or live Internet agent.
+          - FULL one-file distribution: native llama.cpp b12211 CPU backend + genuine Qwen3-1.7B Q4_K_M GGUF weights bundled INSIDE NeuroGenesis.exe, fully offline local model dialogue.
+          - Passed ACTUAL Qwen generation tests both from staged model and FROM THE FROZEN WINDOWS EXE, plus full Python tests, UI, SQLite and integrity verification.
+          - SHA-256 attached as NeuroGenesis.exe.sha256; complete model provenance and upstream Apache-2.0 / MIT attribution attached.
+          - No Python, PyTorch, extra model download or external API required for offline conversation and TXT knowledge indexing. Persistent SQLite remains private.
+          - Optional local-file watcher self-develops approved document knowledge while app runs, but DOES NOT train LLM weights or claim AGI/consciousness.
           - Public credit: Miron przy pomocy AI.
           EOF
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "::notice::Release $tag already exists. Do not replace published binaries."
             exit 0
           fi
-          gh release create "$tag" release/NeuroGenesis.exe release/NeuroGenesis.exe.sha256 \
+          gh release create "$tag" release/NeuroGenesis.exe release/NeuroGenesis.exe.sha256 release/NeuroGenesis-MODEL-PROVENANCE.md \
             --repo "$GITHUB_REPOSITORY" --target "$SOURCE_SHA" \
             --title "NeuroGenesis v${version} — Windows x64 (${short})" \
             --notes-file release-notes.md --latest

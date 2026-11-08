@@ -1,3 +1,19 @@
+2026-11-08 - v0.11 FULL one-file offline corrective work, branch feat/complete-offline-llm-windows-20261108.
+
+NEVER substitute stock/Agent Forge imagery for our real Tk app. User specifically needs an EXE that contains ALL dependencies required for local dialogue. Previously 0.10 had only 13MB GUI and a separate Python+PyTorch/model requirement, which was unacceptable.
+
+New neurogenesis/bundled_llm.py bundles pre-trained, real Qwen3-1.7B Q4_K_M GGUF from pinned Unsloth commit cc27747d7419139e44ba97777c2f2fd5dca92ee1, SHA256 ba491cf470c3cadc624e4c8d6c9a27c998809e8ba8eb938d1689ae87e024b6b7 (Apache-2.0, original Qwen model), with llama.cpp Windows CPU b12211 engine ZIP SHA256 23729000408c6968faf5e322afc99319d3b8c576ba872ef7663d9b89810090f3 (MIT). Onefile PyInstaller bundles model (~1.1GB) plus DLLs. Authenticated 127.0.0.1 IPC only; model remains loaded across turns. This is real prior pre-trained LLM, not invented intelligence. Model weights are not trained by NeuroGenesis.
+
+New local_knowledge.py stores approved TXT chunks in separate local SQLite FTS5, revisions SHA256, retrieval/RAG. New Tk bundled chat/training panels replace old external Python-dependent Tk panels as default, with opt-in local folder watcher to assimilate changed TXT while running (NOT gradient training). Preserve existing experiences.sqlite3 brain and autonomous LIF logic.
+
+New Windows Complete Offline AI EXE workflow from PR #55 SHA-gates both upstream binaries, builds >1GB onefile, demands real answer from BOTH staged model and frozen final EXE, tests Tk/SQLite. Publish verified Windows release workflow updated to wait for the new full workflow on main and only publish full binary, no lite 13MB. Version 0.11.0. Docs/FULL_OFFLINE_EXE.md documents complete bundle, source, license, limitations and actual operation.
+
+Real limitations: original PyTorch Foundation Lab and optional LoRA SFT need separate research dependencies and are not part of built-in FULL chat or TXT RAG. Active self-development of document knowledge requires user-approved local texts; not AGI, no autonomous whole-Internet full LLM gradient training, no fake consciousness. CPU only until real GPU proof. No user surname or sensitive information; public credit Miron przy pomocy AI.
+
+Current status at writing: PR #55 opened, full and other GitHub CI workflows running. Do NOT merge or announce completed release until all mandatory CI, actual compiled EXE inference, GitHub Release attachment and checksum are verified. Keep work in GitHub connector and chat; user rejected Work handoff.
+
+---
+
 ## 2026-11-08 — 0.10.0 local TXT training, Model Chat, opt-in data and bounded self-development
 
 **Branch** `feat/local-text-training-and-dialogue-20261108`, base merged main `fd285b96b53dd6ab2734ced356a255e1e4302813`. Feature must not be described as available in published EXE until Windows frozen-EXE CI, privacy, Python 3.11–3.13, real PyTorch CPU and optional Qt gates pass; merge squash then confirm independent source-commit-tagged release.

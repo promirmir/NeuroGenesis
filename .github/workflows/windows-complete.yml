@@ -1,0 +1,128 @@
+name: Windows Complete Offline AI EXE
+
+on:
+  push:
+    branches: [main]
+    paths: ['neurogenesis/**', 'desktop_launcher.py', 'pyproject.toml', 'tests/**', '.github/workflows/windows-complete.yml', 'scripts/tk_training_screenshot.py']
+  pull_request:
+    paths: ['neurogenesis/**', 'desktop_launcher.py', 'pyproject.toml', 'tests/**', '.github/workflows/windows-complete.yml', 'scripts/tk_training_screenshot.py']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-model-onefile:
+    runs-on: windows-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Privacy audit and full Python source regression suite
+        run: |
+          python -m scripts.privacy_audit --git
+          python -m unittest discover -s tests -v
+      - name: Install packaging and visual QA
+        run: python -m pip install "pyinstaller>=6,<7" "pillow>=11,<13"
+      - name: Download pinned llama.cpp Windows CPU engine and verify release SHA-256
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path bundle/ng_runtime | Out-Null
+          $url = 'https://github.com/ggml-org/llama.cpp/releases/download/b12211/llama-b12211-bin-win-cpu-x64.zip'
+          & curl.exe --fail --location --retry 3 --silent --show-error --output llama-cpu.zip $url
+          if ($LASTEXITCODE -ne 0) { throw 'Official llama.cpp download failed' }
+          $hash = (Get-FileHash llama-cpu.zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne '23729000408c6968faf5e322afc99319d3b8c576ba872ef7663d9b89810090f3') { throw "Llama engine digest mismatch: $hash" }
+          Expand-Archive llama-cpu.zip -DestinationPath extracted-llama -Force
+          $server = Get-ChildItem extracted-llama -Recurse -File -Filter 'llama-server.exe' | Select-Object -First 1
+          if ($null -eq $server) { throw 'Official archive has no llama-server.exe' }
+          Copy-Item (Join-Path $server.Directory.FullName '*') bundle/ng_runtime -Recurse -Force
+          if (-not (Test-Path bundle/ng_runtime/llama-server.exe)) { throw 'Runtime missing' }
+      - name: Download pinned pretrained Qwen3-1.7B GGUF and verify SHA-256
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path bundle/ng_assets | Out-Null
+          $url = 'https://huggingface.co/unsloth/Qwen3-1.7B-GGUF/resolve/cc27747d7419139e44ba97777c2f2fd5dca92ee1/Qwen3-1.7B-Q4_K_M.gguf'
+          $target = 'bundle/ng_assets/Qwen3-1.7B-Q4_K_M.gguf'
+          & curl.exe --fail --location --retry 3 --retry-delay 5 --silent --show-error --output $target $url
+          if ($LASTEXITCODE -ne 0) { throw 'Pinned Qwen model download failed' }
+          $hash = (Get-FileHash $target -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne 'ba491cf470c3cadc624e4c8d6c9a27c998809e8ba8eb938d1689ae87e024b6b7') { throw "GGUF digest mismatch: $hash" }
+          $size = (Get-Item $target).Length
+          if ($size -lt 1000000000 -or $size -gt 1800000000) { throw "GGUF invalid size: $size" }
+      - name: Prove REAL local pretrained model inference from staged engine
+        shell: pwsh
+        env:
+          NEUROGENESIS_CI_STARTUP_LOG: 'llama-startup-ci.log'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & python desktop_launcher.py --complete-model-test --model-root bundle --proof-output local-model-proof.json
+          if ($LASTEXITCODE -ne 0) {
+            if (Test-Path local-model-proof.json) { Get-Content local-model-proof.json }
+            if (Test-Path llama-startup-ci.log) { Get-Content llama-startup-ci.log -Tail 70 }
+            throw 'Real local GGUF inference failed'
+          }
+          $proof = Get-Content local-model-proof.json -Raw | ConvertFrom-Json
+          if ($proof.result -ne 'actual_local_model_inference_passed' -or $proof.cloud_api_used -ne $false -or $proof.model_sha256_verified -ne $true) { throw 'Model proof invalid' }
+      - name: Build TRUE ONEFILE Windows EXE with entire GGUF and CPU engine
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & python -m PyInstaller --noconfirm --clean --onefile --windowed --name NeuroGenesis --add-binary 'bundle/ng_runtime;ng_runtime' --add-data 'bundle/ng_assets/Qwen3-1.7B-Q4_K_M.gguf;ng_assets' desktop_launcher.py
+          if ($LASTEXITCODE -ne 0) { throw 'Packaging failed' }
+          $size = (Get-Item dist/NeuroGenesis.exe).Length
+          if ($size -lt 1000000000 -or $size -gt 2000000000) { throw "Incomplete/oversized onefile EXE: $size" }
+      - name: Actual FROZEN EXE brain/database and Tk GUI smoke
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $exe = (Resolve-Path dist/NeuroGenesis.exe).Path
+          foreach ($arg in @('--self-test','--ui-self-test')) {
+            $p = Start-Process -FilePath $exe -ArgumentList $arg -Wait -PassThru
+            if ($null -eq $p -or $p.ExitCode -ne 0) { throw "Frozen EXE failed $arg ($($p.ExitCode))" }
+          }
+      - name: MANDATORY real Qwen response generated by packaged EXE (not source-only)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $exe = (Resolve-Path dist/NeuroGenesis.exe).Path
+          $proofFile = Join-Path (Get-Location) 'frozen-model-proof.json'
+          $p = Start-Process -FilePath $exe -ArgumentList @('--complete-model-test','--proof-output',"$proofFile") -Wait -PassThru
+          if ($null -eq $p -or $p.ExitCode -ne 0) {
+            if (Test-Path $proofFile) { Get-Content $proofFile }
+            throw 'Actual frozen EXE model inference FAILED'
+          }
+          $proof = Get-Content $proofFile -Raw | ConvertFrom-Json
+          if ($proof.result -ne 'actual_local_model_inference_passed' -or $proof.model_sha256_verified -ne $true -or $proof.cloud_api_used -ne $false -or $proof.response_length -lt 15) { throw 'Frozen GGUF proof invalid' }
+      - name: Write EXE checksum and model provenance
+        shell: pwsh
+        run: |
+          $hash = (Get-FileHash dist/NeuroGenesis.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  NeuroGenesis.exe" | Set-Content -Encoding ascii dist/NeuroGenesis.exe.sha256
+          Copy-Item docs/FULL_OFFLINE_EXE.md dist/NeuroGenesis-MODEL-PROVENANCE.md
+      - name: Capture actual dark Tk training and model chat
+        continue-on-error: true
+        run: python -m scripts.tk_training_screenshot --training-output preview/NeuroGenesis-Training-TXT.png --model-chat-output preview/NeuroGenesis-Model-Chat.png
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NeuroGenesis-Complete-Visual
+          path: |
+            preview/NeuroGenesis-Training-TXT.png
+            preview/NeuroGenesis-Model-Chat.png
+          if-no-files-found: warn
+          retention-days: 10
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NeuroGenesis-Windows-FULL-x64
+          path: |
+            dist/NeuroGenesis.exe
+            dist/NeuroGenesis.exe.sha256
+            dist/NeuroGenesis-MODEL-PROVENANCE.md
+          if-no-files-found: error
+          retention-days: 14

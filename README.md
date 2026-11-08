@@ -1,3 +1,25 @@
+# NeuroGenesis 0.11.0 — COMPLETE OFFLINE AI / Windows
+
+**Miron przy pomocy AI.**
+
+**Najważniejsza zmiana: jedno kompletne EXE z rzeczywistym modelem językowym i silnikiem obliczeniowym.** Wcześniejszy plik 13 MB był tylko interfejsem; jego Model Chat wymagał osobnego Pythona i ręcznie pobieranych wag. To zostało naprawione w nowym profilu FULL.
+
+[**Pobierz najnowszy zweryfikowany NeuroGenesis.exe**](https://github.com/promirmir/NeuroGenesis/releases/latest/download/NeuroGenesis.exe) · [Suma SHA-256](https://github.com/promirmir/NeuroGenesis/releases/latest/download/NeuroGenesis.exe.sha256) · [Wszystkie wydania](https://github.com/promirmir/NeuroGenesis/releases)
+
+### Jak to działa
+
+- **Model Chat** automatycznie uruchamia model **Qwen3-1.7B**, Q4_K_M, działający lokalnie przez **llama.cpp CPU** — pełne wagi i DLL są spakowane do tego samego EXE. Nie wymaga Python, PyTorch ani pobrania dodatkowego modelu. Historia tylko w pamięci sesji. Silnik między turami pozostaje załadowany.
+- **Trening TXT** działa bez zewnętrznych bibliotek: importuje wskazany plik UTF-8, indeksuje go i pozwala modelowi przywołać właściwy fragment w odpowiedzi. **To pamięć z retrieval/RAG, nie gradientowy trening parametrów sieci.**
+- **Aktywny samorozwój wiedzy**: po włączeniu obserwuje jeden zatwierdzony folder z plikami TXT, sam wczytuje nowe/zmienione pliki i aktualizuje bazę podczas działania aplikacji. Bez potajemnego treningu na przypadkowych stronach.
+- Stare **Mission Control**, sieć impulsowa LIF i prywatna SQLite pozostają dostępne. Nie kasujemy starej pamięci.
+- **Kryterium release:** Windows Actions musi pobrać zweryfikowane wagami SHA-256 GGUF i oficjalny silnik, zbudować duży ONEFILE EXE, a następnie uzyskać **rzeczywistą odpowiedź Qwen uruchomioną z tego właśnie EXE**. Bez tego nie publikujemy nowej wersji.
+
+**Wielkość:** gotowy EXE ma zawierać ponad 1 GB skwantyzowanych wag, a nie być „13 MB cudownym AI”. Przy pierwszym uruchomieniu PyInstaller rozpakowuje zasoby do tymczasowego katalogu. Kompletność w tej wersji oznacza **działającą lokalną rozmowę i pozyskiwanie wiedzy z TXT**. Opcjonalne badawcze eksperymenty LoRA/PyTorch nadal wymagają osobnych bibliotek; nie nazywamy ich częścią kompletnego offline treningu wag.
+
+[**Dokładny kontrakt możliwości, pochodzenie wag, SHA-256, licencje, ograniczenia i testy**](docs/FULL_OFFLINE_EXE.md).
+
+---
+
 ## NeuroGenesis 0.10 — Trening TXT + prawdziwa rozmowa z lokalnym modelem
 
 **Nowe funkcje w kodzie Windows EXE (przed publikacją wydania):**
@@ -38,7 +60,7 @@ nie należy mylić starszego EXE 0.8.0 z nowymi funkcjami.
 
 # NeuroGenesis — Mission Control
 
-**research prototype v0.10.0.**  
+**research prototype v0.11.0.**  
 **Publiczne autorstwo: Miron przy pomocy AI.**
 
 NeuroGenesis to lokalny projekt badawczy AI: rzeczywista mała sieć neuronowa LIF ze strukturalną plastycznością, prywatna trwała baza SQLite, kontrolowane zdobywanie informacji ze źródeł HTTPS, ekstrakcyjne cytowanie oraz odrębny eksperymentalny model Foundation Brain trenowany w PyTorch. **System nie jest AGI, świadomością, modelem ludzkiego mózgu ani niezależnie zweryfikowanym systemem rozumienia języka naturalnego.**
