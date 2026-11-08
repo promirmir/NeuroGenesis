@@ -35,26 +35,31 @@ PANELS = (
 )
 
 STYLE = """
-QWidget { background: #0b1220; color: #e2e8f0; font: 10pt 'Segoe UI'; }
-QMainWindow, QFrame#sidebar { background: #0b1220; }
-QFrame#card { background: #151f30; border: 1px solid #2b3950; border-radius: 12px; }
-QFrame#topbar { background: #101a29; border-bottom: 1px solid #2b3950; }
-QLabel#heading { color: #f5f9ff; font: 700 20pt 'Segoe UI'; }
-QLabel#metric { color: #eff9ff; font: 700 19pt 'Segoe UI'; }
-QLabel#subtle { color: #93a6bf; }
-QLabel#status { color: #8ee5c9; font: 600 10pt 'Segoe UI'; }
+QWidget { background: #081320; color: #e3f1f9; font: 10pt 'Segoe UI'; }
+QMainWindow, QFrame#sidebar { background: #091929; }
+QFrame#sidebar { border-right: 1px solid #1f5060; }
+QFrame#card { background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
+    stop:0 #14263a, stop:1 #0b1a2b);
+    border: 1px solid #2d5266; border-radius: 12px; }
+QFrame#topbar { background: #0b2033; border-bottom: 2px solid #1b6278; }
+QLabel#heading { color: #e8fbff; font: 700 20pt 'Segoe UI'; }
+QLabel#metric { color: #e9ffff; font: 700 19pt 'Segoe UI'; }
+QLabel#subtle { color: #9ebaca; }
+QLabel#status { color: #65e4d1; font: 600 10pt 'Segoe UI'; }
 QPushButton { background: #1a2a41; border: 1px solid #31465e; padding: 11px 14px;
               border-radius: 8px; color: #eaf2fb; text-align: center; }
 QPushButton:hover { background: #263c56; }
 QPushButton:pressed { background: #162637; }
 QPushButton:disabled { color: #67768b; background: #132034; }
-QPushButton#primary { background: #087e88; border-color: #159ba4; font-weight: 600; color: #ffffff; }
+QPushButton#primary { background: #0b7e96; border-color: #2bc8d4;
+    font-weight: 600; color: #ffffff; }
 QPushButton#primary:hover { background: #0b909a; }
 QPushButton#nav { text-align: left; border: 0; border-radius: 8px; background: transparent; padding: 12px 16px; }
-QPushButton#nav:checked { background: #173c49; border-left: 3px solid #38c9c7; }
+QPushButton#nav:checked { background: #14516b; border-left: 4px solid #4fe8d4;
+    color: #e4fdff; }
 QPushButton#nav:hover { background: #1b2e42; }
 QLineEdit, QPlainTextEdit, QTextEdit, QSpinBox, QTableWidget {
-    background: #0d1929; border: 1px solid #304158; border-radius: 8px;
+    background: #0b1a2c; border: 1px solid #316077; border-radius: 8px;
     padding: 9px; selection-background-color: #19646e; color: #e9f3fa;
 }
 QCheckBox { color: #d5e4ef; spacing: 9px; }
@@ -146,7 +151,7 @@ class CommandCenter(QMainWindow):
         nav.setContentsMargins(18, 26, 18, 20)
         nav.setSpacing(7)
         nav.addWidget(label("NEUROGENESIS", kind="heading"))
-        nav.addWidget(label("COMMAND CENTER  •  EXPERIMENTAL", kind="subtle"))
+        nav.addWidget(label("NEURAL COMMAND CENTER  /  LIVE", kind="subtle"))
         nav.addSpacing(24)
         self.pages = QStackedWidget()
         self._nav_buttons: list[QPushButton] = []
@@ -184,7 +189,7 @@ class CommandCenter(QMainWindow):
         main.addWidget(self.pages, 1)
         shell.addLayout(main, 1)
         self.setCentralWidget(frame)
-        self.navigate(0)
+        self.navigate(3)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.refresh)
         self.timer.start(2500)
@@ -439,6 +444,9 @@ class CommandCenter(QMainWindow):
         self.brain_plot = NeuralFabric()
         inner.addWidget(self.brain_plot, 1)
         layout.addWidget(card, 1)
+        self.neural_aux_metrics = label(
+            "Foundation model: brak aktywnych obliczeń w tym monitorze.", kind="subtle")
+        layout.addWidget(self.neural_aux_metrics)
         layout.addWidget(label(
             "Neurony wejściowe: niebieskie; pozostałe: turkusowe; błyski: nowy zapisany impuls. "
             "Wizualizowane przejście przez synapsę jest umowne czasowo, a brakujące "
@@ -786,6 +794,14 @@ class CommandCenter(QMainWindow):
         self.research_stop.setEnabled(s.research_running)
         if self.pages.currentIndex() == 3:
             self.refresh_neural_view()
+        self.neural_aux_metrics.setText(
+            ("Foundation PyTorch: prawdziwy trening w toku, krok "
+             + f"{s.training_step}/{s.training_total}; strata batch "
+             + (f"{s.training_last_loss:.5f}" if s.training_last_loss is not None
+                else "niezmierzona"))
+            if s.training_running else
+            "Foundation PyTorch: brak treningu. Graf przedstawia jedynie zapisany mózg LIF."
+        )
         status = ("AKTYWNY" if s.training_running else "NIEURUCHOMIONY")
         measured = (f"{s.training_last_loss:.5f}" if s.training_last_loss is not None
                     else "brak pomiaru")
