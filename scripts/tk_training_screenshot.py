@@ -12,7 +12,10 @@ import sys
 import tkinter as tk
 from tkinter import ttk
 
-from neurogenesis.tk_bundled_chat import install_bundled_chat
+from neurogenesis.tk_autonomous_home import install_autonomous_home
+from neurogenesis.agent_goals import GoalStore
+from neurogenesis.autonomy import AutonomicSupervisor
+from neurogenesis.memory import ExperienceMemory
 from neurogenesis.tk_bundled_training import install_bundled_training
 from neurogenesis.local_knowledge import LocalKnowledge
 import tempfile
@@ -30,6 +33,9 @@ def capture(training_output: Path, model_chat_output: Path) -> bool:
     root = tk.Tk()
     try:
         knowledge = LocalKnowledge(Path(folder.name) / "fictional-local.sqlite3")
+        memory = ExperienceMemory(Path(folder.name) / "fictional-neural.sqlite3")
+        supervisor = AutonomicSupervisor(memory)
+        goals = GoalStore(Path(folder.name) / "fictional-goals.sqlite3")
         apply_dark_tk_theme(root)
         width = min(1250, max(760, root.winfo_screenwidth() - 24))
         height = min(850, max(540, root.winfo_screenheight() - 92))
@@ -41,9 +47,10 @@ def capture(training_output: Path, model_chat_output: Path) -> bool:
         mission = ttk.Frame(tabs)
         tabs.add(mission, text="CENTRUM")
         training = install_bundled_training(tabs, knowledge)
-        chat = install_bundled_chat(tabs, knowledge)
-        if tabs.index(training) != 1 or tabs.index(chat) != 2:
-            raise AssertionError("New training/chat tabs aren't visible near CENTRUM")
+        chat = install_autonomous_home(
+            tabs, memory, knowledge, supervisor, goals, auto_start=False)
+        if tabs.index(training) != 2 or tabs.index(chat) != 0:
+            raise AssertionError("Autonomous chat is not the primary tab")
         def screen(tab, path):
             tabs.select(tab)
             root.update_idletasks()
@@ -73,7 +80,7 @@ def capture(training_output: Path, model_chat_output: Path) -> bool:
                 if found is not None:
                     return found
             return None
-        for label in ("WYŚLIJ WIADOMOŚĆ", "STOP", "NOWA ROZMOWA"):
+        for label in ("WYŚLIJ  ↵", "ZATRZYMAJ", "NOWA ROZMOWA", "+ DODAJ CEL"):
             btn = find_action(chat, label)
             if (btn is None or not btn.winfo_ismapped() or
                     btn.winfo_rooty() + btn.winfo_height() > root.winfo_rooty() + root.winfo_height() - 3):
@@ -91,7 +98,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if not capture(args.training_output, args.model_chat_output):
         return 1
-    print("Actual Tk training/chat visual QA: isolated UI; no files, models, or network")
+    print("Actual autonomous home/chat/training GUI, isolated synthetic SQLite, no real model boot or network")
     return 0
 
 
