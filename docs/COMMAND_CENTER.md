@@ -1,3 +1,7 @@
+## Verified status after source PR #44
+
+Qt backup / verify Settings controls are implemented and actual Qt widget tests passed on Windows and Ubuntu. Frozen Windows Qt onedir technical self-test also passed, but **Qt redistribution is NOT authorized/certified**, and the public onefile EXE remains the Tk desktop. The project still lacks full LGPLv3 source/notice/relinking review and independent manual DPI review. `docs/MEMORY_RECOVERY.md` defines the shared transactional private backup contract. Source integration commit: `ebd08ee4335cc1f76c0bf539a52b62a9ea947a86`.
+
 ## Current v0.7.0 Command Center status (2026-11-08, release candidate)
 
 The earlier "first candidate" wording below is historical. The optional real PySide6 Command Center has seven working views: source-cited conversation with volatile short topic follow-ups, bounded opt-in research, actual legacy brain traces, source version browser and consent, separately authorized real PyTorch byte-prediction training/inference, and settings. This branch adds a **nonblocking Settings → Backup/Verify** panel using the same private transactional SQLite snapshots as the Tk desktop. The tests verify the actual Qt view and job event queue; **no Qt EXE has been publicly released**.
