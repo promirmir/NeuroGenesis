@@ -44,9 +44,13 @@ def install_study_panel(parent, memory, consent_var):
         try:
             # Every start creates a new bounded plan; no hidden queue.
             def persist(observation):
-                if not consent_var.get():
-                    raise PermissionError("Zgoda cofnięta")
-                memory.observe_web(observation)
+                acknowledgement = threading.Event()
+                outcome = []
+                events.put(("observation", (observation, acknowledgement, outcome)))
+                if not acknowledgement.wait(15):
+                    raise TimeoutError("Brak potwierdzenia zapisu")
+                if outcome:
+                    raise RuntimeError("Zapis odrzucony")
             study = SpecialistStudy(topic.get(), persist, max_pages=6)
         except (ValueError, TypeError) as exc:
             messagebox.showerror("Nieprawidłowa dziedzina", str(exc))
@@ -81,7 +85,17 @@ def install_study_panel(parent, memory, consent_var):
         try:
             while True:
                 kind, url = events.get_nowait()
-                if kind == "done":
+                if kind == "observation":
+                    observation, acknowledgement, outcome = url
+                    try:
+                        if not consent_var.get():
+                            raise PermissionError("Zgoda cofnięta")
+                        memory.observe_web(observation)
+                    except Exception:
+                        outcome.append("rejected")
+                    finally:
+                        acknowledgement.set()
+                elif kind == "done":
                     result = current["study"].progress()
                     state.set(f"Zakończono: {result.attempted} prób, "
                               f"{result.accepted} zapisanych, {result.errors} błędów.")
