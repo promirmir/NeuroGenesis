@@ -1,3 +1,10 @@
+## 2026-11-08 — multi-source evidence review / discrepancy flags (PR candidate)
+
+- Starting verified main `200a78cbe7e60777a9fc6a368268c6a055b74c4d`, PR #35 was merged; source-based chat remains primary and can show one verbatim excerpt; independent natural-language model quality is unverified.
+- Branch `feat/evidence-review-multi-source-20261108` expands local newest-revision retrieval to show up to **two bounded verbatim extracts** from different hostnames with exact URL/version/SHA metadata. Both are independently unverified; different hostnames are NOT proof of independent authors or factual corroboration.
+- Conservative **possible** numeric and negation divergence signals trigger manual-review notice, not asserted factual contradictions or fabricated synthesis. Preserve manual-teaching priority, legacy first `source` field, SQL transaction/privacy behavior and source abstention. Qt/Tk receive both provenance entries through unchanged chat response.
+- Synthetic no-network tests explicitly check two-host reporting, numeric/negation flags, revision supersession, same-host exclusion, low-overlap abstention and private SQLite after restart. **Candidate until full Python 3.11–3.13, Windows standalone EXE, Qt Windows/Ubuntu and privacy checks pass.** No automatic factual verification, AI understanding or neural training claim.
+
 ## 2026-11-08 — verified neural learning/inference/retention milestones (#32–#34)
 
 - Current functional main SHA `6a45379c2310bc0622b932e21406feddbdbdcd4d`. PR #32 (`ec5bc9fcfdbc2fa7c940e33fc8b090a48ed610b7`), #33 (`fd4ab6a723baad237d583d62991dbfdcd84b3f74`) and #34 (`6a45379c2310bc0622b932e21406feddbdbdcd4d`) **merged**. Historical sections marked "candidate" below refer to their past, unverified development states.
