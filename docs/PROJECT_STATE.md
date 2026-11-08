@@ -1,3 +1,9 @@
+## 2026-11-08 — Specialist study candidate PR #24 (NOT MERGED)
+
+- Branch `feature/specialist-learning-planner-20261108` adds a bounded Wikipedia topic planner, explicit opt-in sequential HTTPS reading, stop, and a native Specjalizacja tab with progress log. Uses existing SSRF-safe reader and SQLite web observation; GUI-thread persistence, no automatic startup.
+- No unrestricted crawling, forums, search indexing, model weight training, or demonstrated expertise. Maximum six pages per GUI session and at least five seconds between requests. Test/Windows EXE validation pending for current head. See `docs/SPECIALIST_STUDY.md`.
+- Relevant candidate commit: `44e579c71335f6ae02d568aaba99244bb81280dd`. PR #23 is independent and remains unmerged until gates pass.
+
 # NeuroGenesis — durable project state and recovery
 
 Last documentation review: **2026-11-07**. This file is intended to survive chat interruptions and model/context changes.
