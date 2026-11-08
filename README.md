@@ -1,3 +1,7 @@
+## Zweryfikowany etap oceny jakości źródeł (8 listopada 2026)
+
+PR #41 i #42 są scalone. System ma teraz kontrolę jakości cytowań z niepewnością statystyczną i klasyczny algorytm BM25 jako porównanie — **bez automatycznej zmiany sposobu odpowiadania**. W fikcyjnym teście BM25 i obecny system uzyskały ten sam wynik 80%, w tym 1 błędne cytowanie z 3 niewspieranych pytań. To nie jest pomiar zdolności rozumienia ani niezależny test prawdziwych informacji. Najważniejsze zadanie pozostaje bez zmian: rzeczywista, niezależna ocena odpowiedzi i treningu modelu na prawidłowo licencjonowanych danych. [Stan projektu](docs/PROJECT_STATE.md).
+
 ## Klasyczny punkt odniesienia BM25 — PR kandydat
 
 Dodano eksperymentalne, lokalne porównanie dotychczasowego cytowania źródeł z **BM25** (algorytm wyszukiwania informacji), na identycznych pytaniach i tej samej prywatnej bazie SQLite. Weryfikowane są poprawne cytaty oraz fałszywe odpowiedzi, a nie tylko szybkość. System **nie przełącza** automatycznie metody wyszukiwania ani nie deklaruje poprawy bez wyniku testowego. [Dokumentacja](docs/BM25_BASELINE.md).
