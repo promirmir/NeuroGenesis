@@ -236,8 +236,12 @@ def launch(db_path: Path) -> int:
 
     root = tk.Tk()
     root.title("NeuroGenesis — Mission Control / cyfrowy mózg")
-    root.geometry("1450x920")
-    root.minsize(1030, 690)
+    # The user may have a laptop, high-DPI display or constrained remote
+    # desktop. Never position a 1450x920 first-launch window off-screen.
+    available_width = max(780, root.winfo_screenwidth() - 34)
+    available_height = max(580, root.winfo_screenheight() - 92)
+    root.geometry(f"{min(1450, available_width)}x{min(920, available_height)}")
+    root.minsize(min(940, available_width), min(620, available_height))
     root.configure(bg="#07111d")
 
     style = ttk.Style(root)
