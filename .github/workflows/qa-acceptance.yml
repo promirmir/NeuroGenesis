@@ -1,0 +1,45 @@
+name: Prospective QA quality acceptance (offline)
+
+on:
+  pull_request:
+    paths:
+      - 'neurogenesis/qa_acceptance.py'
+      - 'neurogenesis/qa_eval.py'
+      - 'neurogenesis/knowledge.py'
+      - 'tests/test_qa_acceptance.py'
+      - 'tests/test_qa_eval.py'
+      - '.github/workflows/qa-acceptance.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'neurogenesis/qa_acceptance.py'
+      - 'neurogenesis/qa_eval.py'
+      - 'neurogenesis/knowledge.py'
+      - 'tests/test_qa_acceptance.py'
+      - 'tests/test_qa_eval.py'
+      - '.github/workflows/qa-acceptance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qa-gate:
+    name: independent-source-QA-statistical-gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Source privacy and syntax
+        run: |
+          python -m scripts.privacy_audit --git
+          python -m compileall -q neurogenesis tests
+      - name: Verify actual SQLite, statistical uncertainty and leakage gates
+        run: |
+          python -m unittest discover -s tests -p test_qa_acceptance.py -v
+          python -m unittest discover -s tests -p test_qa_eval.py -v
