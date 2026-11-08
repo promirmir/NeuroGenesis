@@ -1,3 +1,8 @@
+## Latest release confirmed — 2026-11-08
+
+- Source SHA-bound verified Windows **Tk** EXE release `v0.6.0-main.4a81cc76` targets `4a81cc76a3191ee4031e8bfde9430626a50914ad`; 13,044,179 bytes; SHA-256 `ad30b2f245a77055feca9557f426b77d5c6298d8e0a0e3a31cf727270e5a293d`. Windows tests and publish workflow succeeded. Different optional Qt exe has NOT been released legally.
+- Feature work PR #36–#38 merged; docs PR follows and should supersede historical "candidate" notes. Do not claim neural semantic generalization or factual certainty; the six synthetic QA questions contain a false-citation error.
+
 ## Latest source-provenance/dialogue/QA handoff — 2026-11-08
 
 - Main source SHA `4a81cc76a3191ee4031e8bfde9430626a50914ad`: PR #36 (two-host verbatim citations and cautious possible-discrepancy flags), #37 (volatile Qt same-URL followup with mandatory novel focus), #38 (rights-gated local read-only QA source attribution/abstention benchmark) **all merged** after required Python 3.11–3.13, privacy, actual Torch CPU, Qt Windows/Linux and Windows frozen Tk EXE CI on feature heads.
