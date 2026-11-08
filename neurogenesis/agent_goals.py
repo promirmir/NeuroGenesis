@@ -235,7 +235,7 @@ def prompt_for_goal(claimed: dict[str, Any]) -> str:
             "nie wdrażaj zmian, nie deklaruj pełnego wykonania.")
     return (
         "Zadanie autonomiczne NeuroGenesis. Cel: " + goal +
-        "\n\nBrak odpowiednich zatwierdzonych źródeł (TXT i HTTPS). Sporządź maksymalnie "
+        "\n\nBrak odpowiednich lokalnych źródeł TXT ani zatwierdzonych HTTPS. Sporządź maksymalnie "
         "trzy konkretne kroki PLANU i wskaż jakie dane trzeba "
         "pozyskać. Nie twierdź, że zadanie zostało zrealizowane. "
         "Nie wymyślaj wyników ani nie wykonuj zewnętrznych działań.")
