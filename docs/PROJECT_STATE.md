@@ -1,9 +1,30 @@
+## 2026-11-08 — Delivery audit and UI completion requirements
+
+- Audited current main `db0b2210bb97c422d83d27f963725d3d6941c067` and release `v0.6.0-main.db0b2210`. Source: [docs/DELIVERY_AUDIT.md](DELIVERY_AUDIT.md). No independent Windows screenshot/manual usability audit or real-site crawl benchmark was performed; GitHub Actions validated Python regression, frozen EXE smoke and release checks.
+- Critical gap: web text flows to legacy 8-channel LIF memory, not a persistent semantic knowledge store or Foundation Brain weight-training/chat inference. The PyTorch model remains a separate, trainable research module; exact taught Q/A is not autonomous language understanding.
+- Next coordinated P0: end-to-end source evidence → persistent knowledge → grounded response and measured held-out questions, alongside professional responsive Windows dashboard/conversation/research/training UI without backend regressions.
+- Outstanding PR #23 must be evaluated against its current base and test gates; green Linux foundation CI alone does not prove the Windows gate for that PR.
+
+## 2026-11-08 — Multi-domain specialist research, PR #24 MERGED
+
+- Expanded beyond static Wikipedia seeds: safe HTML anchor extraction, topic-filtered BFS across public HTTPS domains, robots.txt policy, crawl-delay, 500-attempt upper budget, 50 domains, 20 attempts/host, depth 3, 600 URL queue, >=5 seconds between page fetches. GUI default 120 attempts and displays domain/discovery/error counts. Existing Internet opt-in controls all network access.
+- Manual page reader retains 128 KiB limit; explicit crawler mode has a separately bounded 512 KiB limit. HTML text is capped at 6000 chars and URLs are revalidated through pinned TLS/public IP checks. No unrestricted entire-internet indexing, search API, forum guarantees, semantic understanding or PyTorch gradient training.
+- New offline tests validate robots transport, denied paths, failed robots reads, cross-domain discovery, URL filtering, content size, stop and consent. Latest code and Windows tests must be verified on final branch head before any merge/release.
+- PR #24 source head `c90126532de97189d3717b4adabb25d71a0b55fe` passed Python 3.11–3.13, source/privacy audit and Windows EXE build/smoke. Squash merged to `main` commit `578222800c5adc73c0a756352b5bef405535252a`. Main Python CI (run 42463459779), Windows standalone EXE build/smoke (run 42463459963) and release publishing (run 42463541158) all succeeded. Verified GitHub release `v0.6.0-main.57822280` targets `578222800c5adc73c0a756352b5bef405535252a` and contains `NeuroGenesis.exe` plus SHA-256. The executable asset digest is `20708872a4c2b35484da100a88794aaef321e329d469524eb63162b4638b4731`. No production real-site research benchmark has yet been verified. See [docs/SPECIALIST_STUDY.md](SPECIALIST_STUDY.md). PR #23 remains separate and open.
+
+## 2026-11-08 — Historical initial PR #24 candidate (subsequently merged)
+
+- The original bounded Wikipedia-only candidate has since been expanded in the above PR #24 milestone to multi-domain link discovery. Retained historical note: GUI-thread SQLite persistence and network-off-by-default.
+- No full-Internet indexing, general search API, trained language model, or demonstrated expertise. Follow latest PR #24 details above and `docs/SPECIALIST_STUDY.md`.
+- Historical initial source commit: `44e579c71335f6ae02d568aaba99244bb81280dd`; final merged commit is `578222800c5adc73c0a756352b5bef405535252a`. PR #23 remains independent.
+
 # NeuroGenesis — durable project state and recovery
 
-## 2026-11-08 — CI coverage correction (unmerged candidate)
+## 2026-11-08 — PR #23 conflict resolution candidate (not yet validated)
 
-- Branch `ci/foundation-baseline-gates-20261108`, initial commit `e403afb3fd8d2607d3aa171a6dadd28aee02c357`: dedicated real-PyTorch CPU workflow now triggers for changes to `neurogenesis/foundation_baselines.py` and `tests/test_foundation_baselines.py` on pull requests as well as pushes, and explicitly executes the independent baseline tests. Previously the pull-request path filter omitted both files, and the dedicated command only selected `test_foundation.py` (the full regression suite still included baselines). This is a CI verification improvement, not a new learning capability.
-- No GPU benchmark or new language understanding measured. Await Python 3.11–3.13, dedicated PyTorch CPU and Windows EXE checks before merge. No release or training claims.
+- The original CI coverage PR #23 was behind main and conflicted on durable docs; its first head had passing Python 3.11/3.12/3.13 and real PyTorch CPU tests, but lacked the Windows EXE run because the existing Windows workflow pull-request path filter did not select foundation workflow changes.
+- Resolved the candidate against main `542ba8272ceb4c0c13871b9f9fd954c23d4c4cdb` on the original PR branch; dedicated PyTorch CI pull_request paths now include the byte-baseline module/test, the CPU job explicitly runs baseline tests, and Windows EXE PR path filters include changes to foundation-cpu.yml. Preserves all runtime/SQLite state; no model or user data changes.
+- Do NOT merge until new branch head has successful Python 3.11–3.13, real PyTorch CPU, Windows standalone EXE and privacy test results. This note describes candidate source, not delivered functionality.
 
 
 Last documentation review: **2026-11-07**. This file is intended to survive chat interruptions and model/context changes.

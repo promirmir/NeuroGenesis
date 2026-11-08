@@ -154,6 +154,34 @@ class PublicHTTPSValidationTests(unittest.TestCase):
         self.assertNotIn("PRIVATE_FIELD", obs.text)
         self.assertNotIn("Hidden title", obs.text)
 
+    def test_html_links_are_validated_before_research_discovery(self):
+        DummyConn.result = DummyResponse(body=(
+            b"<html><body><h1>Science about learning and memory</h1>"
+            b"<a href='/Mechanika'>local</a>"
+            b"<a href='https://public.example/Mechanika'>external</a>"
+            b"<a href='http://public.example/Mechanika'>insecure</a>"
+            b"<a href='https://127.0.0.1/Mechanika'>private</a>"
+            b"<a href='https://public.example/?token=secret'>query</a>"
+            b"<a href='javascript:alert(1)'>javascript</a></body></html>"))
+        observation = self.read()
+        self.assertIn("https://example.org/Mechanika", observation.links)
+        self.assertIn("https://public.example/Mechanika", observation.links)
+        self.assertEqual(len(observation.links), 2)
+
+    def test_larger_crawler_limit_requires_explicit_opt_in(self):
+        from neurogenesis.web_sense import MAX_CRAWL_BODY
+        DummyConn.result = DummyResponse(
+            body=b"Learning mechanisms are measurable. " * 7000,
+            content_type="text/plain")
+        with self.assertRaises(WebSenseError):
+            self.read()
+        self.assertGreater(DummyConn.result.body.__len__(), MAX_BODY)
+        obs = read_public_page("https://example.org/learning", resolver=fake_dns,
+                               connection_factory=DummyConn,
+                               max_body=MAX_CRAWL_BODY)
+        self.assertGreater(obs.bytes_read, MAX_BODY)
+        self.assertEqual(obs.links, ())
+
     def test_dns_failure_is_explicit_and_does_not_touch_network(self):
         def unreachable(host, port, *, type=None):
             raise OSError("not found")

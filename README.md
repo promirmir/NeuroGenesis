@@ -13,7 +13,7 @@ Web-perception release candidate; version metadata and tests must pass before pu
 
 NeuroGenesis is a long-term research project investigating whether online structural plasticity can measurably improve an artificial agent's learning and adaptation. The central mechanism is **changing the computational network itself**, not merely appending text to a conversation history.
 
-> **Research status:** v0.6.0 includes the original small deterministic CPU spiking brain, local SQLite persistence, a native Windows desktop application and optional experimental neural regulation/repair/capacity experiments. The self-development controller now supports **opt-in periodic local trials with transactional promotion and rollback**, but it is not a self-coding agent or general-intelligence system. Capacity experiments remain bounded offline trials. This is **not** a conscious entity, a human brain emulator, a natural-language conversational AI, an autonomous web crawler, or a claim of general intelligence. A separate optional PyTorch Foundation Brain is trainable but not yet connected to a verified useful language model.
+> **Research status:** v0.6.0 includes the original small deterministic CPU spiking brain, local SQLite persistence, a native Windows desktop application and optional experimental neural regulation/repair/capacity experiments. The self-development controller now supports **opt-in periodic local trials with transactional promotion and rollback**, but it is not a self-coding agent or general-intelligence system. Capacity experiments remain bounded offline trials. This is **not** a conscious entity, a human brain emulator, a natural-language conversational AI, an unrestricted Internet crawler, or a claim of general intelligence. A separate optional PyTorch Foundation Brain is trainable but not yet connected to a verified useful language model.
 
 ## Foundation Brain — nowy trenowalny rdzeń (eksperymentalny)
 
@@ -26,6 +26,12 @@ NeuroGenesis is a long-term research project investigating whether online struct
 Nowa zakładka **Internet** pozwala po jawnym włączeniu odczytać wskazaną publiczną stronę HTTPS i przekazać tekst jako bodziec do istniejącego neuronowego mózgu. Zapisuje **adres źródła, UTC i SHA-256** w tej samej transakcji SQLite, a identyczny materiał nie uruchamia ponownego uczenia. Można dodatkowo zaznaczyć sprawdzanie tego samego zatwierdzonego adresu co pięć minut. Wykres mózgu aktualizuje się okresowo. Strony są niezaufane: TLS i publiczny adres IP są weryfikowane, DNS jest przypięty do połączenia, przekierowania i prywatne IP są blokowane, a pobrane skrypty nie są wykonywane. Domyślnie nie ma ruchu sieciowego. [Opis i ograniczenia](docs/INTERNET_SENSE.md).
 
 **Ograniczenie:** na obecnym etapie pobrana strona trafia do starego mózgu LIF (8 kanałów), a nie bezpośrednio do trenowanego Foundation Brain. Sama ekspozycja na tekst nie jest jeszcze rozumieniem wiedzy ani tworzeniem prawdziwych odpowiedzi. [Stała wizja projektu](docs/VISION.md).
+
+## Autonomiczne badanie dziedziny — wielodomenowy crawler (wydanie v0.6.0)
+
+Nowa zakładka **Specjalizacja** pozwala wpisać temat i po jawnym zezwoleniu HTTPS uruchomić automatyczne badanie publicznych stron. Program rozpoczyna od tematycznych artykułów Wikipedii, wykrywa odnośniki i przechodzi również do **innych domen**, jeżeli adresy dotyczą tematu oraz pozwala na to `robots.txt`. Użytkownik ustawia limit 1–500 stron (domyślnie 120), widzi próby, zapisane obserwacje, błędy i liczbę odkrytych domen, może zatrzymać proces. Każda strona jest pobierana bez wykonywania kodu; źródła trafiają do lokalnej pamięci. [Zasady i ograniczenia](docs/SPECIALIST_STUDY.md).
+
+**To nie jest indeks ani skan całego internetu, automatyczny trening Foundation Brain lub potwierdzona specjalizacja.** Program nie omija ograniczeń serwisów, wymaga ręcznej zgody i nie działa sieciowo po samym uruchomieniu. Funkcja jest już dostępna w sprawdzonym wydaniu [`v0.6.0-main.57822280`](https://github.com/promirmir/NeuroGenesis/releases/tag/v0.6.0-main.57822280) po scaleniu PR #24. Starsze pliki EXE nie mają tej zakładki.
 
 ## Pierwsze działające uczenie dialogowe (v0.5.6)
 

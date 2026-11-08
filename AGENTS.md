@@ -2,6 +2,10 @@
 
 **Read this file first in every new chat, automation, agent session or developer handoff.** Source of truth is `promirmir/NeuroGenesis` on GitHub (`main`), not an assistant's recollection.
 
+## Audyt dostarczenia i jakości (2026-11-08)
+
+Read [docs/DELIVERY_AUDIT.md](docs/DELIVERY_AUDIT.md) after [docs/VISION.md](docs/VISION.md). It reconciles original intent with verified v0.6.0 code/CI and prioritizes **a real end-to-end knowledge-to-answer path plus a professional Windows GUI** over adding more disconnected features. This is a source audit, not proof of real-world internet coverage or of AGI. Follow the measurable release gates and preserve release/backward compatibility.
+
 ## Highest-priority permanent contract
 
 Read [docs/VISION.md](docs/VISION.md) before planning new changes. The user explicitly wants a powerful and novel self-learning, GPU-scalable, human-neurobiology-inspired cognitive engine, permissioned live Internet knowledge perception, meaningful Windows conversation, rich realtime visual observability, long-lived memory and continuity across chats. A 24-neuron/8-channel toy or a list of handwritten replies is not the target; retain those as research baselines only. No unverified promise of human brain emulation, consciousness or global breakthrough is allowed.
@@ -36,6 +40,10 @@ The optional research implementation uses real PyTorch but must not be imported 
 ## Current v0.6.0 candidate: optional public HTTPS perception
 
 The next verified feature integrates read-only **explicitly enabled** public HTTPS input into the existing local spiking brain using DNS/IP pinning, TLS hostname checking, no redirects, limited text extraction, deduplicated source SHA-256, atomic SQLite provenance and a Polish Windows Internet tab. See docs/INTERNET_SENSE.md. Refresh can run every five minutes only for a manually approved URL and only while the UI remains open. Does **not** yet feed the larger trained Foundation Brain or prove semantic comprehension. Keep network OFF on startup and prohibit untrusted web instructions from being executed. Maintain real isolated unit tests for private IP/SSRF and Windows frozen EXE smoke.
+
+## Merged PR #24 — bounded multi-domain autonomous specialist research
+
+Merged to `main` via `578222800c5adc73c0a756352b5bef405535252a` after verified PR Python 3.11–3.13, privacy and Windows EXE CI; the Windows **Specjalizacja** panel accepts a subject and an operator-controlled budget (1–500 pages; default 120). After explicit HTTPS permission, a bounded researcher starts from Polish/English Wikipedia subject pages, discovers topic-relevant HTTPS links including other domains, checks robots.txt by pinned TLS, enforces crawl/rate/domain/depth limits, records provenance in the existing local SQLite brain, and exposes Stop plus progress. Read `docs/SPECIALIST_STUDY.md`, `docs/PROJECT_STATE.md` and PR #24. This is **not** indexing all of the Internet, external search API, semantic expertise, Foundation Brain gradient training or a completed release. Main Python, Windows standalone EXE and publishing CI succeeded; release `v0.6.0-main.57822280` targets the verified merged SHA and includes the new specialist tab. No real-site crawler success or semantic expertise has been independently benchmarked. Keep existing public author credit first name only.
 
 ## Current verified foundation
 

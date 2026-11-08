@@ -90,7 +90,23 @@ Initial PR head `f11a78bf6e57b227fbcce29f2c784632e719c437` failed Linux research
 
 Research branch `research/full-holdout-evaluation-20261108` replaces the first-window-only Foundation training metric with a deterministic token-weighted evaluation across all non-overlapping windows in the 10% chronological holdout. Window-boundary transitions are excluded; scored transition and window counts are reported. Real PyTorch regression tests cover weighting, short holdout and non-finite losses. Implementation commits: `9c7d5241ed3a7ec018e10f832e9ace7424ab9289`, `9896530d011e8ecebe84cb72d57c0d2ea6a2e444`. **Pending CI**: Python 3.11–3.13, dedicated Foundation CPU, Windows EXE; do not merge until green. No CUDA benchmark, independent language corpus or semantic understanding demonstrated. This evaluation still uses one adjacent split and is not prospective OOD evidence.
 
-## 2026-11-08 — CI coverage correction (unmerged candidate)
+## 2026-11-08 — Candidate PR #24 (unverified)
 
-- Branch `ci/foundation-baseline-gates-20261108`, initial commit `e403afb3fd8d2607d3aa171a6dadd28aee02c357`: dedicated real-PyTorch CPU workflow now triggers for changes to `neurogenesis/foundation_baselines.py` and `tests/test_foundation_baselines.py` on pull requests as well as pushes, and explicitly executes the independent baseline tests. Previously the pull-request path filter omitted both files, and the dedicated command only selected `test_foundation.py` (the full regression suite still included baselines). This is a CI verification improvement, not a new learning capability.
-- No GPU benchmark or new language understanding measured. Await Python 3.11–3.13, dedicated PyTorch CPU and Windows EXE checks before merge. No release or training claims.
+Added opt-in specialist Wikipedia source study controller, tests, native Tk tab and GUI-thread SQLite persistence. Head before documentation: `44e579c71335f6ae02d568aaba99244bb81280dd`. No model-weight training or broad web crawling. Do not merge until Python 3.11–3.13, privacy and Windows EXE checks are green.
+
+## 2026-11-08 — Autonomous public-web specialist discovery candidate, PR #24
+
+Expanded specialist session beyond Wikipedia seeds: validate and extract up to 256 HTTPS links per HTML page, follow topical links across up to 50 public domains with robots.txt and crawl-delay, sequential rate/crawl budgets, operator-adjustable 1–500 page attempts, UI source discovery/progress and existing local SQLite provenance. A separate explicit 512 KiB crawl page cap leaves the manual 128 KiB default unchanged. Offline tests cover robot exclusions/redirects, SSRF URL rejection, cross-domain behavior and bounded HTML extraction. Source milestone `8c845dd60d68691bbc92393bb4e0863e2db3f6ea`; documentation commit `f3cb741ff2af3bc096f6cb4893dce858386ac098`. This is not whole-Internet indexing, forum completeness, semantic expertise or Foundation Brain weight training. At documentation time final Python/Windows tests are not yet verified. Keep PR draft until all gates green.
+
+## 2026-11-08 — PR #24 merged and release verified
+
+Feature head `c90126532de97189d3717b4adabb25d71a0b55fe` passed Python 3.11–3.13, privacy and Windows standalone EXE smoke before merge. PR #24 squash-merged into main `578222800c5adc73c0a756352b5bef405535252a`. Main Python run `42463459779`, Windows EXE run `42463459963` and release publish run `42463541158` completed successfully. Immutable release `v0.6.0-main.57822280` contains `NeuroGenesis.exe` and checksum; EXE digest SHA-256 `20708872a4c2b35484da100a88794aaef321e329d469524eb63162b4638b4731`. Tests validate mocked public-web traversal and EXE packaging, NOT exhaustive web coverage, real-site success, or semantic expertise.
+
+## 2026-11-08 — Original vision versus deliverables audit (documentation)
+
+Measured development status against `docs/VISION.md` using repository `main` `db0b2210bb97c422d83d27f963725d3d6941c067` and the public release `v0.6.0-main.db0b2210`. Wrote `docs/DELIVERY_AUDIT.md` with a code-grounded feature matrix, critical missing web→knowledge→Foundation→conversation integration, missing UI quality/observability, no verified GPU performance/distributed execution, and staged measurable acceptance for v1. Audit did not run an independent user-facing Windows GUI session or real public web crawl; GitHub CI evidence is not substituted for those tests. No Python implementation change in this documentation PR.
+
+## 2026-11-08 — PR #23 current-main reconciliation candidate
+
+- Reconciled old PR #23 with current main `542ba8272ceb4c0c13871b9f9fd954c23d4c4cdb` while retaining prior PR changes. Added a missing Windows-EXE workflow PR trigger for `.github/workflows/foundation-cpu.yml` so this CI-only change can receive its previously absent Windows regression/packaging gate. The dedicated real-PyTorch job now includes held-out baseline tests on relevant file changes.
+- No runtime code, SQLite schema, neural training or release change. Pending fresh CI and explicit merge decision; do not count old green checks as validating the updated head.
