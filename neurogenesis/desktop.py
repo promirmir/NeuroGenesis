@@ -459,11 +459,16 @@ def launch(db_path: Path) -> int:
         model_stop=model_chat_tab.ng_model_stop,
         choose_training_folder=training_tab.ng_choose_folder,
         allowed_web=lambda: web_enabled.get(),
+        study_topic=study_tab.ng_study_topic,
+        study_status=study_tab.ng_study_state,
+        study_autopilot=study_tab.ng_study_autopilot,
+        study_start=study_tab.ng_study_start,
+        study_stop=study_tab.ng_study_stop,
     )
     targets["operations"] = operations_tab
     # Dedicated specialist study tab, off until explicit HTTPS consent.
     from .study_panel import install_study_panel
-    install_study_panel(tabs, memory, web_enabled)
+    study_tab = install_study_panel(tabs, memory, web_enabled)
     ttk.Checkbutton(web_tab, text="Włącz odczyt HTTPS (domyślnie WYŁĄCZONY)",
                     variable=web_enabled).pack(anchor="w", padx=24, pady=3)
     ttk.Checkbutton(web_tab, text="Sprawdzaj zatwierdzony adres co 5 minut (opcjonalnie)",
