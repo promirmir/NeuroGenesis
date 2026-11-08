@@ -1,97 +1,59 @@
-## Aktualny stan Mission Control — kod scalony i zweryfikowany
+# NeuroGenesis — Mission Control
 
-Nowy profesjonalny interfejs Qt jest **scalony w `main`** (PR #48, commit `caa54479`). Jest to prawdziwie działający ekran ze stanem LIF, synapsami, rzeczywistymi impulsami i historią zdarzeń. Testy Qt Windows/Ubuntu oraz Windows EXE przeszły, a wygląd sprawdzono na faktycznych zrzutach z uruchomionej aplikacji. W katalogu repozytorium uruchom `Launch-NeuroGenesis-Mission-Control.cmd` (wymaga Python 3.12; pierwsze pobranie PySide6 wymaga zgody). **Publiczny, samodzielny plik `NeuroGenesis.exe` nadal uruchamia Tkinter**, a Qt DLL nie są w nim zawarte. Uruchamianie Qt z kodu źródłowego nie oznacza gotowej instalacji bez Pythona. Szczegóły: [Mission Control](docs/MISSION_CONTROL.md).
+**research prototype v0.8.0.**  
+**Publiczne autorstwo: Miron przy pomocy AI.**
 
-## Command Center / Mission Control — aktywny rozwój interfejsu
+NeuroGenesis to lokalny projekt badawczy AI: rzeczywista mała sieć neuronowa LIF ze strukturalną plastycznością, prywatna trwała baza SQLite, kontrolowane zdobywanie informacji ze źródeł HTTPS, ekstrakcyjne cytowanie oraz odrębny eksperymentalny model Foundation Brain trenowany w PyTorch. **System nie jest AGI, świadomością, modelem ludzkiego mózgu ani niezależnie zweryfikowanym systemem rozumienia języka naturalnego.**
 
-Zaimplementowano w opcjonalnym Qt nowe profesjonalne centrum wizualizacji: duża prawdziwa sieć LIF na ekranie głównym, mierzone impulsy, kroki mózgu, status pamięci, Internetu i treningu. Nie jest to makieta ani symulacja aktywności. Dla Windows dodano `Launch-NeuroGenesis-Mission-Control.cmd` w pełnym katalogu repozytorium; wymaga Python 3.12 i **pytania o zgodę** przed pierwszym pobraniem PySide6. Publiczny jednoplikowy `NeuroGenesis.exe` nadal pozostaje Tk, do czasu prawnej i technicznej walidacji dystrybucji bibliotek Qt. [Pełny opis i kryteria wydania](docs/MISSION_CONTROL.md). Nie deklarujemy AGI, nieweryfikowanego GPU ani rozumienia neuronowego.
+## Windows x64 — aktualna aplikacja bez Pythona
 
-## Aktualne zweryfikowane wydanie z graficznym mózgiem (8 listopada 2026)
+[**Pobierz aktualny NeuroGenesis.exe**](https://github.com/promirmir/NeuroGenesis/releases/latest/download/NeuroGenesis.exe) · [Suma SHA-256](https://github.com/promirmir/NeuroGenesis/releases/latest/download/NeuroGenesis.exe.sha256) · [Wszystkie wydania](https://github.com/promirmir/NeuroGenesis/releases)
 
-**NeuroGenesis v0.7.0-main.7cb03e3a** zawiera w oficjalnym EXE Windows nową interaktywną 2D mapę rzeczywistej sieci LIF z neuronami, synapsami, wagami oraz ostatnimi impulsami, zamiast słupków. [Pobierz](https://github.com/promirmir/NeuroGenesis/releases/tag/v0.7.0-main.7cb03e3a) · SHA-256 `089f2c5f14f1a792ea22c1874c59ab4bfd71bbb1b97175a0067c883e036705e3`. Wydanie i testy Windows/Qt/Python zweryfikowane. Przy braku nowych kroków aktywność nie jest animowana. Bardziej zaawansowany graficzny Qt Command Center jest dostępny w kodzie, lecz nadal nie jest publicznie dystrybuowany z powodu niesfinalizowanej zgodności licencyjnej. To nie jest obraz całego modelu Foundation ani ludzkiego mózgu.
+**Od v0.8.0 domyślnie wyświetlany jest faktyczny MISSION CONTROL.** Nie jest to stary pusty ekran rozmowy ze zdjęcia zgłoszonego przez użytkownika. Uruchamiany od razu dashboard w samodzielnym, spakowanym Windows EXE ma ciemny, futurystyczny układ z:
 
-# NeuroGenesis
+- centralną interaktywną mapą **faktycznie zapisanej w SQLite sieci LIF** (neurony, rzeczywiste synapsy, wagi, impulsy);
+- czterema rzeczywistymi kaflami: kroki LIF, neurony, synapsy i dokumenty;
+- mierzoną historią ostatniej maski spike *tylko po nowym zapisanym kroku* i dziennikiem faktycznie zaobserwowanych zmian;
+- stanami modułów: uprawnienia HTTPS, lokalna wiedza, stan LIF i oddzielny Foundation Brain;
+- przyciskami przejścia do zachowanych modułów Rozmowa, Internet, Mózg, Specjalizacja i Kopia pamięci.
 
-**Lokalny system badawczy inspirowany neurobiologią — v0.7.0**  
-**Autorstwo publiczne: Miron przy pomocy AI**
+Przy braku nowych kroków graf nie udaje pracy neuronów. Przewijanie myszą przybliża wykres. Wartości nie są umownymi procentami inteligencji. Sam fakt odrysowania połączeń nie jest dowodem powstania jakościowo nowej AI.
 
-Research status: **research prototype v0.7.0.** Stabilizacja lokalnego narzędzia badawczego; brak potwierdzonej inteligencji ogólnej.
+**Silnik interfejsu publicznego EXE nadal korzysta z systemowego Tkintera**, dzięki czemu program działa bez instalowania biblioteki Qt i nie rozpowszechnia Qt DLL. Wygląd oraz domyślny ekran zostały jednak rzeczywiście przebudowane. Nie myl tego wydania z bardziej rozbudowanym, opcjonalnym interfejsem PySide6.
 
-NeuroGenesis rozwija eksperymentalną, mierzalną architekturę sztucznej inteligencji: plastyczne sieci neuronowe, trwałą prywatną pamięć, kontrolowane zdobywanie wiedzy z publicznych źródeł, niezależne eksperymenty PyTorch oraz transparentne oceny jakości. **To nie jest AGI, cyfrowa świadomość ani zweryfikowana symulacja ludzkiego mózgu.** Wygenerowane przez Foundation Brain bajty nie stanowią jeszcze kompetentnej rozmowy.
+### Pamięć i bezpieczeństwo
 
-## Windows — aplikacja bez instalowania Pythona
+Prywatna baza Windows standardowo znajduje się pod `%LOCALAPPDATA%\NeuroGenesis\experiences.sqlite3` i nie jest usuwana podczas aktualizacji aplikacji. Kopie tworzy się ręcznie w zakładce **Kopia pamięci**, za pomocą spójnego transakcyjnego backupu SQLite i weryfikacji SHA-256. Przywracanie wyłącznie do **nowego pliku**. Backup nie jest szyfrowany; trzymaj go w prywatnym miejscu. [Procedura](docs/MEMORY_RECOVERY.md).
 
-[**Pobierz najnowszy NeuroGenesis.exe**](https://github.com/promirmir/NeuroGenesis/releases/latest/download/NeuroGenesis.exe) · [Suma SHA-256](https://github.com/promirmir/NeuroGenesis/releases/latest/download/NeuroGenesis.exe.sha256) · [Wszystkie wydania](https://github.com/promirmir/NeuroGenesis/releases)
+Sieć pozostaje wyłączona na starcie. Pozyskiwanie informacji z publicznych stron wymaga jawnej zgody użytkownika i jest ograniczone. Strony są traktowane jako niezaufane dane, a publiczne udostępnienie nie jest zgodą na trening modelu.
 
-**Wydawany EXE to sprawdzona aplikacja Windows oparta na Tkinter**, nie opcjonalne Command Center Qt. Przed każdą publikacją GitHub Actions uruchamia testy Windows i właściwy spakowany EXE z prawdziwą testową bazą SQLite, wyznacza SHA-256 i wiąże wydanie z dokładnym SHA kodu. Program pozostaje niepodpisany cyfrowo. Nie uruchamia internetu bez zgody.
+## Rozbudowane NeuroGenesis Command Center — opcjonalne Qt
 
-### Co działa w opublikowanym EXE
+Repozytorium zawiera też drugi, działający interfejs napisany w **PySide6 / Qt**, z bardziej rozbudowaną nawigacją, przestrzenną panoramą sieci LIF, podglądem konkretnego neuronu, wykresem rzeczywistych strat treningu i panelami badania, pamięci, rozmowy oraz diagnostyki.
 
-| Obszar | Rzeczywista funkcjonalność |
+Aby uruchomić go na Windows **ze źródeł**, pobierz całe repozytorium, zainstaluj Python 3.12 x64 i użyj `Launch-NeuroGenesis-Mission-Control.cmd`. Skrypt tworzy lokalne środowisko oraz pyta o zgodę przed pierwszym pobraniem PySide6. **To nie jest plik EXE Qt.** Spakowany techniczny Qt na Windows przechodzi testy, ale nie jest publicznie rozpowszechniany, dopóki nie zostaną zweryfikowane wszystkie obowiązki licencyjne LGPLv3. [Dokumentacja Qt](docs/MISSION_CONTROL.md).
+
+## Co faktycznie działa, a czego jeszcze nie dowiedziono
+
+| Moduł | Potwierdzone funkcje i ograniczenia |
 |---|---|
-| Rozmowa | Ręcznie nauczone odpowiedzi oraz dosłowne cytaty ze źródeł; odmowa, gdy brak wystarczającego fragmentu; **brak zweryfikowanego rozumowania semantycznego** |
-| Pamięć | Trwała prywatna SQLite: stan małej sieci neuronowej, doświadczenia, odpowiedzi, wersje stron i uprawnienia |
-| Internet | Kontrolowany odczyt publicznych stron HTTPS, osobny panel badania dziedziny, ograniczenia zasięgu/tempa/robots.txt, zgoda wyłączona domyślnie |
-| Monitor | Prawdziwe kroki mózgu, synapsy, neurony i ślady aktywności sieci LIF — nie wskaźniki świadomości |
-| Kopie | **v0.7.0:** ręczna spójna migawka SQLite, kontrola uszkodzeń, SHA-256 oraz bezpieczne odtwarzanie do NOWEGO pliku (narzędzie CLI) |
-| Aktualizacja | Wersjonowane EXE i pliki SHA-256 na GitHub; dane pozostają w prywatnym katalogu użytkownika |
+| Neurony LIF | Rzeczywiste kroki, impulsy, wagi, tworzenie neuronów i usuwanie połączeń; **to mała sieć eksperymentalna** |
+| Rozmowa | Jawnie nauczone odpowiedzi, dosłowne fragmenty i URL, zachowanie kontekstu w Qt w bieżącej sesji; **bez potwierdzonego rozumowania semantycznego** |
+| Internet | Kontrolowane, limitowane źródła i prywatna wersjonowana wiedza; nie oznacza automatycznego trenowania |
+| Foundation Brain | Osobny prawdziwy eksperyment PyTorch (predykcja bajtów), checkpointy, CPU i opcjonalne CUDA; **nie jest jeszcze silnikiem rozmowy** |
+| Wykresy | Dane zapisane w lokalnym mózgu / prawdziwe zdarzenia treningowe, nigdy sztuczne pomiary świadomości |
+| Jakość | Testy Python 3.11–3.13, Windows frozen EXE, prywatności, QA i opcjonalnego Qt; niezależna rzeczywista QA i fizyczny GPU pozostają niezweryfikowane |
 
-Pamięć Windows znajduje się standardowo w `%LOCALAPPDATA%\NeuroGenesis\experiences.sqlite3`. Plik i kopie **nie są szyfrowane** — chroń je jak prywatne dokumenty. Nic nie jest wysyłane do GitHub z pamięci użytkownika.
+W szczególności system może błędnie cytować dokument przy pytaniu z fałszywą przesłanką. Syntetyczne testy BM25 również wykazały tę klasę błędu. Nie utożsamiaj cytowania z prawdziwością i nie przyjmuj, że zwiększająca się liczba neuronów lub pobranych dokumentów dowodzi wzrostu inteligencji.
 
-## Command Center — nowoczesna aplikacja Qt
+## Dokumentacja, rozwój i odpowiedzialne wydania
 
-Opcjonalny, prawdziwy interfejs PySide6 oferuje siedem paneli: przegląd, rozmowę ze źródłami i kontekstem sesji, badanie domeny, monitor mózgu, sterowanie osobnym treningiem Foundation Brain, bazę wiedzy i ustawienia (w tym nowe kopie pamięci). Jest już technicznie sprawdzany na Windows i Ubuntu; oddzielny Qt EXE przechodzi testy pakowania, ale **nie jest publicznie dystrybuowany** do czasu pełnej weryfikacji obowiązków LGPLv3, informacji licencyjnych i bibliotek.
+- [Stan projektu i aktualne ograniczenia](docs/PROJECT_STATE.md)
+- [Dziennik zmian](docs/DEVELOPMENT_LOG.md)
+- [Architektura i wymogi Mission Control](docs/MISSION_CONTROL.md)
+- [Foundation Brain](docs/FOUNDATION_BRAIN.md)
+- [QA i metody odniesienia](docs/QA_ACCEPTANCE.md)
+- [Bezpieczeństwo](docs/SECURITY.md)
+- [Testy CI](https://github.com/promirmir/NeuroGenesis/actions)
 
-Uruchomienie ze źródeł w Pythonie 3.12:
-
-```powershell
-py -3.12 -m pip install -e ".[command-center]"
-py -3.12 -m neurogenesis.command_center
-```
-
-Opcjonalny rzeczywisty lokalny trening PyTorch wymaga osobnego dodatku:
-
-```powershell
-py -3.12 -m pip install -e ".[foundation]"
-```
-
-Instrukcje: [Command Center](docs/COMMAND_CENTER.md) · [Foundation Brain](docs/FOUNDATION_BRAIN.md) · [Kontrolowany trening](docs/KNOWLEDGE_TRAIN.md).
-
-## Zabezpieczanie i odzyskiwanie prywatnej pamięci
-
-W EXE otwórz zakładkę **Kopia pamięci**, wybierz nową nazwę pliku i sprawdź podaną sumę SHA-256. W Qt znajdziesz analogiczne funkcje w Ustawieniach. Obie działają poza głównym wątkiem interfejsu i korzystają z transakcyjnej kopii SQLite.
-
-Do weryfikacji lub odtworzenia w nowej lokalizacji przez Python:
-
-```powershell
-py -3.12 -m neurogenesis.recovery --verify "C:\Kopie\NeuroGenesis-backup.sqlite3"
-py -3.12 -m neurogenesis.recovery --restore "C:\Kopie\NeuroGenesis-backup.sqlite3" --output "C:\Kopie\NeuroGenesis-odtworzona.sqlite3" --confirm-restore-new
-```
-
-**Nie nadpisuj ręcznie aktywnej bazy.** Zobacz [instrukcję kopii i odtwarzania](docs/MEMORY_RECOVERY.md). Zewnętrzne checkpointy modelu `.pt` muszą być zabezpieczane osobno.
-
-## Jakość i rzeczywiste ograniczenia
-
-- Cytaty zawierają prawdziwy zapisany tekst i źródło, ale **nie dowodzą prawdziwości cytowanego twierdzenia**. Syntetyczne testy wykryły fałszywe cytowania w niektórych pytaniach z nieuprawnioną przesłanką.
-- Nie istnieją jeszcze wystarczające niezależne dane wskazujące, że własny Foundation Brain rozumie kontekst rozmowy. Jego PyTorch GRU uczy się przewidywać kolejne bajty; w dotychczasowym małym teście prosty model Markowa był lepszy. Wagi, checkpointy i testy retencji są prawdziwe, ale pozostają eksperymentalne.
-- Mechanizmy bezpieczeństwa nie dają uprawnienia do trenowania na dowolnej stronie. Każda wersja źródła wymaga jawnego potwierdzenia praw; autonomiczne badanie internetu jest limitowane i wyłączone na starcie.
-- Brak potwierdzonego testu CUDA na fizycznym GPU, niezależnego audytu bezpieczeństwa, przewagi w naturalnym QA, gotowego przetwarzania wielokomputerowego czy oficjalnego pakietu Qt.
-- Nie uruchamiaj eksperymentalnych checkpointów z niezaufanych źródeł. Nie przechowuj haseł ani danych wrażliwych w cytatach lub niezaszyfrowanych kopiach.
-
-Pomiar i otwarte ograniczenia: [Audyt dostawy](docs/DELIVERY_AUDIT.md) · [QA z niepewnością statystyczną](docs/QA_ACCEPTANCE.md) · [BM25 kontra wyszukiwanie bieżące](docs/BM25_BASELINE.md) · [Retencja modelu](docs/RETENTION_GATE.md) · [Model zagrożeń](docs/SECURITY.md).
-
-## Niezawodność i rozwój
-
-Kod jest testowany w Pythonie **3.11, 3.12 i 3.13**. Oddzielne kontrole uruchamiają rzeczywisty PyTorch CPU, opcjonalny Qt Windows/Ubuntu, Windows Tk EXE, kontrolę prywatności kodu i pamięć SQLite po restarcie. Aktualny wynik i SHA są dostępne bezpośrednio w [GitHub Actions](https://github.com/promirmir/NeuroGenesis/actions).
-
-Podstawowe informacje do bezstratnej kontynuacji: [PROJECT_STATE.md](docs/PROJECT_STATE.md), [DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md), [AGENTS.md](AGENTS.md).
-
-**Status produktu:** stabilizowane narzędzie badawcze, nie ukończona sztuczna inteligencja ogólna. Najważniejszą otwartą kwestią pozostaje niezależnie potwierdzona jakość rzeczywistego rozumowania i odpowiedzi.
-
-## Podgląd pracy mózgu — nowy Qt Connectome (kandydat)
-
-Na podstawie prawdziwych, odczytanych z prywatnej bazy neuronów, ich potencjałów i spike'ów oraz zapisanych połączeń i wag nowy interaktywny widok Qt rysuje futurystyczną mapę sieci. Układ nie tworzy losowych impulsów, a aktualizacje pokazują tylko rzeczywiste kroki. W panelu treningu wykres loss powstaje z prawdziwych zdarzeń PyTorch. Dotychczasowy pobierany Windows EXE pozostaje Tk; nowe Qt oczekuje na testy i prawnie zgodny pakiet. Szczegóły: [Command Center](docs/COMMAND_CENTER.md).
-
-### Wydawana aplikacja Windows: Connectome / Live (PR kandydat)
-
-Również domyślny Windows Tk EXE otrzymał w kodzie dużą, ciemną mapę prawdziwych neuronów LIF oraz istniejących połączeń, rzeczywistych wag i impulsów. Bez nowych kroków stan pozostaje nieruchomy. Ten widok oraz bardziej zaawansowany Qt czekają na końcowe testy i nową publikację; dotychczasowy plik EXE v0.7.0 nie zmieni się samoczynnie. Qt nadal wymaga weryfikacji warunków dystrybucji. Ograniczenia: nie jest to mózg człowieka ani graf wag Foundation Brain.
+Wydanie Windows jest publikowane tylko z dokładnie zweryfikowanego commita `main` i zawiera plik kontrolny SHA-256. **v0.8.0 jest etapem doprowadzania istniejącej aplikacji do wyższej jakości użytkowej, a nie deklaracją osiągnięcia AGI ani ukończenia wszystkich celów badawczych.**
