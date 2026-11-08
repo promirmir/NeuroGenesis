@@ -5,6 +5,7 @@ model, verify factual claims, interpret instructions, or contact the network.
 """
 from __future__ import annotations
 
+from datetime import datetime, timezone
 import re
 import sqlite3
 import unicodedata
@@ -93,6 +94,12 @@ def ensure_schema(con: sqlite3.Connection) -> None:
     con.execute("CREATE INDEX IF NOT EXISTS ix_knowledge_url ON knowledge_sources(url)")
     con.execute("CREATE INDEX IF NOT EXISTS ix_knowledge_passage_source ON knowledge_passages(source_id)")
     con.execute("CREATE INDEX IF NOT EXISTS ix_knowledge_term ON knowledge_terms(term)")
+    con.execute("""CREATE TABLE IF NOT EXISTS knowledge_rights_audit (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        source_id INTEGER NOT NULL,
+        changed_utc TEXT NOT NULL,
+        status TEXT NOT NULL
+    )""")
 
 
 def insert_source(con: sqlite3.Connection, *, event_id: int, url: str,
@@ -126,6 +133,7 @@ def remove_event(con: sqlite3.Connection, event_id: int) -> None:
                    (SELECT id FROM knowledge_passages WHERE source_id=?)""",
                 (source_id,))
     con.execute("DELETE FROM knowledge_passages WHERE source_id=?", (source_id,))
+    con.execute("DELETE FROM knowledge_rights_audit WHERE source_id=?", (source_id,))
     con.execute("DELETE FROM knowledge_sources WHERE id=?", (source_id,))
 
 
@@ -204,3 +212,51 @@ def source_passages(con: sqlite3.Connection, source_id: int) -> list[dict[str, A
         "JOIN knowledge_sources s ON s.id=p.source_id "
         "WHERE s.id=? ORDER BY p.ordinal LIMIT ?", (source_id, MAX_CHUNKS_PER_SOURCE)).fetchall()
     return [{"ordinal": ordinal, "text": body} for ordinal, body in rows]
+
+
+MAX_APPROVED_TRAINING_SOURCES = 64
+TRAINING_APPROVED = "operator-approved-local-training"
+
+
+def set_training_rights(con: sqlite3.Connection, source_id: int,
+                        approved: bool) -> dict[str, Any]:
+    """Record explicit operator assertion; not proof of the source's license."""
+    if type(source_id) is not int or source_id < 1 or type(approved) is not bool:
+        raise ValueError("explicit source identifier and approval boolean required")
+    row = con.execute(
+        "SELECT url,sha256 FROM knowledge_sources WHERE id=?", (source_id,)).fetchone()
+    if row is None:
+        raise ValueError("source revision not found")
+    status = TRAINING_APPROVED if approved else "training-denied"
+    con.execute("UPDATE knowledge_sources SET rights_status=? WHERE id=?",
+                (status, source_id))
+    con.execute(
+        "INSERT INTO knowledge_rights_audit(source_id,changed_utc,status) VALUES(?,?,?)",
+        (source_id, datetime.now(timezone.utc).isoformat(), status))
+    return {"source_id": source_id, "url": row[0], "sha256": row[1],
+            "rights_status": status}
+
+
+def approved_training_documents(con: sqlite3.Connection) -> list[dict[str, Any]]:
+    """Only latest explicitly approved source revisions, preserving doc splits.
+
+    All text remains local. No network calls and no automatic approvals.
+    """
+    rows = con.execute(
+        "SELECT s.id,s.url,s.sha256 FROM knowledge_sources s "
+        "WHERE s.rights_status=? "
+        "AND s.id=(SELECT MAX(n.id) FROM knowledge_sources n WHERE n.url=s.url) "
+        "ORDER BY s.url,s.id LIMIT ?",
+        (TRAINING_APPROVED, MAX_APPROVED_TRAINING_SOURCES + 1)).fetchall()
+    if len(rows) > MAX_APPROVED_TRAINING_SOURCES:
+        raise ValueError("too many approved documents for bounded training")
+    documents = []
+    for key, url, sha in rows:
+        parts = con.execute(
+            "SELECT body FROM knowledge_passages WHERE source_id=? "
+            "ORDER BY ordinal LIMIT ?", (key, MAX_CHUNKS_PER_SOURCE)).fetchall()
+        if not parts:
+            raise ValueError("approved knowledge source has no passages")
+        text = "\n".join(part[0] for part in parts)
+        documents.append({"source_id": key, "url": url, "sha256": sha, "text": text})
+    return documents
