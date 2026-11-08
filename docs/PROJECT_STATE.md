@@ -1,3 +1,9 @@
+## 2026-11-08 — conservative source-grounded short follow-ups (PR candidate)
+
+- Current `main` at feature start `0bcfb6a158c57465b0b39dda26e4ed3ca20e22bd`, PR #36 **merged** with Python 3.11–3.13, real PyTorch CPU, privacy, Qt Windows/Ubuntu and frozen Tk Windows EXE checks green. Its two-host source comparison warns only about **possible** text/numeric discrepancies; factual accuracy and publisher independence remain unverified.
+- Branch `feat/session-grounded-followups-20261108` adds **session-only** (memory-only, not SQLite) previous sourced question and URL in `CommandService`. Explicit short follow-up question beginning `A/I/Or az ...?` is re-evaluated using last topic and only the exact prior source URL, requiring a new substantive term actually present in a latest-version excerpt. No topic/no relevant new evidence => normal abstention. `Clear context` in Qt removes the volatile topic without deleting private SQLite records; exact manually taught answer continues to win.
+- Tests cover actual SQLite after restart, source version replacement, cross-host refusal, manual teaching precedence, no private raw question storage, explicit invalid queries, and Qt session state. Tk `process_message` defaults unchanged. **Candidate pending full Python 3.11–3.13, privacy, actual Qt Windows+Ubuntu, and frozen legacy Windows EXE.** No LLM coreference or semantic reasoning asserted.
+
 ## 2026-11-08 — multi-source evidence review / discrepancy flags (PR candidate)
 
 - Starting verified main `200a78cbe7e60777a9fc6a368268c6a055b74c4d`, PR #35 was merged; source-based chat remains primary and can show one verbatim excerpt; independent natural-language model quality is unverified.
