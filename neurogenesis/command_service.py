@@ -118,6 +118,11 @@ class CommandService:
             memory_maintenance_running=(maintenance_thread is not None
                                         and maintenance_thread.is_alive()))
 
+    def neural_connectome(self):
+        """Return bounded actual LIF neuron/edge activity, never simulated."""
+        from .neural_telemetry import snapshot_neural_telemetry
+        return snapshot_neural_telemetry(self.memory.brain())
+
     def ask(self, question: str) -> dict[str, Any]:
         from .dialogue_context import expand_followup
         with self._state_lock:
