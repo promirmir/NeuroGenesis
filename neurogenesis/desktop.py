@@ -422,15 +422,12 @@ def launch(db_path: Path) -> int:
             st = memory.status()
             bs = st["brain"]
             status_text.set(
-                f"Kroki: {bs['steps']}\nNeurony: {bs['neurons']}\nSynapsy: {bs['synapses']}\n"
-                f"Wzorce sensoryczne: {bs['stored_patterns']}\n"
-                f"Utworzone neurony: {bs['total_grown']}\nUsunięte synapsy: {bs['total_pruned']}\n"
-                f"Zapisane doświadczenia: {st['observations']}\n"
-                f"Doświadczenia z pełnym tekstem: {st['records_with_raw_text']}\n"
-                f"Ręcznie nauczone odpowiedzi: {st['taught_responses']}\n"
-                f"Źródła internetowe: {st['web_observations']}\n"
-                f"Dokumenty wiedzy: {st['knowledge']['documents']}\n"
-                f"Fragmenty wiedzy: {st['knowledge']['passages']}"
+                f"OBLICZENIA LIF {bs['steps']} kroków   ·   "
+                f"NEURONY {bs['neurons']}   ·   SYNAPSY {bs['synapses']}   ·   "
+                f"PAMIĘĆ {st['observations']} doświadczeń\n"
+                f"ŹRÓDŁA {st['knowledge']['documents']} dokumentów   ·   "
+                f"{st['knowledge']['passages']} fragmentów   ·   "
+                f"RĘCZNA NAUKA {st['taught_responses']} odpowiedzi"
             )
             health = supervisor.status()
             autonomy_info.set(
@@ -456,7 +453,8 @@ def launch(db_path: Path) -> int:
                 dimensions = (canvas.winfo_width(), canvas.winfo_height())
                 changed = snapshot.step != live["step"]
                 if changed:
-                    live["seen"] = clock
+                    # First paint is historical state, never flash old spikes.
+                    live["seen"] = clock if live["step"] is not None else -1e9
                     live["step"] = snapshot.step
                     live["frame"] = snapshot
                 age = clock - live["seen"]
@@ -650,6 +648,8 @@ def launch(db_path: Path) -> int:
     message.bind("<Control-Return>", lambda _event: (send(), "break")[1])
     ttk.Label(chat_tab, text="Ctrl+Enter — zapytaj • przycisk Naucz: jawny zapis pary pytanie/odpowiedź w prywatnej bazie",
               wraplength=770).pack(anchor="w", padx=12, pady=(0, 8))
+    # Open on the real network scene: users see the actual topology immediately.
+    tabs.select(brain_tab)
     refresh()
 
     def on_close() -> None:
