@@ -7,6 +7,7 @@ from __future__ import annotations
 from contextlib import closing
 from datetime import datetime, timezone
 import hashlib
+import json
 import math
 from pathlib import Path
 import sqlite3
@@ -109,6 +110,13 @@ class ApprovedKnowledgeRightsTests(unittest.TestCase):
             on_progress=lambda step, metrics: progress.append((step, metrics["loss"])))
         self.assertEqual([p[0] for p in progress], [1, 2, 3])
         self.assertTrue(all(math.isfinite(p[1]) for p in progress))
+        # Publish only synthetic, non-personal CI fixture metrics, never
+        # source text or a private operator dataset.
+        keys = ("heldout_next_byte_ce_before", "heldout_next_byte_ce_after",
+                "heldout_markov_ce_nats", "heldout_improved", "beats_markov_baseline",
+                "train_steps_per_second", "device", "training_steps")
+        print("KNOWLEDGE_TRAIN_CPU_METRICS=" +
+              json.dumps({k: report[k] for k in keys}, sort_keys=True), flush=True)
         self.assertEqual(report["training_steps"], 3)
         self.assertEqual(report["device"], "cpu")
         self.assertEqual(report["trained_documents"], 2)
