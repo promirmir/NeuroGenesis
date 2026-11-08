@@ -7,6 +7,8 @@ on:
       - 'neurogenesis/foundation.py'
       - 'neurogenesis/foundation_train.py'
       - 'tests/test_foundation.py'
+      - 'neurogenesis/foundation_baselines.py'
+      - 'tests/test_foundation_baselines.py'
       - 'pyproject.toml'
       - '.github/workflows/foundation-cpu.yml'
   pull_request:
