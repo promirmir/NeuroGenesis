@@ -38,9 +38,9 @@ def load_latest_passages(con: sqlite3.Connection) -> list[tuple[str, str, tuple[
     result = []
     for body, url in rows:
         # Preserve document term frequency: _terms() intentionally deduplicates\n        # for retrieval but true BM25 uses repeated term counts.\n        terms = tuple(w for w in TOKEN.findall(\n            unicodedata.normalize('NFKC', body).casefold()) if w not in STOP)
-        if not terms or len(terms) > MAX_DOCUMENT_TOKENS:
+        if not tokens or len(tokens) > MAX_DOCUMENT_TOKENS:
             continue
-        result.append((body, url, terms))
+        result.append((body, url, tokens))
     return result
 
 
