@@ -169,6 +169,53 @@ def self_test() -> int:
     return 0
 
 
+def ui_self_test() -> int:
+    """Run actual default Tk Mission Control widgets on isolated SQLite.
+
+    Distinct from the headless brain smoke: this verifies that a FROZEN
+    public Windows EXE contains and can initialize the new default GUI.
+    """
+    import tkinter as tk
+    from tkinter import ttk
+    from .tk_mission import MissionDashboard
+
+    with tempfile.TemporaryDirectory(prefix="ng-public-tk-ui-check-") as folder:
+        memory = ExperienceMemory(Path(folder) / "synthetic-private.sqlite3")
+        root = tk.Tk()
+        root.withdraw()
+        try:
+            root.geometry("1350x830")
+            tabs = ttk.Notebook(root)
+            tabs.pack(fill="both", expand=True)
+            dashboard = ttk.Frame(tabs)
+            tabs.add(dashboard, text="CENTRUM")
+            mission = MissionDashboard(
+                dashboard, memory, navigate=lambda _where: None,
+                network_enabled=lambda: False)
+            tabs.select(dashboard)
+            root.update_idletasks()
+            if mission.refresh() or mission.metrics["steps"].get() != "0":
+                return 31
+            before = tuple(mission._samples)
+            mission.refresh()
+            if tuple(mission._samples) != before:
+                return 32
+            result = process_message(memory, "Syntetyczny bodziec GUI")
+            if not mission.refresh():
+                return 33
+            if (mission._last is None or mission._last.step != result["brain_step"]
+                    or not mission.graph._latest
+                    or mission.graph._latest.step != result["brain_step"]):
+                return 34
+            if mission.modules["network"].get() != "WYŁĄCZONY":
+                return 35
+            if len(mission._samples) != len(before) + 1:
+                return 36
+        finally:
+            root.destroy()
+    return 0
+
+
 def launch(db_path: Path) -> int:
     """Create a native local-first window; web access is off until enabled."""
     import tkinter as tk
@@ -188,28 +235,55 @@ def launch(db_path: Path) -> int:
         return 1
 
     root = tk.Tk()
-    root.title("NeuroGenesis — cyfrowy mózg")
-    root.geometry("960x720")
-    root.minsize(720, 560)
-    root.configure(bg="#111827")
+    root.title("NeuroGenesis — Mission Control / cyfrowy mózg")
+    # The user may have a laptop, high-DPI display or constrained remote
+    # desktop. Never position a 1450x920 first-launch window off-screen.
+    available_width = max(780, root.winfo_screenwidth() - 34)
+    available_height = max(580, root.winfo_screenheight() - 92)
+    root.geometry(f"{min(1450, available_width)}x{min(920, available_height)}")
+    root.minsize(min(940, available_width), min(620, available_height))
+    root.configure(bg="#07111d")
 
     style = ttk.Style(root)
     style.theme_use("clam")
-    style.configure("TNotebook", background="#111827", borderwidth=0)
-    style.configure("TNotebook.Tab", padding=(20, 11), font=("Segoe UI", 10))
-    style.configure("TFrame", background="#111827")
-    style.configure("TLabel", background="#111827", foreground="#e5e7eb", font=("Segoe UI", 10))
-    style.configure("TCheckbutton", background="#111827", foreground="#cbd5e1")
-    style.configure("TButton", font=("Segoe UI", 10), padding=(13, 8))
+    style.configure("TNotebook", background="#07111d", borderwidth=0,
+                    lightcolor="#07111d", darkcolor="#07111d")
+    style.configure("TNotebook.Tab", padding=(21, 12), borderwidth=0,
+                    font=("Segoe UI", 10, "bold"),
+                    background="#112637", foreground="#a5c6d3",
+                    focuscolor="#112637")
+    style.map("TNotebook.Tab",
+              background=[("selected", "#135468"), ("active", "#1a4155")],
+              foreground=[("selected", "#e8ffff"), ("active", "#ffffff")],
+              expand=[("selected", (0, 0, 0, 0))])
+    style.configure("TFrame", background="#07111d")
+    style.configure("TLabel", background="#07111d", foreground="#cde9ef",
+                    font=("Segoe UI", 10))
+    style.configure("TCheckbutton", background="#07111d", foreground="#cde9ef")
+    style.map("TCheckbutton", background=[("active", "#07111d")],
+              foreground=[("active", "#ffffff")])
+    style.configure("TButton", font=("Segoe UI", 10, "bold"), padding=(14, 10),
+                    background="#164056", foreground="#e8fcff",
+                    relief="flat", borderwidth=0)
+    style.map("TButton", background=[("active", "#1c6678")],
+              foreground=[("active", "#ffffff")])
 
-    header = tk.Frame(root, bg="#111827")
-    header.pack(fill="x", padx=18, pady=(16, 8))
-    tk.Label(header, text="NeuroGenesis", bg="#111827", fg="#f8fafc",
-             font=("Segoe UI", 21, "bold")).pack(side="left")
-    tk.Label(header, text="Miron przy pomocy AI  •  LOKALNIE  •  SIEĆ TYLKO PO ZGODZIE",
-             bg="#111827", fg="#93a4bc", font=("Segoe UI", 9)).pack(side="right", padx=(10, 0))
+    header = tk.Frame(root, bg="#07111d")
+    header.pack(fill="x", padx=24, pady=(16, 10))
+    logo = tk.Frame(header, bg="#07111d")
+    logo.pack(side="left")
+    tk.Label(logo, text="NEUROGENESIS", bg="#07111d", fg="#f4fffb",
+             font=("Segoe UI", 22, "bold")).pack(anchor="w")
+    tk.Label(logo, text="MISSION CONTROL  /  LOCAL RESEARCH ENVIRONMENT",
+             bg="#07111d", fg="#53e9d5",
+             font=("Consolas", 9, "bold")).pack(anchor="w")
+    tk.Label(header, text="Miron przy pomocy AI    •    PRYWATNA PAMIĘĆ    •    HTTPS TYLKO PO ZGODZIE",
+             bg="#07111d", fg="#95b8c7", font=("Segoe UI", 9)).pack(
+                 side="right", padx=(10, 0))
     tabs = ttk.Notebook(root)
-    tabs.pack(fill="both", expand=True, padx=14, pady=(0, 14))
+    tabs.pack(fill="both", expand=True, padx=18, pady=(0, 15))
+    mission_tab = ttk.Frame(tabs)
+    tabs.add(mission_tab, text="  CENTRUM  ")
     chat_tab = ttk.Frame(tabs)
     brain_tab = ttk.Frame(tabs)
     web_tab = ttk.Frame(tabs)
@@ -240,34 +314,56 @@ def launch(db_path: Path) -> int:
         bg="#111827", fg="#93a4bc", anchor="w", justify="left",
         wraplength=760).pack(fill="x", padx=24)
 
-    tk.Label(chat_tab, text=("Mózg rejestruje bodźce. Odpowiedzi mogą pochodzić z ręcznej nauki "
-                              "lub cytatów zapisanych źródeł. Cytaty nie oznaczają treningu modelu."),
-             bg="#111827", fg="#a6b6c9", anchor="w", font=("Segoe UI", 10),
-             wraplength=840).pack(fill="x", padx=12, pady=(12, 8))
-    history = tk.Text(chat_tab, font=("Segoe UI", 11), bg="#172237", fg="#e2e8f0",
+    chat_header = tk.Frame(chat_tab, bg="#07111d")
+    chat_header.pack(fill="x", padx=20, pady=(15, 9))
+    tk.Label(chat_header, text="CONVERSATION / SOURCE CONSOLE",
+             bg="#07111d", fg="#f1ffff", anchor="w",
+             font=("Segoe UI", 16, "bold")).pack(side="left")
+    tk.Label(chat_header, text="● OFFLINE FIRST  /  REAL SQLITE",
+             bg="#07111d", fg="#59dccf",
+             font=("Consolas", 9, "bold")).pack(side="right")
+    tk.Label(chat_tab, text=("Odpowiedzi pochodzą z ręcznej nauki lub cytowanych źródeł. "
+                              "Dopóki brak źródła, system nie udaje rozumienia."),
+             bg="#07111d", fg="#91b7c6", anchor="w", font=("Segoe UI", 10),
+             wraplength=1020).pack(fill="x", padx=20, pady=(0, 10))
+    history = tk.Text(chat_tab, font=("Segoe UI", 11), bg="#0c2031", fg="#d7f3fd",
                       insertbackground="#e2e8f0", wrap="word", relief="flat",
-                      padx=14, pady=12, state="disabled")
-    history.pack(fill="both", expand=True, padx=12, pady=(0, 10))
-    tk.Label(chat_tab, text="Napisz obserwację:", bg="#111827", fg="#e5e7eb").pack(anchor="w", padx=12)
-    message = tk.Text(chat_tab, height=3, font=("Segoe UI", 11), bg="#172237", fg="#f1f5f9",
-                      insertbackground="#e2e8f0", wrap="word", relief="flat", padx=10, pady=8)
-    message.pack(fill="x", padx=12, pady=(5, 8))
-    controls = tk.Frame(chat_tab, bg="#111827")
-    controls.pack(fill="x", padx=12, pady=(0, 10))
+                      padx=20, pady=17, height=12, state="disabled",
+                      highlightbackground="#235166", highlightthickness=1)
+    history.pack(fill="both", expand=True, padx=20, pady=(0, 11))
+    history.tag_configure("human", foreground="#74efdc")
+    history.tag_configure("assistant", foreground="#e2f5ff")
+    history.tag_configure("system", foreground="#819eb2",
+                          font=("Consolas", 9))
+    history.configure(state="normal")
+    history.insert("end", "LOCAL SESSION  /  Twoja rozmowa nie jest wysyłana do Internetu.\n"
+                         "Wpisz pytanie poniżej lub wybierz badanie źródeł.\n\n",
+                   "system")
+    history.configure(state="disabled")
+    tk.Label(chat_tab, text="TWOJA WIADOMOŚĆ / PYTANIE", bg="#07111d",
+             fg="#6fe1d7", font=("Consolas", 9, "bold")).pack(anchor="w", padx=20)
+    message = tk.Text(chat_tab, height=3, font=("Segoe UI", 11), bg="#102739", fg="#f1f9ff",
+                      insertbackground="#8bf6df", wrap="word", relief="flat",
+                      padx=14, pady=10,
+                      highlightthickness=1, highlightbackground="#245367")
+    message.pack(fill="x", padx=20, pady=(6, 9))
+    controls = tk.Frame(chat_tab, bg="#07111d")
+    controls.pack(fill="x", padx=20, pady=(0, 10))
     store_text = tk.BooleanVar(value=False)
     ttk.Checkbutton(controls, text="Zapisuj pełną treść prywatnie (opcjonalnie)", variable=store_text).pack(side="left")
     info = ttk.Label(controls, text="Tekst nie jest wysyłany do internetu")
     info.pack(side="left", padx=18)
-    teach_area = tk.Frame(chat_tab, bg="#111827")
-    teach_area.pack(fill="x", padx=12, pady=(0, 10))
+    teach_area = tk.Frame(chat_tab, bg="#07111d")
+    teach_area.pack(fill="x", padx=20, pady=(0, 10))
     tk.Label(teach_area,
              text="Naucz odpowiedzi na pytanie z pola powyżej (zapis lokalny, tylko na żądanie):",
-             bg="#111827", fg="#cbd5e1", anchor="w").pack(fill="x")
+             bg="#07111d", fg="#a6c8d1", anchor="w").pack(fill="x")
     answer_input = tk.Text(teach_area, height=2, font=("Segoe UI", 10),
-                           bg="#172237", fg="#f1f5f9", wrap="word",
-                           insertbackground="#e2e8f0", relief="flat", padx=8, pady=5)
+                           bg="#102739", fg="#f1f9ff", wrap="word",
+                           insertbackground="#8bf6df", relief="flat", padx=10, pady=6,
+                           highlightthickness=1, highlightbackground="#245367")
     answer_input.pack(fill="x", pady=(4, 5))
-    teaching_controls = tk.Frame(teach_area, bg="#111827")
+    teaching_controls = tk.Frame(teach_area, bg="#07111d")
     teaching_controls.pack(fill="x")
 
     status_text = tk.StringVar(value="Odczytywanie stanu...")
@@ -305,6 +401,18 @@ def launch(db_path: Path) -> int:
               wraplength=780).pack(anchor="w", padx=24, pady=(0, 8))
     web_enabled = tk.BooleanVar(value=False)
     web_auto = tk.BooleanVar(value=False)
+    from .tk_mission import MissionDashboard
+    targets = {
+        "chat": chat_tab,
+        "brain": brain_tab,
+        "web": web_tab,
+        "mission": mission_tab,
+    }
+    mission = MissionDashboard(
+        mission_tab, memory,
+        navigate=lambda where: tabs.select(targets[where]),
+        network_enabled=lambda: web_enabled.get(),
+    )
     # Dedicated specialist study tab, off until explicit HTTPS consent.
     from .study_panel import install_study_panel
     install_study_panel(tabs, memory, web_enabled)
@@ -334,7 +442,8 @@ def launch(db_path: Path) -> int:
 
     def append(role: str, text: str) -> None:
         history.configure(state="normal")
-        history.insert("end", f"{role}: {text}\n\n")
+        style_tag = "human" if role == "Ty" else "assistant"
+        history.insert("end", f"{role.upper()}  /  {text}\n\n", style_tag)
         history.configure(state="disabled")
         history.see("end")
 
@@ -568,6 +677,17 @@ def launch(db_path: Path) -> int:
         if neural_graph._latest is not None else None))
     root.after(650, poll_neural_graph)
 
+    def mission_tick() -> None:
+        if tabs.select() == str(mission_tab):
+            try:
+                mission.refresh()
+            except (ValueError, OSError, RuntimeError, KeyError):
+                mission.status.configure(text="BŁĄD ODCZYTU PAMIĘCI",
+                                         fg="#f5b18b")
+        root.after(700, mission_tick)
+
+    root.after(700, mission_tick)
+
     def refresh_tick() -> None:
         refresh()
         root.after(3000, refresh_tick)
@@ -632,6 +752,8 @@ def launch(db_path: Path) -> int:
     message.bind("<Control-Return>", lambda _event: (send(), "break")[1])
     ttk.Label(chat_tab, text="Ctrl+Enter — zapytaj • przycisk Naucz: jawny zapis pary pytanie/odpowiedź w prywatnej bazie",
               wraplength=770).pack(anchor="w", padx=12, pady=(0, 8))
+    tabs.select(mission_tab)
+    mission.refresh()
     refresh()
 
     def on_close() -> None:
@@ -650,8 +772,12 @@ def launch(db_path: Path) -> int:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="NeuroGenesis desktop client")
     parser.add_argument("--self-test", action="store_true", help="test brain/SQLite persistence without GUI")
+    parser.add_argument("--ui-self-test", action="store_true",
+                        help="open real default Tk mission widgets against synthetic local data")
     parser.add_argument("--db", type=Path, default=None, help="explicit private database path")
     args = parser.parse_args(argv)
     if args.self_test:
         return self_test()
+    if args.ui_self_test:
+        return ui_self_test()
     return launch(args.db if args.db is not None else default_db_path())
