@@ -102,9 +102,13 @@ class ApprovedKnowledgeRightsTests(unittest.TestCase):
         sources = self.add_sources()
         for s in sources:
             self.memory.set_source_training_rights(s["id"], True)
+        progress = []
         report = train_approved_knowledge(
             self.db, self.output, confirm_rights=True,
-            steps=3, sequence=16, batch=1, hidden=16, seed=11, device="cpu")
+            steps=3, sequence=16, batch=1, hidden=16, seed=11, device="cpu",
+            on_progress=lambda step, metrics: progress.append((step, metrics["loss"])))
+        self.assertEqual([p[0] for p in progress], [1, 2, 3])
+        self.assertTrue(all(math.isfinite(p[1]) for p in progress))
         self.assertEqual(report["training_steps"], 3)
         self.assertEqual(report["device"], "cpu")
         self.assertEqual(report["trained_documents"], 2)
@@ -120,6 +124,19 @@ class ApprovedKnowledgeRightsTests(unittest.TestCase):
         self.assertEqual(steps, 3)
         self.assertEqual(model.parameter_count, report["parameter_count"])
         self.assertEqual(self.memory.status()["records_with_raw_text"], 0)
+
+    @unittest.skipIf(torch is None, "dedicated CI installs real PyTorch CPU")
+    def test_cancel_before_gradient_updates_never_writes_checkpoint(self):
+        import threading
+        for src in self.add_sources():
+            self.memory.set_source_training_rights(src["id"], True)
+        cancel = threading.Event()
+        cancel.set()
+        with self.assertRaises(InterruptedError):
+            train_approved_knowledge(
+                self.db, self.output, confirm_rights=True, steps=4,
+                sequence=16, batch=1, hidden=16, device="cpu", cancel_event=cancel)
+        self.assertFalse(self.output.exists())
 
     @unittest.skipIf(torch is None, "dedicated CI installs real PyTorch CPU")
     def test_training_never_starts_with_only_two_approved_sources(self):
