@@ -171,3 +171,66 @@ class ConnectomeView(QWidget):
             painter.setPen(QColor("#ffca7c"))
             painter.drawText(20, 48, "LIMIT WYŚWIETLANIA — część połączeń pominięta")
         painter.end()
+
+
+class TrainingLossPlot(QWidget):
+    """Plots ONLY actual reported PyTorch batch losses from training events."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setMinimumHeight(155)
+        self._points: list[tuple[int, float]] = []
+
+    @property
+    def points(self) -> tuple[tuple[int, float], ...]:
+        return tuple(self._points)
+
+    def add_real_loss(self, step: int, loss: float) -> None:
+        if (type(step) is not int or step < 1 or
+                type(loss) not in (float, int) or not math.isfinite(loss)
+                or loss < 0):
+            raise ValueError("only finite real training losses with positive step")
+        if self._points and step <= self._points[-1][0]:
+            # New training runs intentionally reset the chart, not fabricate
+            # continuous steps across unrelated checkpoint sessions.
+            self._points.clear()
+        self._points.append((step, float(loss)))
+        if len(self._points) > 600:
+            del self._points[:-600]
+        self.update()
+
+    def paintEvent(self, event) -> None:
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.fillRect(self.rect(), QColor("#091322"))
+        painter.setPen(QColor("#9ac6d9"))
+        painter.setFont(QFont("Consolas", 9))
+        painter.drawText(17, 24, "FOUNDATION / REAL TORCH LOSS")
+        if not self._points:
+            painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter,
+                             "Brak rzeczywistych pomiarów w bieżącej sesji")
+            painter.end()
+            return
+        left, right = 43, max(44, self.width() - 19)
+        top, bottom = 45, max(46, self.height() - 26)
+        vals = [x[1] for x in self._points]
+        low, high = min(vals), max(vals)
+        span = max(0.001, high - low)
+        painter.setPen(QPen(QColor("#213b52"), 1))
+        for i in range(4):
+            y = top + (bottom - top) * i / 3
+            painter.drawLine(QPointF(left, y), QPointF(right, y))
+        painter.setPen(QPen(QColor("#4fe6c8"), 2.2))
+        previous = None
+        for i, (_, loss) in enumerate(self._points):
+            x = left + (right - left) * i / max(1, len(self._points) - 1)
+            y = bottom - (bottom - top) * (loss - low) / span
+            point = QPointF(x, y)
+            if previous is not None:
+                painter.drawLine(previous, point)
+            previous = point
+        painter.setPen(QColor("#cfedf4"))
+        painter.drawText(17, self.height() - 7,
+                         f"{self._points[-1][0]} steps / last {vals[-1]:.5f} nats "
+                         f"/ range {low:.3f}–{high:.3f}")
+        painter.end()
