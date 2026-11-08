@@ -1,3 +1,7 @@
+## Dostępne wydanie Windows z faktycznym ekranem MISSION CONTROL
+
+**NeuroGenesis 0.8.0 — rzeczywisty, nowy ekran startowy w samodzielnym EXE.** [Pobierz zweryfikowane wydanie](https://github.com/promirmir/NeuroGenesis/releases/tag/v0.8.0-main.8e27f420). SHA-256 pliku EXE: `5e48e1c7ecde3b7a066a39c2b71c8a70764351888ff30dc23ba75b53c6fcb44e`. Windows GUI otwiera teraz `CENTRUM` z prawdziwym grafem LIF i metrykami zamiast starej pustej rozmowy. Źródło i testy: PR #50; pełna macierz Windows/Python/Torch/Qt/ochrona prywatności zielona. Technologia **publicznego EXE: Tkinter**; rozbudowane Qt pozostaje opcjonalnym programem uruchamianym ze źródeł i wymaga osobnej licencyjnej bramki wydania. Brak AGI i samodzielnego semantycznego modelu języka.
+
 # NeuroGenesis — Mission Control
 
 **research prototype v0.8.0.**  
