@@ -534,6 +534,17 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
             try:
                 classification = model.classify_semantics(message)
                 result = semantic_store.learn(classification)
+                # ACF may trigger a REAL read-only approved-TXT prefetch
+                # ONLY after measured adaptive > fixed/persistence controls.
+                # No data content sent to model; no Internet calls here.
+                try:
+                    result["policy"] = semantic_store.prepare_next_topic(knowledge)
+                except (OSError, ValueError, RuntimeError, KeyError) as exc:
+                    result["policy"] = {
+                        "status": "local_policy_read_failed",
+                        "detail": str(exc)[:110],
+                        "local_sources_consulted": 0,
+                    }
                 events.put(("ok", "semantic", None, result))
             except (OSError, ValueError, RuntimeError, KeyError,
                     TimeoutError) as exc:
@@ -603,10 +614,31 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
                         scores = sm["route_mean_mse_recent"]
                         error = scores[route]
                         metric = f"{error:.5f}" if error is not None else "brak próbek"
+                        choice = value.get("policy", {})
+                        state = choice.get("status", "unavailable")
+                        status_text = {
+                            "local_sources_prepared": (
+                                f"WSTĘPNY ODCZYT TXT: {choice.get('predicted_axis')} "
+                                f"· {choice.get('local_sources_consulted', 0)} frag."),
+                            "approved_sources_missing": (
+                                f"LUKA W WIEDZY: {choice.get('predicted_axis')} "
+                                f"· dodaj zatwierdzony TXT"),
+                            "insufficient_real_observations": (
+                                "POLITYKA ACF: za mało obserwacji"),
+                            "no_measured_adaptive_advantage": (
+                                "POLITYKA ACF: brak przewagi nad kontrolą"),
+                            "adaptive_not_selected_by_actual_loss": (
+                                "POLITYKA ACF: wybrano lepszy model kontrolny"),
+                            "low_confidence_or_unsuitable_topic": (
+                                "POLITYKA ACF: brak pewnego tematu"),
+                            "local_policy_read_failed": (
+                                "POLITYKA ACF: błąd lokalnego odczytu"),
+                        }.get(state, "POLITYKA ACF: brak potwierdzonej decyzji")
                         semantic_status.set(
                             f"SEMANTYKA Qwen / {learned} wektorów · nowe "
                             f"{value['processed']}\nACF: {route} · MSE {metric} "
-                            f"· neurony {sm['adaptive_structure']['neurons']}")
+                            f"· neurony {sm['adaptive_structure']['neurons']}\n"
+                            f"{status_text}")
                     else:
                         semantic_status.set(
                             "SEMANTYCZNY ACF / błąd klasyfikacji, "
