@@ -194,6 +194,11 @@ class CommandService:
     def source_passages(self, source_id: int) -> list[dict[str, Any]]:
         return self.memory.knowledge_passages(source_id)
 
+    def neural_frame(self):
+        """Read an actual persisted bounded LIF synapse/spike snapshot."""
+        from .neural_graph import snapshot_brain
+        return snapshot_brain(self.memory.brain())
+
     def neural_traces(self) -> tuple[float, ...]:
         return tuple(self.memory.brain().traces)
 
