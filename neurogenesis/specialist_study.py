@@ -16,7 +16,7 @@ import time
 from urllib.parse import quote
 
 from .web_discovery import RobotsPolicy, relevant_public_link
-from .web_sense import read_public_page, validate_public_url
+from .web_sense import MAX_CRAWL_BODY, read_public_page, validate_public_url
 
 MAX_PAGES = 500
 MAX_TOPIC = 100
@@ -25,6 +25,11 @@ MAX_QUEUE = 600
 MAX_DOMAINS = 50
 MAX_DEPTH = 3
 MAX_PER_DOMAIN = 20
+
+
+def read_crawl_page(url: str):
+    """Explicitly larger but still bounded HTML read for public research."""
+    return read_public_page(url, max_body=MAX_CRAWL_BODY)
 
 
 def plan_topic(topic: str, *, max_pages: int = 6) -> list[str]:
@@ -39,7 +44,10 @@ def plan_topic(topic: str, *, max_pages: int = 6) -> list[str]:
     if len(words) > 12:
         raise ValueError("Zbyt wiele słów")
     title = "_".join(words)
-    titles = [title] + (words[: max_pages - 1] if len(words) > 1 else [])
+    # Wikipedia's canonical first letter is capitalized (avoids many 301s).
+    title = title[:1].upper() + title[1:]
+    titles = [title] + ([w[:1].upper() + w[1:] for w in words[:max_pages - 1]]
+                        if len(words) > 1 else [])
     urls = ["https://pl.wikipedia.org/wiki/" + quote(t, safe="_") for t in titles]
     # An English seed also supports domains that are not linked from Polish pages.
     if len(urls) < max_pages:
@@ -66,7 +74,7 @@ class SpecialistStudy:
     """
 
     def __init__(self, topic: str, observe, *, max_pages: int = 60,
-                 interval: float = MIN_INTERVAL, fetch=read_public_page,
+                 interval: float = MIN_INTERVAL, fetch=read_crawl_page,
                  robots: RobotsPolicy | None = None, max_depth: int = MAX_DEPTH,
                  max_domains: int = MAX_DOMAINS,
                  max_per_domain: int = MAX_PER_DOMAIN):
