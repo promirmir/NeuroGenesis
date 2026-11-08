@@ -22,6 +22,18 @@ from neurogenesis.web_sense import WebObservation
 def render(output: Path) -> None:
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     app = QApplication.instance() or QApplication([])
+    if os.name == "nt":
+        # Windows CI uses the Qt "offscreen" platform. Unlike the normal
+        # Windows plugin it may lack an enumerated system font database,
+        # causing square glyphs in a real QWidget screenshot. Load an
+        # INSTALLED local Windows font for this CI screenshot ONLY.
+        # Never bundle, publish or copy the font file.
+        from PySide6.QtGui import QFontDatabase
+        windir = Path(os.environ.get("WINDIR", "C:/Windows"))
+        for font_name in ("segoeui.ttf", "arial.ttf"):
+            path = windir / "Fonts" / font_name
+            if path.is_file() and QFontDatabase.addApplicationFont(str(path)) >= 0:
+                break
     with tempfile.TemporaryDirectory(prefix="ng-mission-preview-") as folder:
         service = CommandService(Path(folder) / "fictional-test-memory.sqlite3")
         evidence = "Syntetyczny dokument testowy: pamięć, synapsy i plastyczność neuronowa."
