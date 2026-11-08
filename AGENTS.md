@@ -1,3 +1,12 @@
+## 2026-11-08 — EMBODIED PRESENCE / FOUNDATION LAB 0.9.0 — release candidate
+
+- Work on `feat/avatar-foundation-lab-20261108`, based on merged holographic LIF source `d54eb6d2b4c7dd97eef63032a7940c7cff5f32dd`. This is the REAL `desktop.py` → Windows onefile Tk EXE path, NOT another optional-only Qt demo. Public download is previous release until verified post-merge.
+- `neurogenesis/tk_avatar.py`: futuristic humanoid 2.5D avatar, **symbolic** physical-looking representation. Only a new actual stored LIF step triggers an activity ring, and actual fired neurons trigger eye response. Camera/HUD idle motion is clearly distinct. Dashboard switches among authentic existing 2D, orbital 3D and avatar. No microphones, voice, camera, inference of consciousness or hidden network.
+- `neurogenesis/tk_foundation_lab.py`: actual Foundation Brain next-byte greedy prediction in a user-selected isolated external Python environment with installed PyTorch/neurogenesis, local operator-trusted trained numerical checkpoint and explicit consent. Because frozen Tk EXE does NOT ship torch, no automatic downloads or false claim of built-in neural language intelligence. Private prompt piped on stdin; no argv exposure. CPU/CUDA manual and 1-64 byte bound, worker subprocess cancellable, no source mixing, no persistent writes, no automatic weights promotion.
+- `neurogenesis/foundation_infer.py` adds CLI `--prompt-stdin`; optional prior `--prompt` retained; bounded input 2048 UTF-8 bytes. Unit tests `tests/test_tk_avatar.py`, `tests/test_tk_foundation_lab.py`, Windows real Tk widgets in `tests/test_tk_mission.py` and actual `desktop --ui-self-test` updated. Docs `docs/EMBODIED_FOUNDATION.md`.
+- Version 0.9.0 in `pyproject.toml` and `neurogenesis/__init__.py`. No SQLite migration; old config and private data remain unchanged, still research prototype.
+- **RELEASE GATES:** all Python 3.11–3.13, privacy, Windows Tk + actual frozen EXE `--self-test`/`--ui-self-test`, Qt Windows/Ubuntu, real CPU Torch, inspect synthetic screenshot and verify official 0.9.0 SHA-bound GitHub Release. Do not claim completed AGI or competent model chat.
+
 ## 2026-11-08 — HOLOGRAPHIC CORE development candidate, not released
 
 - Feature branch `feat/holographic-neural-core-and-capacity-20261108`, preserving confirmed 0.8.0 Windows release and all local user memory. Actual public EXE is still Tk; 3D-like orbit is implemented IN the default Tk Mission, not only optional Qt.
