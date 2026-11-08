@@ -1,3 +1,15 @@
+## NeuroGenesis 0.12.0 — zintegrowana AUTONOMIA
+
+**Zmiana działania programu, a nie tylko kolejny ekran:** aplikacja otwiera się teraz na autonomicznym centrum operacyjnym, z którego obsługuje się rzeczywisty model lokalny, pamięć z TXT, mózg LIF oraz kontrolowane źródła Internetu. Pierwsze trzy zakładki to **AUTONOMIA → ROZMOWA AI → WIEDZA TXT**.
+
+Panel pokazuje aktualne, odczytywane stany, udokumentowane zmiany, faktyczne kroki sieci LIF i informuje, czy model rzeczywiście działa. Samodzielne przeglądy LIF są włączone lokalnie przy starcie, ale **dopiero 40 nowych obserwacji** uruchamia próbę ulepszenia. Przetwarzanie nowych plików TXT wymaga zgody na folder. Opcjonalna autonomia wybranej dziedziny może kontrolowanie powtarzać badania HTTPS (zgoda, limity sesji i przerwy). Pozyskane wcześniej źródła publiczne oraz lokalne TXT stają się kontekstem **rzeczywistej rozmowy offline** z Qwen.
+
+[Architektura i szczegóły autonomii, ograniczenia oraz rzeczywiste testy](docs/AUTONOMY_CENTER_012.md).
+
+**Uwaga:** to jest autonomiczne wykonywanie określonych funkcji i wzrost lokalnej wiedzy, nie deklaracja nieskończonego, niezależnego rozwoju ogólnej inteligencji ani automatyczny fine-tuning wszystkich wag LLM. Kod wersji 0.12 jest oceniany w PR #57; nie przedstawiamy go jako gotowego EXE przed sukcesem testów Windows.
+
+---
+
 # NeuroGenesis 0.11.0 — COMPLETE OFFLINE AI / Windows
 
 **Miron przy pomocy AI.**
