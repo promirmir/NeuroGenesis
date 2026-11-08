@@ -1,3 +1,10 @@
+## 2026-11-08 — Delivery audit and UI completion requirements
+
+- Audited current main `db0b2210bb97c422d83d27f963725d3d6941c067` and release `v0.6.0-main.db0b2210`. Source: [docs/DELIVERY_AUDIT.md](DELIVERY_AUDIT.md). No independent Windows screenshot/manual usability audit or real-site crawl benchmark was performed; GitHub Actions validated Python regression, frozen EXE smoke and release checks.
+- Critical gap: web text flows to legacy 8-channel LIF memory, not a persistent semantic knowledge store or Foundation Brain weight-training/chat inference. The PyTorch model remains a separate, trainable research module; exact taught Q/A is not autonomous language understanding.
+- Next coordinated P0: end-to-end source evidence → persistent knowledge → grounded response and measured held-out questions, alongside professional responsive Windows dashboard/conversation/research/training UI without backend regressions.
+- Outstanding PR #23 must be evaluated against its current base and test gates; green Linux foundation CI alone does not prove the Windows gate for that PR.
+
 ## 2026-11-08 — Multi-domain specialist research, PR #24 MERGED
 
 - Expanded beyond static Wikipedia seeds: safe HTML anchor extraction, topic-filtered BFS across public HTTPS domains, robots.txt policy, crawl-delay, 500-attempt upper budget, 50 domains, 20 attempts/host, depth 3, 600 URL queue, >=5 seconds between page fetches. GUI default 120 attempts and displays domain/discovery/error counts. Existing Internet opt-in controls all network access.
