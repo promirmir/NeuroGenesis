@@ -89,3 +89,8 @@ Initial PR head `f11a78bf6e57b227fbcce29f2c784632e719c437` failed Linux research
 ## 2026-11-08 — Full chronological holdout evaluation candidate (unmerged)
 
 Research branch `research/full-holdout-evaluation-20261108` replaces the first-window-only Foundation training metric with a deterministic token-weighted evaluation across all non-overlapping windows in the 10% chronological holdout. Window-boundary transitions are excluded; scored transition and window counts are reported. Real PyTorch regression tests cover weighting, short holdout and non-finite losses. Implementation commits: `9c7d5241ed3a7ec018e10f832e9ace7424ab9289`, `9896530d011e8ecebe84cb72d57c0d2ea6a2e444`. **Pending CI**: Python 3.11–3.13, dedicated Foundation CPU, Windows EXE; do not merge until green. No CUDA benchmark, independent language corpus or semantic understanding demonstrated. This evaluation still uses one adjacent split and is not prospective OOD evidence.
+
+## 2026-11-08 — CI coverage correction (unmerged candidate)
+
+- Branch `ci/foundation-baseline-gates-20261108`, initial commit `e403afb3fd8d2607d3aa171a6dadd28aee02c357`: dedicated real-PyTorch CPU workflow now triggers for changes to `neurogenesis/foundation_baselines.py` and `tests/test_foundation_baselines.py` on pull requests as well as pushes, and explicitly executes the independent baseline tests. Previously the pull-request path filter omitted both files, and the dedicated command only selected `test_foundation.py` (the full regression suite still included baselines). This is a CI verification improvement, not a new learning capability.
+- No GPU benchmark or new language understanding measured. Await Python 3.11–3.13, dedicated PyTorch CPU and Windows EXE checks before merge. No release or training claims.
