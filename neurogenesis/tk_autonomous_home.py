@@ -15,6 +15,7 @@ from tkinter import ttk, messagebox
 from .agent_goals import GoalStore, prompt_for_goal
 from .autonomy import AutonomicSupervisor, WINDOW
 from .acf_memory import FabricMemoryObserver
+from .acf_semantic_memory import SemanticFabricStore
 from .bundled_llm import BundledModelSession, has_bundled_model
 from .local_knowledge import LocalKnowledge
 from .memory import ExperienceMemory
@@ -49,9 +50,12 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
     fabric_observer = FabricMemoryObserver(
         memory.path, memory.path.with_name("adaptive_fabric.acf.json"))
     fabric_events: queue.SimpleQueue = queue.SimpleQueue()
+    semantic_store = SemanticFabricStore(memory.path.parent)
+    semantic_pending: list[str] = []  # RAM only, never persisted as raw text.
     events: queue.SimpleQueue = queue.SimpleQueue()
     running: dict[str, object] = {
-        "job": None, "brain_job": None, "acf_job": None, "ready": False,
+        "job": None, "brain_job": None, "acf_job": None,
+        "semantic_job": None, "ready": False,
         "starting": False, "closing": False, "pending_message": None,
     }
     own_brain_enabled = brain_enabled or tk.BooleanVar(master=tab, value=True)
@@ -211,7 +215,8 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
                     memory.remember(message, source="local", store_text=False)
                 except (ValueError, OSError) as exc:
                     sensory_error = str(exc)[:130]
-            return {"reply": reply, "sensory_error": sensory_error}
+            return {"reply": reply, "sensory_error": sensory_error,
+                    "record_sensory": record_sensory}
         if background("chat", run, detail=message):
             state_model.set("MODEL / generuje odpowiedź")
             conversation_status.set("Lokalne obliczenia — prawdziwy model językowy pracuje...")
@@ -224,8 +229,9 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
         side="left", padx=(6, 0))
     ttk.Button(buttons, text="NOWA ROZMOWA", command=lambda: clear_chat()).pack(
         side="left", padx=(6, 0))
-    ttk.Checkbutton(buttons, text="Impulsy LIF bez zapisu treści",
-                    variable=sensory_inputs).pack(side="right")
+    ttk.Checkbutton(
+        buttons, text="Uczenie LIF + semantyczne ACF (bez treści rozmów)",
+        variable=sensory_inputs).pack(side="right")
 
     def stop_model():
         model.stop()
@@ -394,6 +400,9 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
     fabric_status = tk.StringVar(
         master=tab,
         value="ACF / oddzielna sieć predykcyjna; oczekiwanie na pomiary SQLite")
+    semantic_status = tk.StringVar(
+        master=tab,
+        value="SEMANTYCZNY ACF / lokalna klasyfikacja Qwen; brak pomiarów")
     tk.Label(brain_card, textvariable=brain_activity,
              bg=PANEL, fg=MUTED, anchor="w", wraplength=345).pack(
                  fill="x", padx=10, pady=(0, 5))
@@ -411,11 +420,16 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
              justify="left", anchor="w", wraplength=345,
              font=("Consolas", 9)).pack(fill="x", padx=10, pady=(0, 4))
     tk.Label(brain_card, text=(
-        "Uczy się rzeczywistych 8 kanałów cech, porównuje wzrost LIF "
-        "z kontrolą i prostymi bazami. Nie mierzy rozumienia języka."),
+        "ACF sensoryczny: haszowane 8 cech; osobny ACF semantyczny: "
+        "osiem kategorii rozpoznanych przez prawdziwy Qwen. "
+        "Żaden z tych wskaźników nie dowodzi wzrostu jakości rozmowy."),
         bg=PANEL, fg=MUTED, justify="left", anchor="w",
         wraplength=345, font=("Segoe UI", 8)).pack(
-            fill="x", padx=10, pady=(0, 6))
+            fill="x", padx=10, pady=(0, 3))
+    tk.Label(
+        brain_card, textvariable=semantic_status, bg=PANEL, fg=CYAN,
+        justify="left", anchor="w", wraplength=345,
+        font=("Consolas", 9)).pack(fill="x", padx=10, pady=(0, 5))
 
     def redraw_connectome(*, force=False):
         if running["closing"]:
@@ -505,6 +519,31 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
         if tab.winfo_exists():
             tab.after(9500, autonomy_tick)
 
+    def launch_semantic():
+        # Secondary inference never delays displaying the completed chat.
+        # Only operator-enabled local sensory learning may queue a message.
+        if running["closing"] or not running["ready"] or not sensory_inputs.get():
+            semantic_pending.clear()
+            return
+        work = running["semantic_job"]
+        if isinstance(work, threading.Thread) and work.is_alive():
+            return
+        if not semantic_pending:
+            return
+        message = semantic_pending.pop(0)
+        def work_semantic():
+            try:
+                classification = model.classify_semantics(message)
+                result = semantic_store.learn(classification)
+                events.put(("ok", "semantic", None, result))
+            except (OSError, ValueError, RuntimeError, KeyError,
+                    TimeoutError) as exc:
+                events.put(("error", "semantic", None, str(exc)[:180]))
+        thread = threading.Thread(
+            target=work_semantic, daemon=True, name="NeuroGenesis-semantic-ACF")
+        running["semantic_job"] = thread
+        thread.start()
+
     def poll():
         if running["closing"]:
             return
@@ -544,10 +583,36 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
                                if value["sensory_error"] else "Bodźce LIF zapisane w SQLite."
                                if sensory_inputs.get() else "Bez zapisu treści rozmowy."))
                         state_model.set("MODEL / gotowy na następne pytanie")
+                        if (question and value.get("record_sensory")
+                                and sensory_inputs.get()):
+                            if len(semantic_pending) < 8:
+                                semantic_pending.append(question[:1200])
+                                launch_semantic()
+                            else:
+                                semantic_status.set(
+                                    "SEMANTYCZNY ACF / zapełniona kolejka RAM; "
+                                    "nie zapisano tekstu do treningu")
                     else:
                         log("SYSTEM", "Nie udało się wygenerować odpowiedzi: " + str(value)[:320])
                         conversation_status.set("Generacja nieudana; spróbuj ponownie.")
                         state_model.set("MODEL / błąd odpowiedzi")
+                elif task == "semantic":
+                    if kind == "ok":
+                        sm = value["self_model"]
+                        learned = sm["observations"]
+                        route = sm["selected_route"]
+                        scores = sm["route_mean_mse_recent"]
+                        error = scores[route]
+                        metric = f"{error:.5f}" if error is not None else "brak próbek"
+                        semantic_status.set(
+                            f"SEMANTYKA Qwen / {learned} wektorów · nowe "
+                            f"{value['processed']}\nACF: {route} · MSE {metric} "
+                            f"· neurony {sm['adaptive_structure']['neurons']}")
+                    else:
+                        semantic_status.set(
+                            "SEMANTYCZNY ACF / błąd klasyfikacji, "
+                            "nie zapisano fikcyjnych cech: " + str(value)[:120])
+                    launch_semantic()
                 elif task == "goal":
                     refresh_goals(force=True)
                     if kind == "ok":
@@ -600,6 +665,8 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
 
     tab.bind("<Destroy>", on_destroy, add="+")
     tab.after(0, refresh_status)
+    # Separate 8-D topic measurements are only made from user questions
+    # with the SAME opt-in sensory-learning switch; no transcript persisted.
     tab.after(1200, acf_tick)
     if auto_start:
         tab.after(400, initialize_model)
