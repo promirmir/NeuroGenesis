@@ -1,3 +1,9 @@
+## Active matched retrieval baseline candidate — 2026-11-08
+
+- PR #41 merged main `7dd3094ac791b241b2b84d50dccb0fa3032bc8b6` after Python 3.11–3.13, dedicated offline QA, privacy, Windows Tk EXE checks. It established read-only disjoint-question Wilson confidence/abstain-all literal source QA gate; public 40/100 synthetic proof is **seen test data**, NOT validation of real-world accuracy.
+- Branch `feat/bm25-source-retrieval-benchmark-20261108` adds a bounded non-neural **actual BM25 term-frequency/IDF** control over unchanged latest SQLite evidence; `qa_baselines.py` reports comparator/citation/unsupported false positives and timings against existing `answer_question` using one rights-cleared QA file. Baseline not deployed. See `docs/BM25_BASELINE.md`. New QA workflow and Python 3.11–3.13/privacy/Windows EXE required before merge.
+- Avoid heuristic tuning on seen synthetic fixtures and marketing lexical citations as semantic cognition. Neural model still only experimental bytes; operator rights, independent real QA, verified CUDA GPU and compliant Qt installer remain open.
+
 ## Current main and prospective QA acceptance candidate — 2026-11-08
 
 - Live `main` SHA `da9a6c736f55c13b048101a4a07c2f5defff64a1`; no open PR. Previous source corroboration, ephemeral contextual follow-ups, offline `qa_eval` and conservative polar-question guards are merged. Source-based answer remains lexical, can cite an unsupported claim, and has NO independently validated natural QA capability.
