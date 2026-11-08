@@ -6,6 +6,12 @@
 
 Read [docs/DELIVERY_AUDIT.md](docs/DELIVERY_AUDIT.md) after [docs/VISION.md](docs/VISION.md). It reconciles original intent with verified v0.6.0 code/CI and prioritizes **a real end-to-end knowledge-to-answer path plus a professional Windows GUI** over adding more disconnected features. This is a source audit, not proof of real-world internet coverage or of AGI. Follow the measurable release gates and preserve release/backward compatibility.
 
+## Active PR and continuation — 2026-11-08
+
+- PR #23 is **merged** on main `66f3d61fa1696aaeeb3c33c0d035100a9aaacba1`; required Python 3.11–3.13, real PyTorch CPU, Windows frozen EXE and privacy checks passed.
+- PR #27 is the **candidate** first internet evidence→private SQLite passage index→quoted citation in normal Tk conversation, with restart persistence, duplicate/revision/deletion behavior and abstention on missing evidence. Important privacy change: extracted public page passages (up to 6000 chars) are saved locally, not just fingerprints. Not neural weight training or independent source validation. See `docs/KNOWLEDGE_PIPELINE.md`, and do not claim a release until final CI/EXE and publication pass.
+- `docs/COMMAND_CENTER.md` defines the staged optional PySide6 frontend; **no professional Qt UI is implemented yet**. Keep existing production Tk EXE stable and local memory private.
+
 ## Highest-priority permanent contract
 
 Read [docs/VISION.md](docs/VISION.md) before planning new changes. The user explicitly wants a powerful and novel self-learning, GPU-scalable, human-neurobiology-inspired cognitive engine, permissioned live Internet knowledge perception, meaningful Windows conversation, rich realtime visual observability, long-lived memory and continuity across chats. A 24-neuron/8-channel toy or a list of handwritten replies is not the target; retain those as research baselines only. No unverified promise of human brain emulation, consciousness or global breakthrough is allowed.

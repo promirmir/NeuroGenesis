@@ -1,3 +1,10 @@
+## 2026-11-08 — PR #27: private source evidence → Windows dialogue (candidate)
+
+- PR #23 was merged into main commit `66f3d61fa1696aaeeb3c33c0d035100a9aaacba1` after Python 3.11–3.13, real PyTorch CPU, Windows standalone EXE and privacy checks passed. Historical notes below that called PR #23 open were written earlier.
+- PR #27 `feat/knowledge-to-dialogue-20261108` implements the first *retrieval-based* end-to-end web→local passages→cited Windows chat slice. Approved extracted text (up to 6,000 characters) is now kept privately in additive SQLite tables in the original atomic neural/provenance transaction. Exact manual teachings retain precedence, changed URL content is versioned, duplicate material is skipped, and unsupported questions abstain.
+- Existing `observations.raw_text` stays NULL by default and old SQLite/brain APIs are preserved. Foundation Brain weights are **not** trained and source truth is **not** independently validated. See `docs/KNOWLEDGE_PIPELINE.md` for licensing/privacy and `docs/COMMAND_CENTER.md` for the planned Qt architecture (not yet implemented).
+- First CI run `42465142616`: all 11 new knowledge tests passed, but one pre-existing taught-response wording regression failed. Restored exact legacy phrase in source commit `d4fc8fe2a2b3ec2a5e0e06d70fbac96af4a417b3`. Fresh full Python/Windows/EXE and privacy CI still required before merge/release; zero CUDA or real-site benchmark claimed.
+
 ## 2026-11-08 — Delivery audit and UI completion requirements
 
 - Audited current main `db0b2210bb97c422d83d27f963725d3d6941c067` and release `v0.6.0-main.db0b2210`. Source: [docs/DELIVERY_AUDIT.md](DELIVERY_AUDIT.md). No independent Windows screenshot/manual usability audit or real-site crawl benchmark was performed; GitHub Actions validated Python regression, frozen EXE smoke and release checks.
