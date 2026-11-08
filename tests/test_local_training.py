@@ -146,7 +146,8 @@ class LocalTrainingTests(unittest.TestCase):
             for i in range(12):
                 yield {"messages": [
                     {"role": "user", "content": f"Actual source row {i}?"},
-                    {"role": "assistant", "content": f"Actual source answer {i}."},
+                    {"role": "assistant", "content": (f"Actual source answer {i}. " +
+                        "This text is a synthetic unit-test-only sample, not a training source.")},
                 ]}
         def fake_load_dataset(name, *, split, streaming):
             calls.append((name, split, streaming))
@@ -158,7 +159,6 @@ class LocalTrainingTests(unittest.TestCase):
         self.assertEqual(report["dialogues"], 12)
         self.assertEqual(report["declared_license_in_dataset_card"], "MIT")
         self.assertEqual(report["model_trained"], False)
-        self.assertEqual(len(parse_dialogues(path.read_text())), 12) if False else None
         self.assertEqual(len(path.read_text().split("USER:"))-1, 12)
         self.assertEqual(calls[0][1], "train_sft")
         with mock.patch.dict(sys.modules, {"datasets": types.SimpleNamespace(
