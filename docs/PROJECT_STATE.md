@@ -1,3 +1,9 @@
+## 2026-11-08 — Holographic Core feature candidate (NOT yet shipped)
+
+- Current public source-verified 0.8.0 Windows Tk EXE is unchanged until PR, CI, merge and release. Feature branch `feat/holographic-neural-core-and-capacity-20261108` puts data-bound orbital hologram in the **actual default** Tk Mission rather than optional-only Qt. The camera rotates decoratively; live edge highlights require actual new persisted LIF spike events. 3D positioning is symbolic and clearly labeled. Original 2D accurate graph remains switchable.
+- New LIF memory resource ceilings: 512 neurons / 4096 synapses / 1024 patterns; existing serialized BrainConfig retains old bounds and no memory is rewritten on start. No claim of improved semantic reasoning, Foundation model internals, GPU acceleration or true 3D anatomy.
+- Implementation and quality gates: [HOLOGRAPHIC_CORE.md](HOLOGRAPHIC_CORE.md); mandatory Python matrix, privacy, frozen Tk EXE with widgets, optional Qt and PyTorch CPU regression, new release SHA verification. Candidate until all are verified.
+
 ## 2026-11-08 — VERIFIED published default Windows Mission Control v0.8.0
 
 - **Root cause fixed:** A user's screenshot showed that the last official onefile `NeuroGenesis.exe` displayed the old plain Tk chat, despite the separate optional Qt Mission Control already being source-tested. This was a delivery mismatch. PR #50 upgraded the **actual default public Windows application**, not just another non-distributed Qt prototype.
