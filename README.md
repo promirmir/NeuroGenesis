@@ -1,3 +1,15 @@
+## NeuroGenesis 0.12.3 — ACF: plastyczność neuronalna z rzeczywistym samomodelem
+
+Nie kolejna zakładka: uruchamiamy eksperymentalny **Adaptive Cognitive Fabric (ACF)** wewnątrz głównego NeuroGenesis. Uczy się sam z nowych, rzeczywiście zapisanych doświadczeń SQLite (tylko ośmiokanałowe cechy, bez tekstu prywatnych rozmów), zachowuje stan po zamknięciu aplikacji i może autonomicznie zmieniać połączenia w osobnej sieci LIF. Porównuje wzrost sieci z identyczną kontrolą bez wzrostu, poprzednim bodźcem oraz prostą wartością stałą. Mechanizm samomodelowania wybiera metodę przewidywania na podstawie **faktycznie zmierzonych wcześniejszych błędów**, nie deklaracji o rosnącej inteligencji.
+
+Na głównym ekranie widać mierzone neurony, zmiany synaps, aktualnie wybraną metodę i błąd MSE. Test A → B → A porównuje uczenie, zmianę zadania i retencję umiejętności. **Wynik może wykazać brak przewagi plastyczności** i wtedy właśnie tak będzie raportowany.
+
+[**Architektura, testy, reprodukowalny eksperyment i niewdrożone etapy**](docs/ADAPTIVE_COGNITIVE_FABRIC.md).
+
+**Granica:** to rzeczywisty obliczeniowy układ predykcyjny, ale jeszcze nie semantyczny mózg sterujący Qwen i planowaniem. Nie jest AGI ani systemem niezależnym od danych, sprzętu i energii. Poprawę rzeczywistych zdolności należy dopiero udowodnić na niewidzianych zadaniach. Kod wersji 0.12.3 wymaga przejścia testów przed publicznym wydaniem.
+
+---
+
 ## NeuroGenesis 0.12.2 — autonomiczne cele reagują na wyniki badań
 
 Agent celów nie czeka już wyłącznie na zmianę prywatnych plików TXT. Po legalnym i świadomie zatwierdzonym pobraniu źródła HTTPS, jego faktyczne fragmenty i wersja SHA-256 trafiają do tej samej pętli cel → źródło → analiza → raport do oceny. Cel w stanie *waiting* wznawia pracę po pojawieniu się pasujących informacji. Niepasujące strony nie powodują udawanego postępu, a niezmieniona wersja źródła nie uruchamia ciągłego ponawiania pracy.
@@ -93,7 +105,7 @@ nie należy mylić starszego EXE 0.8.0 z nowymi funkcjami.
 
 # NeuroGenesis — Mission Control
 
-**research prototype v0.12.2.**  
+**research prototype v0.12.3.**  
 **Publiczne autorstwo: Miron przy pomocy AI.**
 
 NeuroGenesis to lokalny projekt badawczy AI: rzeczywista mała sieć neuronowa LIF ze strukturalną plastycznością, prywatna trwała baza SQLite, kontrolowane zdobywanie informacji ze źródeł HTTPS, ekstrakcyjne cytowanie oraz odrębny eksperymentalny model Foundation Brain trenowany w PyTorch. **System nie jest AGI, świadomością, modelem ludzkiego mózgu ani niezależnie zweryfikowanym systemem rozumienia języka naturalnego.**
