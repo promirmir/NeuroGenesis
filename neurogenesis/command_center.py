@@ -363,7 +363,10 @@ class CommandCenter(QMainWindow):
                     f"{measured['heldout_next_byte_ce_after']:.4f} nats; "
                     f"Markov {measured['heldout_markov_ce_nats']:.4f}; "
                     f"{measured['train_steps_per_second']:.2f} kroków/s; "
-                    f"urządzenie {measured['device']}; CUDA VRAM: "
+                    f"urządzenie {measured['device']}; "
+                    f"wznowienie wag: {'tak' if measured.get('resumed_from_trusted_local_checkpoint') else 'nie'}; "
+                    f"łączne kroki checkpointu: {measured.get('checkpoint_total_training_steps', measured['training_steps'])}; "
+                    "optymalizator przy wznowieniu: nowy AdamW; CUDA VRAM: "
                     f"{measured['gpu_peak_allocated_bytes'] if measured['gpu_peak_allocated_bytes'] is not None else 'niezmierzono'}."
                     " Checkpoint KANDYDAT, nie aktywny silnik rozmowy.")
                 self.training_log.appendPlainText("ZAKOŃCZONO · " + self._last_training_summary)
@@ -439,6 +442,9 @@ class CommandCenter(QMainWindow):
         self.training_rights = QCheckBox(
             "Potwierdzam uprawnienie do treningu na zatwierdzonych źródłach")
         inner.addWidget(self.training_rights)
+        self.training_resume = QCheckBox(
+            "Kontynuuj wagami z zaufanego pliku wybranego poniżej (nowy checkpoint)")
+        inner.addWidget(self.training_resume)
         buttons = QHBoxLayout()
         self.training_start = QPushButton("Uruchom trening")
         self.training_start.setObjectName("primary")
@@ -451,8 +457,10 @@ class CommandCenter(QMainWindow):
         inner.addLayout(buttons)
         inner.addWidget(label(
             "Parametry wstępne: batch 2, sekwencja 32 bajty, ukryte 32. "
-            "Ostatni odrębny dokument pozostaje wyłącznie do walidacji. "
-            "Checkpoint jest KANDYDATEM; rozmowa nadal korzysta z cytatów źródeł.",
+            "Kontynuacja przywraca wagi, lecz resetuje stan optymalizatora AdamW. "
+            "Ostatni odrębny dokument służy do walidacji. "
+            "Każdy zapis tworzy NOWY checkpoint, bez podmiany starego. "
+            "Rozmowa nadal korzysta z cytatów źródeł.",
             kind="subtle"))
         layout.addWidget(card)
         self.training_log = QPlainTextEdit()
@@ -520,18 +528,27 @@ class CommandCenter(QMainWindow):
             QMessageBox.warning(self, "Prawa do treningu",
                                 "Potwierdź prawa do zatwierdzonych źródeł.")
             return
+        resume = self.training_resume.isChecked()
+        if resume and not self.trust_checkpoint.isChecked():
+            QMessageBox.warning(self, "Kontynuacja wag",
+                                "Potwierdź zaufane pochodzenie wybranego checkpointu.")
+            return
+        previous = self.checkpoint_path.text().strip() if resume else None
         output = self.service.memory.path.with_name(
             "foundation-candidate-" + str(time.time_ns()) + ".pt")
         try:
             self.service.start_training(
                 output, confirmed=True, steps=self.training_steps.value(),
-                device=self.training_device.currentText())
+                device=self.training_device.currentText(),
+                resume_from=previous, trust_resume=resume)
         except (ValueError, PermissionError, OSError, RuntimeError) as exc:
             QMessageBox.warning(self, "Trening Foundation Brain", str(exc))
             return
         self._last_training_summary = ""
         self.checkpoint_path.setText(str(output))
-        self.training_log.appendPlainText("START · trening na zatwierdzonych dokumentach; sieć wyłączona.")
+        self.training_log.appendPlainText(
+            "START · " + ("kontynuacja wybranych wag" if resume else "nowy model")
+            + "; zaufane źródła, niezależny nowy plik, bez sieci.")
         self.refresh()
 
     def _build_knowledge(self) -> None:
