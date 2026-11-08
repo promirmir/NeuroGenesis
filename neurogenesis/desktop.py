@@ -310,34 +310,56 @@ def launch(db_path: Path) -> int:
         bg="#111827", fg="#93a4bc", anchor="w", justify="left",
         wraplength=760).pack(fill="x", padx=24)
 
-    tk.Label(chat_tab, text=("Mózg rejestruje bodźce. Odpowiedzi mogą pochodzić z ręcznej nauki "
-                              "lub cytatów zapisanych źródeł. Cytaty nie oznaczają treningu modelu."),
-             bg="#111827", fg="#a6b6c9", anchor="w", font=("Segoe UI", 10),
-             wraplength=840).pack(fill="x", padx=12, pady=(12, 8))
-    history = tk.Text(chat_tab, font=("Segoe UI", 11), bg="#172237", fg="#e2e8f0",
+    chat_header = tk.Frame(chat_tab, bg="#07111d")
+    chat_header.pack(fill="x", padx=20, pady=(15, 9))
+    tk.Label(chat_header, text="CONVERSATION / SOURCE CONSOLE",
+             bg="#07111d", fg="#f1ffff", anchor="w",
+             font=("Segoe UI", 16, "bold")).pack(side="left")
+    tk.Label(chat_header, text="● OFFLINE FIRST  /  REAL SQLITE",
+             bg="#07111d", fg="#59dccf",
+             font=("Consolas", 9, "bold")).pack(side="right")
+    tk.Label(chat_tab, text=("Odpowiedzi pochodzą z ręcznej nauki lub cytowanych źródeł. "
+                              "Dopóki brak źródła, system nie udaje rozumienia."),
+             bg="#07111d", fg="#91b7c6", anchor="w", font=("Segoe UI", 10),
+             wraplength=1020).pack(fill="x", padx=20, pady=(0, 10))
+    history = tk.Text(chat_tab, font=("Segoe UI", 11), bg="#0c2031", fg="#d7f3fd",
                       insertbackground="#e2e8f0", wrap="word", relief="flat",
-                      padx=14, pady=12, state="disabled")
-    history.pack(fill="both", expand=True, padx=12, pady=(0, 10))
-    tk.Label(chat_tab, text="Napisz obserwację:", bg="#111827", fg="#e5e7eb").pack(anchor="w", padx=12)
-    message = tk.Text(chat_tab, height=3, font=("Segoe UI", 11), bg="#172237", fg="#f1f5f9",
-                      insertbackground="#e2e8f0", wrap="word", relief="flat", padx=10, pady=8)
-    message.pack(fill="x", padx=12, pady=(5, 8))
-    controls = tk.Frame(chat_tab, bg="#111827")
-    controls.pack(fill="x", padx=12, pady=(0, 10))
+                      padx=20, pady=17, height=12, state="disabled",
+                      highlightbackground="#235166", highlightthickness=1)
+    history.pack(fill="both", expand=True, padx=20, pady=(0, 11))
+    history.tag_configure("human", foreground="#74efdc")
+    history.tag_configure("assistant", foreground="#e2f5ff")
+    history.tag_configure("system", foreground="#819eb2",
+                          font=("Consolas", 9))
+    history.configure(state="normal")
+    history.insert("end", "LOCAL SESSION  /  Twoja rozmowa nie jest wysyłana do Internetu.\n"
+                         "Wpisz pytanie poniżej lub wybierz badanie źródeł.\n\n",
+                   "system")
+    history.configure(state="disabled")
+    tk.Label(chat_tab, text="TWOJA WIADOMOŚĆ / PYTANIE", bg="#07111d",
+             fg="#6fe1d7", font=("Consolas", 9, "bold")).pack(anchor="w", padx=20)
+    message = tk.Text(chat_tab, height=3, font=("Segoe UI", 11), bg="#102739", fg="#f1f9ff",
+                      insertbackground="#8bf6df", wrap="word", relief="flat",
+                      padx=14, pady=10,
+                      highlightthickness=1, highlightbackground="#245367")
+    message.pack(fill="x", padx=20, pady=(6, 9))
+    controls = tk.Frame(chat_tab, bg="#07111d")
+    controls.pack(fill="x", padx=20, pady=(0, 10))
     store_text = tk.BooleanVar(value=False)
     ttk.Checkbutton(controls, text="Zapisuj pełną treść prywatnie (opcjonalnie)", variable=store_text).pack(side="left")
     info = ttk.Label(controls, text="Tekst nie jest wysyłany do internetu")
     info.pack(side="left", padx=18)
-    teach_area = tk.Frame(chat_tab, bg="#111827")
-    teach_area.pack(fill="x", padx=12, pady=(0, 10))
+    teach_area = tk.Frame(chat_tab, bg="#07111d")
+    teach_area.pack(fill="x", padx=20, pady=(0, 10))
     tk.Label(teach_area,
              text="Naucz odpowiedzi na pytanie z pola powyżej (zapis lokalny, tylko na żądanie):",
-             bg="#111827", fg="#cbd5e1", anchor="w").pack(fill="x")
+             bg="#07111d", fg="#a6c8d1", anchor="w").pack(fill="x")
     answer_input = tk.Text(teach_area, height=2, font=("Segoe UI", 10),
-                           bg="#172237", fg="#f1f5f9", wrap="word",
-                           insertbackground="#e2e8f0", relief="flat", padx=8, pady=5)
+                           bg="#102739", fg="#f1f9ff", wrap="word",
+                           insertbackground="#8bf6df", relief="flat", padx=10, pady=6,
+                           highlightthickness=1, highlightbackground="#245367")
     answer_input.pack(fill="x", pady=(4, 5))
-    teaching_controls = tk.Frame(teach_area, bg="#111827")
+    teaching_controls = tk.Frame(teach_area, bg="#07111d")
     teaching_controls.pack(fill="x")
 
     status_text = tk.StringVar(value="Odczytywanie stanu...")
@@ -416,7 +438,8 @@ def launch(db_path: Path) -> int:
 
     def append(role: str, text: str) -> None:
         history.configure(state="normal")
-        history.insert("end", f"{role}: {text}\n\n")
+        style_tag = "human" if role == "Ty" else "assistant"
+        history.insert("end", f"{role.upper()}  /  {text}\n\n", style_tag)
         history.configure(state="disabled")
         history.see("end")
 
