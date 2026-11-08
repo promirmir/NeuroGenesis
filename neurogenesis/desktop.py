@@ -150,6 +150,22 @@ def self_test() -> int:
                 or synthetic.url not in grounded["reply"]
                 or new_session.status()["knowledge"]["documents"] != 1):
             return 15
+        # Verify the Windows frozen EXE includes the actual offline backup
+        # module: snapshot, SHA check, a non-destructive restored copy.
+        from .recovery import (backup_private_database, inspect_private_database,
+                               restore_to_new_database)
+        snapshot = Path(directory) / "snapshot.sqlite3"
+        restored = Path(directory) / "restored.sqlite3"
+        result = backup_private_database(db, snapshot)
+        if result["integrity"] != "ok" or result["source_versions"] != 1:
+            return 16
+        if inspect_private_database(snapshot, expected_sha256=result["sha256"])["sha256"] != result["sha256"]:
+            return 17
+        restored_report = restore_to_new_database(snapshot, restored, confirmed=True)
+        if (restored_report["sha256"] != result["sha256"]
+                or ExperienceMemory(restored).status()["knowledge"]["documents"] != 1
+                or ExperienceMemory(db).status()["knowledge"]["documents"] != 1):
+            return 18
     return 0
 
 
