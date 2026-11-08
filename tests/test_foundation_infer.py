@@ -82,6 +82,27 @@ class CandidateInferenceTests(unittest.TestCase):
             generate_candidate(self.path, "abcdef", trust_checkpoint=True,
                                cancel_event="not a stop event")
 
+    def test_service_worker_reports_real_model_output_without_chat_promotion(self):
+        import json
+        from neurogenesis.command_service import CommandService
+        db = self.root / "service.sqlite3"
+        service = CommandService(db)
+        with self.assertRaises(PermissionError):
+            service.start_candidate_inference(self.path, "abcdef", confirmed=False)
+        service.start_candidate_inference(
+            self.path, "abcdef", confirmed=True, max_new_bytes=3, device="cpu")
+        service._inference_thread.join(timeout=20)
+        self.assertFalse(service._inference_thread.is_alive())
+        events = service.poll_events()
+        records = [json.loads(body) for kind, body in events if kind == "inference_done"]
+        self.assertEqual(len(records), 1, events)
+        self.assertEqual(records[0]["generated_bytes"], 3)
+        self.assertEqual(records[0]["source_citations"], [])
+        self.assertEqual(records[0]["response_kind"], "ungrounded_neural_experiment")
+        self.assertFalse(service.snapshot().inference_running)
+        self.assertEqual(service.memory.status()["observations"], 0)
+        self.assertEqual(service.memory.status()["knowledge"]["documents"], 0)
+
     def test_cancellation_and_failed_checkpoint_never_mutate_memory(self):
         db = self.root / "private.sqlite3"
         memory = ExperienceMemory(db)
