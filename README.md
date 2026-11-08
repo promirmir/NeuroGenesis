@@ -1,3 +1,7 @@
+## Weryfikacja wielu źródeł — etap badawczy (PR kandydat)
+
+NeuroGenesis potrafi pokazać **dwa dosłowne fragmenty** na ten sam temat z różnych hostów oraz ich adresy i wersje. Jeżeli fragmenty zawierają różne wartości liczbowe albo odmienne słowa przeczenia, pojawia się **ostrzeżenie o możliwej rozbieżności wymagającej sprawdzenia**, a nie bezpodstawna deklaracja ustalonej sprzeczności. Dwie domeny nie gwarantują niezależności autorów ani prawdziwości treści. Stary system ręcznie uczonych odpowiedzi i prywatna pamięć pozostają bez zmian. Przed publikacją w EXE wymagane jest pełne CI. [Opis architektury](docs/KNOWLEDGE_PIPELINE.md).
+
 ## Stan zweryfikowany — NeuroGenesis (8 listopada 2026)
 
 **Kod scalony w `main`:** pozyskanie źródeł HTTPS → prywatna wiedza z cytatami, prawdziwy lokalny trening PyTorch, opcjonalne wnioskowanie z wag, kontrola regresji poprzednich umiejętności i kontynuacja trenowania z wcześniejszego checkpointu **bez nadpisywania poprzedniego pliku**. PR #32–#34 są scalone, a testy Python, CPU PyTorch i Windows/Qt przeszły. Model generuje nadal eksperymentalne bajty, **nie sprawdzoną inteligentną rozmowę**. Wyniki syntetycznych testów nie dorównują jeszcze silnym prostym punktom odniesienia. Nowe Qt Command Center jest funkcjonalne w kodzie i testach, ale jego pakiet redystrybucyjny wciąż czeka na weryfikację licencji. [Bieżący stan](docs/PROJECT_STATE.md).
