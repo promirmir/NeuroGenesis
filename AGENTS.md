@@ -1,3 +1,11 @@
+## Verified handoff — November 8, 2026 (supersedes historical "candidate" notes)
+
+- Current source `main`: `6a45379c2310bc0622b932e21406feddbdbdcd4d`. PRs #32, #33, #34 merged after all appropriate CI: Python 3.11–3.13, privacy, genuine PyTorch CPU, actual Qt Windows/Ubuntu, old frozen Tk EXE and optional frozen Qt technical smoke.
+- Real trained Foundation weights now support isolated local, trust-gated next-byte inference (#32), two-checkpoint old/new numerical regression testing (#33; synthetic candidate rejected), and **true weight continuation** from a prior local trained checkpoint to a new candidate output (#34; 2+2-step actual CPU test). This is byte prediction, NOT independently validated semantic conversation.
+- Last measured fictional continuation CE `5.6478154→5.5607319` nats over 2 resumed steps, weaker than first-order Markov. The previous .pt SHA remains intact. AdamW optimizer moments restart, no silent checkpoint deployment, no automatic public-web weight training.
+- Do not repeat these already merged implementations; read `docs/PROJECT_STATE.md`, `docs/FOUNDATION_INFERENCE.md`, `docs/RETENTION_GATE.md`, `docs/KNOWLEDGE_TRAIN.md` before next task. Qt redistributable not approved/published; existing Tk EXE remains default. Newest release and post-merge CI must be checked live.
+- **Next P0**: licensed natural QA/semantic-context evaluation versus strong controls, independently unused audit corpora, retention/candidate rollback without regressing previous knowledge; then actual RTX/CUDA measurement and Qt licensing/package distribution. No AGI, consciousness or human-brain imitation asserted.
+
 ## Active safe weight continuation (2026-11-08) — PR candidate
 
 - Main baseline `fd4ab6a723baad237d583d62991dbfdcd84b3f74`: PR #33 old/new retention audit merged after real PyTorch CPU, Linux Python 3.11–3.13/privacy and frozen Windows EXE. Synthetic audit **rejected** model candidate; this is the desired gate behavior.
