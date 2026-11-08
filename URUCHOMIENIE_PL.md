@@ -11,7 +11,7 @@
    Get-FileHash .\NeuroGenesis.exe -Algorithm SHA256
    ```
 
-3. Uruchom `NeuroGenesis.exe` dwukrotnym kliknięciem. Aplikacja otworzy własne okno z zakładkami **Rozmowa**, **Mózg**, **Internet**.
+3. Uruchom `NeuroGenesis.exe` dwukrotnym kliknięciem. Aplikacja otworzy własne okno z zakładkami **Rozmowa**, **Mózg**, **Internet** (oraz **Specjalizacja** w wydaniu zawierającym PR #24).
 
 **Uwaga:** program jest eksperymentalny i nie ma podpisu cyfrowego producenta. Nie ignoruj ostrzeżeń bezpieczeństwa bez sprawdzenia pochodzenia i sumy SHA-256. Wydania GitHub Releases mają stałe odnośniki; tymczasowe artefakty GitHub Actions są przechowywane przez 14 dni.
 
@@ -43,6 +43,15 @@ Ten tryb nie jest dowodem rozumienia języka: to jawnie nauczone skojarzenie, za
 5. Wyłącz opcję HTTPS, kiedy nie chcesz pobierać danych. Dane rozmów nie są wysyłane na strony internetowe.
 
 Serwer zobaczy adres IP Twojego połączenia. Program nie otwiera stron wymagających logowania i nie wykonuje kodu ze stron. Odwiedzane adresy zostają zapisane w lokalnej pamięci; ich treść nie jest trwale przechowywana w postaci pełnego tekstu. To pierwszy zmysł internetowy; nie oznacza rozumienia zawartości.
+
+## Jak uruchomić autonomiczne badanie dziedziny? (po wydaniu PR #24)
+
+1. Otwórz **Internet** i świadomie zaznacz **Włącz odczyt HTTPS**.
+2. Przejdź do nowej zakładki **Specjalizacja**. Wpisz dziedzinę, na przykład „Mechanika”, i ustal limit stron (1–500; domyślnie 120).
+3. Kliknij **Rozpocznij badanie**. Program najpierw szuka stron z Wikipedii, a następnie odkrywa powiązane adresy z innych publicznych domen. Pokazuje liczbę prób, zapisanych obserwacji, błędów i odkrytych źródeł.
+4. Kliknij **Stop**, aby przerwać kolejne odczyty. Wyłączenie zgody HTTPS również zatrzymuje proces.
+
+Robot respektuje `robots.txt`, wykonuje nie więcej niż jedno żądanie strony na 5 sekund i nakłada dodatkowe limity domen. Część stron może być niedostępna. **Nie jest to pełny skan internetu ani nauka wag modelu PyTorch**. Przy wcześniejszym EXE zakładka może być nieobecna; najpierw sprawdź, czy nowy kod został scalony i opublikowany.
 
 ## Gdzie jest pamięć?
 
