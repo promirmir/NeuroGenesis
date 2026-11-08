@@ -39,3 +39,7 @@ The existing Qt Training panel already offers source review, weight training and
 ## Next scientific tasks
 
 Develop genuinely independent licensed natural-language, contextual question-answering and factual source checks; run prospective baseline-matched comparisons and per-domain forgetting on previously unused data. Introduce candidate-vs-incumbent checkpoint **promotion only after** complete multi-task gates, explicit user approval and rollback tests. See issue #18 and docs/VISION.md.
+
+## Verified numeric gate milestone — PR #33 merged (November 8, 2026)
+
+PR #33 merged to main `fd4ab6a723baad237d583d62991dbfdcd84b3f74` after Python 3.11–3.13, real CPU PyTorch, privacy and frozen Tk EXE checks. In fictional CPU data, old-domain CE improved 5.7167409→5.6910159, but new-task CE only 5.7461666→5.7415593 (~0.08%); the configurable 1% gate correctly **rejected** this candidate. A report passing a gate later must still not auto-promote. Follow-up PR #34 enabled real resumed weights on separately approved datasets; evaluate any such update against truly unused audit files.
