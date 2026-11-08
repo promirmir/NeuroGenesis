@@ -195,3 +195,9 @@ Measured development status against `docs/VISION.md` using repository `main` `db
 ## 2026-11-08 — verified Windows Tk release for PR #36–#38
 
 - GitHub release `v0.6.0-main.4a81cc76` successfully published for exact main `4a81cc76a3191ee4031e8bfde9430626a50914ad` after Windows standalone EXE smoke and SHA-bound release workflow. 13,044,179-byte `NeuroGenesis.exe` digest `ad30b2f245a77055feca9557f426b77d5c6298d8e0a0e3a31cf727270e5a293d`. This is the Tk executable; Qt source/technical smoke is separate and not redistributed yet.
+
+## 2026-11-08 — strict polar claim coverage to reduce unsupported citations (candidate)
+
+- Starting main `87127d13921a9c4840163cc67e1b3d52c6b5310a`. A pre-existing fictional QA fixture reported a wrong source citation for an unsupported yes/no assertion with lexical subject overlap; PR #38's QA evaluator is read-only and remains unchanged.
+- Implemented conservative claim coverage for direct `Czy...` and explicit contextual `A czy...` questions. Only quote if **every** substantive claim token in the question appears in the same saved newest-revision passage and explicit negation is consistent. Otherwise abstain; no inference from mere subject words. Intentionally conservative, limited to literal words and not factual validation.
+- Add new fictional polar-question tests (positive, unsupported qualifier, polarity mismatch, negative source, old teaching priority), adapt cross-host negation-review test to a nonpolar query, and do not call improved scores on the *already seen* QA fixture an independent quality gain. Await required CI before merge.

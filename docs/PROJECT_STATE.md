@@ -1,3 +1,10 @@
+## 2026-11-08 — conservative polar-question source answer guard (PR candidate)
+
+- Latest merged source main baseline `87127d13921a9c4840163cc67e1b3d52c6b5310a` includes PR #36–#38; #39 durable docs were merged after confirming Tk EXE release `v0.6.0-main.4a81cc76`. The 6-question synthetic *development* QA benchmark previously exposed **one false citation for 3 unsupported prompts**, not a verified independent accuracy estimate.
+- Branch `feat/polar-question-claim-coverage-20261108` introduces a **transparent strict lexical coverage guard for yes/no questions** beginning with Polish `Czy...`/`A czy...`. All substantive query terms must appear in a **single current source excerpt**, including matching presence/absence of explicit negation. If not, evidence retrieval refuses the citation. It does not infer yes/no truth, semantic entailment or calibrated confidence. Expected trade-off: increased abstention on paraphrases/morphological variants.
+- A separate fictional test corpus checks unsupported qualifier/polarity, supported verbatim claims, manual teaching precedence and unchanged nonpolar retrieval. The prior already-seen six-question fixture is retained but no longer treated as an untouched audit: any improvement there must be labeled an **in-sample regression check**, not a generalization result.
+- Candidate pending fresh Python 3.11–3.13, actual Torch CPU, Qt Windows/Ubuntu, privacy and Windows Tk frozen EXE CI. No new Qt download, real CUDA hardware results or v1 claim.
+
 ## Verified Windows release after PR #38 — 2026-11-08
 
 - Latest published source SHA-bound Tk release: `v0.6.0-main.4a81cc76` at `https://github.com/promirmir/NeuroGenesis/releases/tag/v0.6.0-main.4a81cc76`, target `4a81cc76a3191ee4031e8bfde9430626a50914ad`. GitHub Windows regression/EXE self-test and release workflow succeeded. Asset `NeuroGenesis.exe` published at 2026-11-08 14:49:01 UTC; 13,044,179 bytes; SHA-256 `ad30b2f245a77055feca9557f426b77d5c6298d8e0a0e3a31cf727270e5a293d`.

@@ -65,7 +65,9 @@ def process_message(memory: ExperienceMemory, message: str, *, store_text: bool 
     evidence = (memory.answer_from_knowledge(
                     evidence_query if evidence_query is not None else message,
                     source_url=evidence_source_url,
-                    focus_terms=evidence_focus_terms)
+                    focus_terms=evidence_focus_terms,
+                    polar_question=(" ".join(message.casefold().split()).startswith(
+                        ("czy ", "a czy "))))
                 if taught is None and asks and len(message) <= 512 else None)
     result = memory.remember(message, source="desktop", store_text=store_text)
     reply = (taught["answer"] if taught is not None else

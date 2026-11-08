@@ -162,7 +162,8 @@ def _discrepancy_signals(excerpts: tuple[str, ...]) -> tuple[str, ...]:
 
 def answer_question(con: sqlite3.Connection, question: str, *,
                     source_url: str | None = None,
-                    focus_terms: tuple[str, ...] = ()) -> dict[str, Any] | None:
+                    focus_terms: tuple[str, ...] = (),
+                    polar_question: bool = False) -> dict[str, Any] | None:
     """Return bounded, source-grounded excerpts, never synthesized facts.
 
     The strongest lexical passage remains the first answer for compatibility.
@@ -175,6 +176,14 @@ def answer_question(con: sqlite3.Connection, question: str, *,
     terms = _terms(question)[:MAX_QUERY_TERMS]
     if not terms:
         return None
+    if type(polar_question) is not bool:
+        raise ValueError("polar_question must be boolean")
+    # Questions asking whether a particular claim is true should never be
+    # answered by merely sharing its SUBJECT words with a quote. Require
+    # every substantive lexical claim term in ONE excerpt. This intentionally
+    # increases abstention and is not semantic entailment or truth validation.
+    polar = (polar_question or
+             re.match(r"^\s*(?:a\s+)?czy\b", question.casefold()) is not None)
     if source_url is not None and (type(source_url) is not str
                                    or not 1 <= len(source_url) <= 2048):
         raise ValueError("invalid exact prior source URL")
@@ -202,6 +211,13 @@ def answer_question(con: sqlite3.Connection, question: str, *,
         minimum_focus = max(1, (len(focus_terms) + 1) // 2)
         rows = [row for row in rows if len(set(focus_terms) & set(_terms(row[0])))
                 >= minimum_focus]
+    if polar:
+        requested = set(terms)
+        negation = re.compile(r"\b(?:nie|not|never)\b", re.IGNORECASE)
+        query_negated = bool(negation.search(question))
+        rows = [row for row in rows
+                if (requested.issubset(set(_terms(row[0])))
+                    and bool(negation.search(row[0])) == query_negated)]
     if not rows:
         return None
     best = rows[0]
@@ -274,6 +290,7 @@ def answer_question(con: sqlite3.Connection, question: str, *,
             "signals": list(flags),
             "independently_fact_checked": False,
             "publisher_independence_verified": False,
+            "polar_claim_lexical_coverage_required": polar,
         },
     }
 

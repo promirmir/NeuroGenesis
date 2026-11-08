@@ -1,3 +1,7 @@
+## Ostrzejsza kontrola źródeł w pytaniach „Czy…?” — etap testowy
+
+Dla pytań sprawdzających konkretną tezę system wymaga, aby wszystkie jej istotne słowa — oraz zgodność jawnego przeczenia — znajdowały się w **jednym zapisanym fragmencie**. Jeżeli nie ma takiego cytatu, zamiast sugerować potwierdzenie system odmawia. Nie jest to logiczne dowodzenie ani semantyczna weryfikacja faktów; niektóre poprawne parafrazy także zostaną odrzucone. Wdrożenie wymaga pełnych testów i nowego, niezależnego zbioru pytań do oceny faktycznej poprawy. [Pomiar i ograniczenia](docs/QA_EVALUATION.md).
+
 ## Najnowsze zweryfikowane EXE Windows
 
 [**Pobierz NeuroGenesis v0.6.0-main.4a81cc76**](https://github.com/promirmir/NeuroGenesis/releases/tag/v0.6.0-main.4a81cc76) — aplikacja Tkinter z potwierdzonego commita `4a81cc76`, SHA-256 `ad30b2f245a77055feca9557f426b77d5c6298d8e0a0e3a31cf727270e5a293d`. Pozostałe, eksperymentalne funkcje Foundation Brain i Qt Command Center wymagają osobnych zależności i testów przed wydaniem nowego interfejsu Windows. **Nie jest to AGI ani gotowa semantyczna AI.**
