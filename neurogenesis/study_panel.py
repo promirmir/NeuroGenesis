@@ -56,8 +56,9 @@ def install_study_panel(parent, memory, consent_var):
                 events.put(("observation", (observation, acknowledgement, outcome)))
                 if not acknowledgement.wait(15):
                     raise TimeoutError("Brak potwierdzenia zapisu")
-                if outcome:
+                if outcome and outcome[0] == "rejected":
                     raise RuntimeError("Zapis odrzucony")
+                return outcome[0] if outcome else None
             study = SpecialistStudy(topic.get(), persist, max_pages=int(pages.get()))
         except (ValueError, TypeError) as exc:
             messagebox.showerror("Nieprawidłowa dziedzina", str(exc))
@@ -98,7 +99,7 @@ def install_study_panel(parent, memory, consent_var):
                     try:
                         if not consent_var.get():
                             raise PermissionError("Zgoda cofnięta")
-                        memory.observe_web(observation)
+                        outcome.append(memory.observe_web(observation))
                     except Exception:
                         outcome.append("rejected")
                     finally:
@@ -112,7 +113,10 @@ def install_study_panel(parent, memory, consent_var):
                 elif kind == "fatal":
                     add_log(url)
                 elif kind != "discovered":
-                    add_log(("Zapisano: " if kind == "saved" else "Niepowodzenie: ") + url)
+                    descriptions = {"saved": "Nowe źródło: ",
+                                    "duplicate": "Bez zmian: ",
+                                    "error": "Niepowodzenie: "}
+                    add_log(descriptions.get(kind, "Zdarzenie: ") + url)
         except queue.Empty:
             pass
         if (current["thread"] is not None and current["thread"].is_alive()
