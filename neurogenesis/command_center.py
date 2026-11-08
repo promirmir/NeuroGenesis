@@ -37,6 +37,9 @@ PANELS = (
 
 STYLE = """
 QWidget { background: #07111c; color: #e9f6ff; font: 10pt 'Segoe UI'; }
+QLabel { background: transparent; }
+QWidget#pageRoot, QWidget#scrollContent { background: #07111c; }
+QScrollArea, QScrollArea > QWidget > QWidget { background: #07111c; border: 0; }
 QMainWindow, QFrame#sidebar { background: #060e19; }
 QFrame#sidebar { border-right: 1px solid #1b3648; }
 QFrame#card { background: #0d1c2b; border: 1px solid #254359; border-radius: 14px; }
@@ -227,6 +230,7 @@ class CommandCenter(QMainWindow):
 
     def _page(self) -> tuple[QWidget, QVBoxLayout]:
         widget = QWidget()
+        widget.setObjectName("pageRoot")
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(28, 26, 28, 28)
         layout.setSpacing(18)
@@ -249,6 +253,7 @@ class CommandCenter(QMainWindow):
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
         content = QWidget()
+        content.setObjectName("scrollContent")
         content.setMinimumWidth(680)
         layout = QVBoxLayout(content)
         layout.setContentsMargins(3, 2, 3, 13)
