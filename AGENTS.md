@@ -1,3 +1,7 @@
+## Default Windows Tk real connectome added (PR #46 pending CI)
+
+- Not only optional Qt: downloadable Tk app source now displays actual 2D LIF graph (not old bar chart), with measured persistent spikes and synapses, no fake movement, visible-pane 650ms polling and wheel zoom. This uses `neural_telemetry.py` and `tk_connectome.py`; headless fake-canvas and real SQLite tests accompany Qt implementation. PR #46 must pass Python 3.11–3.13/privacy/Windows Tk frozen+Qt Windows/Ubuntu+Qt frozen technical gates before merge. Do NOT imply already in published v0.7.0 EXE before fresh GitHub Release.
+
 ## 2026-11-08 — rzeczywisty futurystyczny Connectome / Live (PR kandydat)
 
 - Zgłoszono rozbieżność z ustaloną wizją: oficjalnie wydawany EXE v0.7 pozostaje prostą aplikacją Tkinter, a wcześniejszy opcjonalny Qt miał jedynie słupki `Brain.traces`. Sama zmiana kolorów nie realizuje pełnej interaktywnej wizualizacji. To nowa faktyczna implementacja w Qt, ale nie jest jeszcze nowym publicznym EXE.
