@@ -192,6 +192,11 @@ def install_bundled_chat(parent, knowledge: LocalKnowledge) -> ttk.Frame:
             running["closing"] = True
             model.stop()
 
+    # Expose real running-process status and UI commands to the operations
+    # dashboard. These are live Tk variables/callbacks, not proxy metrics.
+    tab.ng_model_status = status
+    tab.ng_model_start = start
+    tab.ng_model_stop = stop
     tab.bind("<Destroy>", on_destroy, add="+")
     parent.bind("<<NotebookTabChanged>>", on_selected, add="+")
     tab.after(140, poll)
