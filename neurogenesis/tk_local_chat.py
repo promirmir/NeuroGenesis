@@ -32,7 +32,7 @@ def build_local_chat_command(python_exe: str, model_dir: str, *,
     model = validate_model_dir(model_dir)
     if device not in ("cpu", "cuda") or type(tokens) is not int or not 16 <= tokens <= 256:
         raise ValueError("Nieprawidłowy limit CPU/CUDA lub liczba tokenów.")
-    cmd = [str(py), "-m", "neurogenesis.local_dialogue", "--respond-stdin",
+    cmd = [str(py), "-m", "neurogenesis.local_dialogue", "--serve-stdio",
            "--model-dir", str(model), "--device", device,
            "--max-new-tokens", str(tokens)]
     if adapter_dir.strip():
@@ -44,15 +44,20 @@ def build_local_chat_command(python_exe: str, model_dir: str, *,
 
 
 class LocalChatWorker:
+    """One persistent local model process per active conversation tab."""
+
     def __init__(self):
         self.cancelled = threading.Event()
         self.lock = threading.Lock()
         self.proc: subprocess.Popen | None = None
+        self.argv: tuple[str, ...] | None = None
 
     def cancel(self):
         self.cancelled.set()
         with self.lock:
             p = self.proc
+            self.proc = None
+            self.argv = None
         if p is not None and p.poll() is None:
             p.kill()
 
@@ -61,41 +66,69 @@ class LocalChatWorker:
                           ensure_ascii=False)
         if self.cancelled.is_set():
             raise InterruptedError("Rozmowa przerwana.")
-        info = None
-        if os.name == "nt":
-            info = subprocess.STARTUPINFO()
-            info.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        p = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE, encoding="utf-8", text=True,
-                             startupinfo=info)
         with self.lock:
-            self.proc = p
+            p = self.proc
+            same_config = p is not None and p.poll() is None and self.argv == tuple(argv)
+        if not same_config:
+            if p is not None and p.poll() is None:
+                p.kill()  # changing model/device/adapter requires new weights
+            info = None
+            if os.name == "nt":
+                info = subprocess.STARTUPINFO()
+                info.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            p = subprocess.Popen(
+                argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE, encoding="utf-8", text=True,
+                bufsize=1, startupinfo=info)
+            with self.lock:
+                self.proc = p
+                self.argv = tuple(argv)
+        timed_out = threading.Event()
+
+        def on_timeout():
+            timed_out.set()
+            if p.poll() is None:
+                p.kill()
+
+        watchdog = threading.Timer(240, on_timeout)
+        watchdog.daemon = True
+        watchdog.start()
         try:
+            if not same_config:
+                ready_line = p.stdout.readline()
+                if not ready_line or len(ready_line.encode("utf-8")) > MAX_OUTPUT_BYTES:
+                    raise RuntimeError("Nie udało się załadować wag lokalnego modelu.")
+                ready = json.loads(ready_line)
+                if ready != {"status": "local_model_ready", "offline": True}:
+                    raise RuntimeError("Model nie potwierdził gotowości offline.")
             if self.cancelled.is_set():
-                p.kill()
-            try:
-                stdout, stderr = p.communicate(data, timeout=240)
-            except subprocess.TimeoutExpired:
-                p.kill()
-                p.communicate()
+                raise InterruptedError("Rozmowa przerwana.")
+            p.stdin.write(data + "\n")
+            p.stdin.flush()
+            line = p.stdout.readline()
+            if timed_out.is_set():
                 raise TimeoutError("Limit 4 minut na odpowiedź został przekroczony.")
             if self.cancelled.is_set():
                 raise InterruptedError("Rozmowa anulowana.")
-            if p.returncode:
-                raise RuntimeError("Model nie może odpowiedzieć: "
-                                   + stderr[-1000:].replace("\r", " "))
-            if len(stdout.encode("utf-8")) > MAX_OUTPUT_BYTES:
+            if not line:
+                raise RuntimeError("Zewnętrzny model nie zwrócił odpowiedzi.")
+            if len(line.encode("utf-8")) > MAX_OUTPUT_BYTES:
                 raise ValueError("Model zwrócił za długi tekst.")
-            result = json.loads(stdout)
+            result = json.loads(line)
+            if type(result) is dict and result.get("status") == "local_model_error":
+                raise RuntimeError(str(result.get("message", "Błąd lokalnego modelu"))[:500])
             if (type(result) is not dict or
                     result.get("status") != "local_conversational_model" or
                     result.get("offline_inference") is not True or
                     type(result.get("reply")) is not str):
                 raise ValueError("Nieprawidłowa odpowiedź lokalnego modelu.")
             return result
+        except (OSError, ValueError, RuntimeError, InterruptedError, TimeoutError):
+            # If a protocol message fails, don't keep a desynchronized session.
+            self.cancel()
+            raise
         finally:
-            with self.lock:
-                self.proc = None
+            watchdog.cancel()
 
 
 def install_local_chat(parent) -> ttk.Frame:
@@ -181,8 +214,10 @@ def install_local_chat(parent) -> ttk.Frame:
         append("TY: " + message)
         status.set("GENEROWANIE / lokalny model oblicza odpowiedź, bez API")
         send_button.configure(state="disabled")
-        worker = LocalChatWorker()
-        running["worker"] = worker
+        worker = running["worker"]
+        if not isinstance(worker, LocalChatWorker) or worker.cancelled.is_set():
+            worker = LocalChatWorker()
+            running["worker"] = worker
         def calculate():
             try:
                 events.put(("ok", message, worker.run(argv, history)))
@@ -225,7 +260,7 @@ def install_local_chat(parent) -> ttk.Frame:
                     answer = response["reply"]
                     # Only successfully generated replies become the conversation.
                     turns.extend(({"role": "user", "content": message},
-                                  {"role": "assistant", "content": answer or "(pusty wynik)"}))
+                                  {"role": "assistant", "content": (answer or "(pusty wynik)")[:1800]}))
                     status.set("OFFLINE / lokalne wagi; odpowiedź bez sprawdzania faktów")
                     append("NEUROGENESIS: " + (answer or "(brak treści)"))
         except queue.Empty:
