@@ -229,7 +229,7 @@ def prompt_for_goal(claimed: dict[str, Any]) -> str:
     if claimed["sources"]:
         return (
             "Zadanie autonomiczne NeuroGenesis. Cel: " + goal +
-            "\n\nPrzeanalizuj dostępne zatwierdzone źródła lokalne i HTTPS, przedstaw konkretny "
+            "\n\nPrzeanalizuj dostępne lokalne źródła oraz zatwierdzone źródła HTTPS, przedstaw konkretny "
             "wynik, ryzyka i czego nie można jeszcze potwierdzić. "
             "Nie wymyślaj faktów. To WERSJA DO WERYFIKACJI, "
             "nie wdrażaj zmian, nie deklaruj pełnego wykonania.")
