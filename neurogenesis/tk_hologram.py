@@ -130,15 +130,51 @@ class HolographicBrain:
                       fill="#102c40")
         c.create_line(cx, cy - scale * .94, cx, cy + scale * .94,
                       fill="#102c40")
+        # Two independently rounded cortical lobes form a cinematic
+        # WIREFRAME shell. These lines are decorative coordinates; only
+        # actual LIF nodes/edges below represent measured neural state.
+        ca, sa = math.cos(self.angle), math.sin(self.angle)
+        def camera(x: float, y: float, z: float):
+            xr, zr = x * ca + z * sa, z * ca - x * sa
+            size = 2.8 / (2.8 - zr)
+            return (cx + scale * xr * size,
+                    cy + scale * y * size, zr)
+        def cortex(lobe: int, latitude: float, longitude: float):
+            r = math.sqrt(max(0.0, 1 - latitude * latitude))
+            ripple = .023 * math.sin(11 * longitude + 8 * latitude)
+            x = lobe * .29 + (.35 * r + ripple) * math.cos(longitude)
+            y = .76 * latitude + .022 * math.sin(9 * longitude + 5 * latitude)
+            z = (.57 * r + ripple) * math.sin(longitude)
+            return camera(x, y, z)
         for lobe in (-1, 1):
-            for latitude in (-.62, -.25, .18, .55):
-                ring_width = scale * (.18 + .30 * math.sqrt(1 - latitude**2))
-                x = cx + lobe * scale * (.13 + .20 * math.cos(self.angle))
-                y = cy + scale * latitude * .9
-                c.create_arc(x - ring_width, y - scale * .14,
-                             x + ring_width, y + scale * .14,
-                             start=12, extent=152, style="arc",
-                             outline="#16394d", width=1)
+            # Subtle gyri: latitude arcs + longitude ribs follow a turning
+            # 3D shell. This never draws an imaginary synapse.
+            for band in range(-4, 5):
+                lat = band / 5
+                path = []
+                depths = []
+                for k in range(37):
+                    px, py, depth = cortex(lobe, lat, 2 * math.pi * k / 36)
+                    path.extend((px, py))
+                    depths.append(depth)
+                c.create_line(*path, smooth=True,
+                              fill="#22526a" if max(depths) > .15 else "#16394f",
+                              width=1)
+            for meridian in range(12):
+                lon = 2 * math.pi * meridian / 12
+                path = []
+                for k in range(25):
+                    px, py, _depth = cortex(lobe, -.97 + 1.94 * k / 24, lon)
+                    path.extend((px, py))
+                c.create_line(*path, smooth=True, fill="#174258", width=1)
+        # Major silhouette arc uses a different hue from live synapses.
+        for lobe in (-1, 1):
+            outline = []
+            for k in range(41):
+                lat = -.98 + 1.96 * k / 40
+                px, py, _ = cortex(lobe, lat, math.pi * .04)
+                outline.extend((px, py))
+            c.create_line(*outline, smooth=True, fill="#2b7792", width=1.5)
 
         data = self.latest
         if data is None:
