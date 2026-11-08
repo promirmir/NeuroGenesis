@@ -18,8 +18,10 @@ import sqlite3
 from threading import Lock
 from typing import Any, Sequence
 
-from .acf import _sample
+from .acf import AdaptiveCognitiveFabric, _sample
 from .acf_memory import FabricMemoryObserver
+from .local_knowledge import LocalKnowledge
+from .semantic_policy import prepare_local_sources
 from .acf_semantics import VERSION
 
 MAX_EVENTS = 50000
@@ -82,6 +84,17 @@ class SemanticFabricStore:
 
     def sync(self, limit: int = 96) -> dict[str, Any]:
         return self._observer.poll(limit=limit)
+
+    def prepare_next_topic(self, knowledge: LocalKnowledge) -> dict[str, Any]:
+        """Autonomously decide and, only when measured advantage is adequate,
+        read approved LOCAL indexed material for the next predicted topic.
+        Returns counts and measurements, never private file names or bodies.
+        """
+        with self._lock:
+            fabric = (AdaptiveCognitiveFabric.load(self.state_path)
+                      if self.state_path.is_file()
+                      else AdaptiveCognitiveFabric())
+            return prepare_local_sources(fabric, knowledge).public()
 
     def status(self) -> dict[str, Any]:
         data = self._observer.status()
