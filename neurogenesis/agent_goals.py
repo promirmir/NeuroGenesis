@@ -74,6 +74,12 @@ class GoalStore:
                     result_sha256 TEXT NOT NULL,
                     citations_json TEXT NOT NULL
                 )""")
+                # Previous application may have shut down while the local
+                # model was computing. Recover queued work on next start,
+                # retaining the last successful result for audit.
+                conn.execute(
+                    "UPDATE agent_goals SET state='queued',fingerprint=NULL,"
+                    "updated_utc=? WHERE state='running'", (_now(),))
 
     def _connect(self) -> sqlite3.Connection:
         con = sqlite3.connect(str(self.path), timeout=20)
