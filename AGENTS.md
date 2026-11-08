@@ -1,3 +1,10 @@
+## Current claim-grounding PR candidate (November 8, 2026)
+
+- Latest main baseline `87127d13921a9c4840163cc67e1b3d52c6b5310a`, including verified Tk release v0.6.0-main.4a81cc76 from prior source SHA. PR #36–#39 merged. Source QA developer fixture showed 3/3 supported quotes, 2/3 unsupported abstentions, **one false citation**.
+- Branch `feat/polar-question-claim-coverage-20261108`: for direct Polish `Czy...`/contextual `A czy...` queries, require ALL distinctive claim terms and explicit negation polarity match in ONE newest source excerpt before quoting. This increases abstention, is **not a semantic/truth evaluator**, and may exclude valid paraphrases.
+- New separate fictional polar tests; prior six QA queries are **seen development data**, cannot substantiate prospective accuracy after the rule change. Run Python 3.11–3.13, real PyTorch CPU, Qt offscreen Windows/Ubuntu, Windows frozen Tk EXE, privacy before merge. Preserve manual teachings and private SQLite, no automatic model promotion.
+- After safe merge, focus on genuinely untouched, rights-cleared real QA and retrieval/source verification vs external baselines rather than endless heuristic tuning on the same sample.
+
 ## Latest release confirmed — 2026-11-08
 
 - Source SHA-bound verified Windows **Tk** EXE release `v0.6.0-main.4a81cc76` targets `4a81cc76a3191ee4031e8bfde9430626a50914ad`; 13,044,179 bytes; SHA-256 `ad30b2f245a77055feca9557f426b77d5c6298d8e0a0e3a31cf727270e5a293d`. Windows tests and publish workflow succeeded. Different optional Qt exe has NOT been released legally.
