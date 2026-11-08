@@ -108,13 +108,14 @@ jobs:
           Copy-Item docs/FULL_OFFLINE_EXE.md dist/NeuroGenesis-MODEL-PROVENANCE.md
       - name: Capture actual dark Tk training and model chat
         continue-on-error: true
-        run: python -m scripts.tk_training_screenshot --training-output preview/NeuroGenesis-Training-TXT.png --model-chat-output preview/NeuroGenesis-Model-Chat.png
+        run: python -m scripts.tk_training_screenshot --training-output preview/NeuroGenesis-Training-TXT.png --model-chat-output preview/NeuroGenesis-Model-Chat.png --operations-output preview/NeuroGenesis-Autonomy-Live.png
       - uses: actions/upload-artifact@v4
         with:
           name: NeuroGenesis-Complete-Visual
           path: |
             preview/NeuroGenesis-Training-TXT.png
             preview/NeuroGenesis-Model-Chat.png
+            preview/NeuroGenesis-Autonomy-Live.png
           if-no-files-found: warn
           retention-days: 10
       - uses: actions/upload-artifact@v4
