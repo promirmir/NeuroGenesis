@@ -6,8 +6,10 @@ The default Windows Tk EXE is unchanged. No fake neural/training telemetry.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 from pathlib import Path
+import time
 
 # Qt is an OPTIONAL runtime dependency; legacy desktop never imports this file.
 from PySide6.QtCore import Qt, QTimer
@@ -16,6 +18,7 @@ from PySide6.QtWidgets import (
     QApplication, QCheckBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
     QMessageBox, QPlainTextEdit, QPushButton, QSpinBox, QStackedWidget, QTableWidget,
     QTableWidgetItem, QTextEdit, QVBoxLayout, QWidget, QSizePolicy, QHeaderView,
+    QComboBox,
 )
 
 from .command_service import CommandService
@@ -323,6 +326,7 @@ class CommandCenter(QMainWindow):
         layout.addWidget(card)
         self.study_log = QPlainTextEdit()
         self.study_log.setReadOnly(True)
+        self.study_log.document().setMaximumBlockCount(1200)
         self.study_log.setPlaceholderText("Zdarzenia źródeł, duplikatów i błędów będą widoczne tutaj.")
         layout.addWidget(self.study_log, 1)
         layout.addWidget(label("Pobieranie tekstu to NIE trening wag sieci. Pauza i wznowienie "
@@ -346,6 +350,28 @@ class CommandCenter(QMainWindow):
         for kind, description in events:
             if kind == "discovered":
                 continue
+            if kind == "train_progress":
+                metrics = json.loads(description)
+                self.training_log.appendPlainText(
+                    f"Krok {metrics['step']}/{metrics['total']} · rzeczywista strata {metrics['loss']:.5f}")
+                continue
+            if kind == "train_done":
+                measured = json.loads(description)
+                self._last_training_summary = (
+                    "Trening ukończony. Holdout (odrębny dokument): "
+                    f"{measured['heldout_next_byte_ce_before']:.4f} → "
+                    f"{measured['heldout_next_byte_ce_after']:.4f} nats; "
+                    f"Markov {measured['heldout_markov_ce_nats']:.4f}; "
+                    f"{measured['train_steps_per_second']:.2f} kroków/s; "
+                    f"urządzenie {measured['device']}; CUDA VRAM: "
+                    f"{measured['gpu_peak_allocated_bytes'] if measured['gpu_peak_allocated_bytes'] is not None else 'niezmierzono'}."
+                    " Checkpoint KANDYDAT, nie aktywny silnik rozmowy.")
+                self.training_log.appendPlainText("ZAKOŃCZONO · " + self._last_training_summary)
+                continue
+            if kind in ("train_cancelled", "train_fatal"):
+                self._last_training_summary = ("Trening: " + description)
+                self.training_log.appendPlainText(kind.upper() + " · " + description)
+                continue
             detail = description if kind != "fatal" else "Błąd: " + description
             self.study_log.appendPlainText(kind.upper() + " · " + detail)
         if events:
@@ -366,15 +392,66 @@ class CommandCenter(QMainWindow):
 
     def _build_training(self) -> None:
         _, layout = self._page()
-        card, inner = block("Trening i sprzęt — stan rzeczywisty",
-                            "Oddzielny Foundation Brain wymaga zatwierdzonego korpusu, checkpointu i kontrolowanego uruchomienia.")
-        self.training_status = label("Brak uruchomionego procesu treningu.")
+        card, inner = block("Foundation Brain — trening neuronowy",
+                            "Wyłącznie dokumenty zatwierdzone przez operatora do lokalnego treningu. "
+                            "PyTorch [foundation] jest opcjonalny; brak automatycznego treningu.")
+        self.training_status = label("Foundation training worker: NIEURUCHOMIONY")
+        self._last_training_summary = ""
         inner.addWidget(self.training_status)
-        inner.addWidget(label("CUDA, VRAM, parametry, loss, walidacja i prędkość będą prezentowane "
-                               "dopiero po podłączeniu mierzonego pracownika modelu. "
-                               "Dzisiaj Command Center nie uruchamia treningu samodzielnie.", kind="subtle"))
+        budget = QHBoxLayout()
+        budget.addWidget(label("Kroki:"))
+        self.training_steps = QSpinBox()
+        self.training_steps.setRange(1, 1000)
+        self.training_steps.setValue(20)
+        budget.addWidget(self.training_steps)
+        budget.addWidget(label("Sprzęt:"))
+        self.training_device = QComboBox()
+        self.training_device.addItems(["cpu", "cuda"])
+        budget.addWidget(self.training_device)
+        budget.addStretch()
+        inner.addLayout(budget)
+        self.training_rights = QCheckBox(
+            "Potwierdzam uprawnienie do treningu na zatwierdzonych źródłach")
+        inner.addWidget(self.training_rights)
+        buttons = QHBoxLayout()
+        self.training_start = QPushButton("Uruchom trening")
+        self.training_start.setObjectName("primary")
+        self.training_start.clicked.connect(self.start_training)
+        buttons.addWidget(self.training_start)
+        self.training_stop = QPushButton("Przerwij")
+        self.training_stop.clicked.connect(self.service.stop_training)
+        buttons.addWidget(self.training_stop)
+        buttons.addStretch()
+        inner.addLayout(buttons)
+        inner.addWidget(label(
+            "Parametry wstępne: batch 2, sekwencja 32 bajty, ukryte 32. "
+            "Ostatni odrębny dokument pozostaje wyłącznie do walidacji. "
+            "Checkpoint jest KANDYDATEM; rozmowa nadal korzysta z cytatów źródeł.",
+            kind="subtle"))
         layout.addWidget(card)
-        layout.addStretch()
+        self.training_log = QPlainTextEdit()
+        self.training_log.setReadOnly(True)
+        self.training_log.document().setMaximumBlockCount(800)
+        self.training_log.setPlaceholderText("Tutaj pojawią się rzeczywiste pomiary strat i wyniki walidacji.")
+        layout.addWidget(self.training_log, 1)
+
+    def start_training(self) -> None:
+        if not self.training_rights.isChecked():
+            QMessageBox.warning(self, "Prawa do treningu",
+                                "Potwierdź prawa do zatwierdzonych źródeł.")
+            return
+        output = self.service.memory.path.with_name(
+            "foundation-candidate-" + str(time.time_ns()) + ".pt")
+        try:
+            self.service.start_training(
+                output, confirmed=True, steps=self.training_steps.value(),
+                device=self.training_device.currentText())
+        except (ValueError, PermissionError, OSError, RuntimeError) as exc:
+            QMessageBox.warning(self, "Trening Foundation Brain", str(exc))
+            return
+        self._last_training_summary = ""
+        self.training_log.appendPlainText("START · trening na zatwierdzonych dokumentach; sieć wyłączona.")
+        self.refresh()
 
     def _build_knowledge(self) -> None:
         _, layout = self._page()
@@ -391,6 +468,14 @@ class CommandCenter(QMainWindow):
         refresh_button = QPushButton("Odśwież źródła")
         refresh_button.clicked.connect(self.refresh_sources)
         inner.addWidget(refresh_button)
+        rights_buttons = QHBoxLayout()
+        approve = QPushButton("Zatwierdź prawa do treningu")
+        approve.clicked.connect(lambda: self.change_source_rights(True))
+        rights_buttons.addWidget(approve)
+        revoke = QPushButton("Cofnij zgodę na trening")
+        revoke.clicked.connect(lambda: self.change_source_rights(False))
+        rights_buttons.addWidget(revoke)
+        inner.addLayout(rights_buttons)
         layout.addWidget(card, 1)
         self.source_preview = QPlainTextEdit()
         self.source_preview.setReadOnly(True)
@@ -424,6 +509,30 @@ class CommandCenter(QMainWindow):
             + "\nWersja: " + str(source["version"])
             + "\nStatus praw: " + source["rights_status"] + "\n\n"
             + "\n\n".join(str(p["ordinal"] + 1) + ". " + p["text"] for p in passages))
+
+    def change_source_rights(self, approved: bool) -> None:
+        row = self.sources_table.currentRow()
+        if not 0 <= row < len(self._source_rows):
+            QMessageBox.information(self, "Wybór źródła", "Najpierw wybierz wersję dokumentu.")
+            return
+        source = self._source_rows[row]
+        if approved:
+            confirmed = QMessageBox.question(
+                self, "Prawa do lokalnego treningu",
+                "Czy potwierdzasz posiadanie praw lub uprawnienia do lokalnego "
+                "trenowania modelu na tej konkretnej wersji źródła? "
+                "To oświadczenie nie wynika automatycznie z dostępności publicznej strony.",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            if confirmed != QMessageBox.StandardButton.Yes:
+                return
+        try:
+            self.service.set_source_training_rights(source["id"], approved)
+        except (ValueError, OSError) as exc:
+            QMessageBox.warning(self, "Prawa źródła", str(exc))
+            return
+        self.refresh_sources()
+        self.source_preview.setPlainText(
+            "Zapisano lokalne oświadczenie o prawach. Nie uruchomiono treningu.")
 
     def _build_settings(self) -> None:
         _, layout = self._page()
@@ -469,10 +578,16 @@ class CommandCenter(QMainWindow):
             f"Rzeczywisty stan: neurony {s.neurons}, synapsy {s.synapses}, krok {s.brain_steps}")
         if self.pages.currentIndex() == 3:
             self.brain_plot.set_values(self.service.neural_traces())
+        status = ("AKTYWNY" if s.training_running else "NIEURUCHOMIONY")
+        measured = (f"{s.training_last_loss:.5f}" if s.training_last_loss is not None
+                    else "brak pomiaru")
         self.training_status.setText(
             f"Logiczne wątki CPU: {s.cpu_threads or 'brak odczytu'}\n"
-            "Foundation training worker: NIEURUCHOMIONY\n"
-            "CUDA/VRAM: NIEPOMIERZONE")
+            f"Foundation training worker: {status} · {s.training_step}/{s.training_total} kroków\n"
+            f"Ostatnia rzeczywista strata batch: {measured}\n"
+            + (self._last_training_summary or "CUDA/VRAM: brak zakończonego pomiaru"))
+        self.training_start.setEnabled(not s.training_running)
+        self.training_stop.setEnabled(s.training_running)
         self.diag_status.setText(
             f"SQLite: {s.database}\nSieć: {'zezwolono' if s.network_enabled else 'zablokowana'}\n"
             f"Aktywna sesja badawcza: {'tak' if s.research_running else 'nie'}")
@@ -480,6 +595,7 @@ class CommandCenter(QMainWindow):
     def closeEvent(self, event) -> None:
         self.service.set_network_consent(False)
         self.service.stop_study()
+        self.service.stop_training()
         super().closeEvent(event)
 
 

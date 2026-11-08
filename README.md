@@ -15,6 +15,10 @@ NeuroGenesis is a long-term research project investigating whether online struct
 
 > **Research status:** v0.6.0 includes the original small deterministic CPU spiking brain, local SQLite persistence, a native Windows desktop application and optional experimental neural regulation/repair/capacity experiments. The self-development controller now supports **opt-in periodic local trials with transactional promotion and rollback**, but it is not a self-coding agent or general-intelligence system. Capacity experiments remain bounded offline trials. This is **not** a conscious entity, a human brain emulator, a natural-language conversational AI, an unrestricted Internet crawler, or a claim of general intelligence. A separate optional PyTorch Foundation Brain is trainable but not yet connected to a verified useful language model.
 
+## Kontrolowany trening Foundation Brain na zatwierdzonych źródłach (PR kandydat)
+
+Po zatwierdzeniu praw do **konkretnych wersji** co najmniej trzech zapisanych źródeł możliwe jest uruchomienie lokalnego rzeczywistego treningu PyTorch: osobny dokument testowy, straty przed/po, porównanie Markov, checkpoint kandydata i stop. Nowa opcjonalna aplikacja Qt oferuje panel treningu, ale nie zastępuje jeszcze opublikowanego EXE. **Nie** oznacza to językowego rozumowania, automatycznego treningu na całym internecie ani gotowego modelu do rozmowy. [Zasady, uruchomienie i ograniczenia](docs/KNOWLEDGE_TRAIN.md).
+
 ## Command Center — nowy opcjonalny interfejs Qt (kandydat, nie wydanie EXE)
 
 Zaimplementowano źródłową aplikację PySide6/Qt działającą na tej samej prywatnej bazie SQLite: dashboard rzeczywistych pomiarów, rozmowa z cytatami, centrum badań z jawną zgodą i Stop, podgląd aktywności neuronowej, źródła, ustawienia. Panel treningu jasno wskazuje, że Foundation Brain nie jest jeszcze do niego podłączony. Nie jest to symulacja świadomości.

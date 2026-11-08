@@ -330,6 +330,20 @@ class ExperienceMemory:
         with closing(self._connect()) as con:
             return source_passages(con, source_id)
 
+    def set_source_training_rights(self, source_id: int, approved: bool) -> dict[str, Any]:
+        """Explicit local operator rights assertion; never automatically inferred."""
+        from .knowledge import set_training_rights
+        with closing(self._connect()) as con:
+            with con:
+                con.execute("BEGIN IMMEDIATE")
+                return set_training_rights(con, source_id, approved)
+
+    def approved_training_documents(self) -> list[dict[str, Any]]:
+        """Only latest revisions explicitly approved for local model training."""
+        from .knowledge import approved_training_documents
+        with closing(self._connect()) as con:
+            return approved_training_documents(con)
+
     def teach(self, question: str, answer: str) -> dict[str, Any]:
         """Explicit user-approved Q/A training, atomically with brain stimulus.
 
