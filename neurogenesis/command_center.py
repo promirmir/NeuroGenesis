@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
     QApplication, QCheckBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
     QMessageBox, QPlainTextEdit, QPushButton, QSpinBox, QStackedWidget, QTableWidget,
     QTableWidgetItem, QTextEdit, QVBoxLayout, QWidget, QSizePolicy, QHeaderView,
-    QComboBox, QFileDialog,
+    QComboBox, QFileDialog, QScrollArea,
 )
 
 from .command_service import CommandService
@@ -406,7 +406,18 @@ class CommandCenter(QMainWindow):
                                kind="subtle"))
 
     def _build_training(self) -> None:
-        _, layout = self._page()
+        _, page_layout = self._page()
+        # Controls and the experimental decoding laboratory must remain
+        # reachable on 720p laptops and high-DPI screens without clipping.
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        content = QWidget()
+        layout = QVBoxLayout(content)
+        layout.setContentsMargins(8, 8, 8, 12)
+        layout.setSpacing(14)
+        scroll.setWidget(content)
+        page_layout.addWidget(scroll, 1)
         card, inner = block("Foundation Brain — trening neuronowy",
                             "Wyłącznie dokumenty zatwierdzone przez operatora do lokalnego treningu. "
                             "PyTorch [foundation] jest opcjonalny; brak automatycznego treningu.")
