@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
 )
 
 from .command_service import CommandService
+from .connectome_view import ConnectomeView, TrainingLossPlot
 
 PANELS = (
     ("Przegląd", "Stan systemu"),
@@ -187,6 +188,11 @@ class CommandCenter(QMainWindow):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.refresh)
         self.timer.start(2500)
+        # Poll actual brain state only when Connectome panel is visible.
+        # A timer does not simulate spikes: widget draws only new persisted steps.
+        self.neural_timer = QTimer(self)
+        self.neural_timer.timeout.connect(self.refresh_connectome)
+        self.neural_timer.start(350)
         self.events_timer = QTimer(self)
         self.events_timer.timeout.connect(self.poll_study_events)
         self.events_timer.start(200)
@@ -207,6 +213,8 @@ class CommandCenter(QMainWindow):
             button.setChecked(i == index)
         if index == 5:
             self.refresh_sources()
+        if index == 3:
+            self.refresh_connectome()
 
     def _build_overview(self) -> None:
         _, layout = self._page()
@@ -379,6 +387,8 @@ class CommandCenter(QMainWindow):
                 metrics = json.loads(description)
                 self.training_log.appendPlainText(
                     f"Krok {metrics['step']}/{metrics['total']} · rzeczywista strata {metrics['loss']:.5f}")
+                self.training_loss_plot.add_real_loss(
+                    int(metrics["step"]), float(metrics["loss"]))
                 continue
             if kind == "train_done":
                 measured = json.loads(description)
@@ -422,16 +432,59 @@ class CommandCenter(QMainWindow):
 
     def _build_brain(self) -> None:
         _, layout = self._page()
-        card, inner = block("Monitor aktywności neuronowej",
-                            "Rzeczywiste ślady aktywności z lokalnego Brain. Wykres nie mierzy świadomości.")
+        card, inner = block(
+            "NEURAL CONNECTOME / LIVE",
+            "Prawdziwa mapa neuronów i synaps z lokalnej sieci LIF; kolor i blask "
+            "wynikają z ostatnich rzeczywistych impulsów, śladów oraz wag.")
         self.brain_metrics = label("Ładowanie pomiarów...", kind="subtle")
         inner.addWidget(self.brain_metrics)
+        self.connectome = ConnectomeView()
+        inner.addWidget(self.connectome, 1)
+        layout.addWidget(card, 3)
+        signals, s = block(
+            "NEURAL EVENT STREAM",
+            "Zmiany liczone między kolejnymi zapisanymi krokami. "
+            "Brak nowego kroku = brak nowych impulsów na ekranie.")
+        self.neural_event_status = label("BRAK NOWYCH KROKÓW", kind="status")
+        s.addWidget(self.neural_event_status)
         self.brain_plot = ActivityPlot()
-        inner.addWidget(self.brain_plot, 1)
-        layout.addWidget(card, 1)
-        layout.addWidget(label("Historyczna sieć LIF pozostaje eksperymentalnym punktem odniesienia. "
-                               "Bez podłączonego modelu PyTorch nie pokazujemy strat ani dokładności treningu.",
-                               kind="subtle"))
+        self.brain_plot.setMinimumHeight(95)
+        self.brain_plot.setMaximumHeight(130)
+        s.addWidget(self.brain_plot)
+        layout.addWidget(signals, 1)
+        layout.addWidget(label(
+            "Legenda: niebieski = kanały wejściowe; turkus = rzeczywista aktywność; "
+            "jasny impuls = neuron zarejestrował spike. Linie = zapisane synapsy; "
+            "jaśniejsze/grubsze oznaczają większą wagę. Przewijaj kółkiem, aby "
+            "powiększać, i wskaż neuron kursorem, aby odczytać wartości. "
+            "To eksperymentalna sieć LIF, nie niewidoczna architektura Foundation Brain.",
+            kind="subtle"))
+
+    def refresh_connectome(self) -> None:
+        if self.pages.currentIndex() != 3:
+            return
+        try:
+            state = self.service.neural_connectome()
+        except (ValueError, OSError, RuntimeError) as exc:
+            self.neural_event_status.setText("BŁĄD ODCZYTU RZECZYWISTEJ SIECI")
+            return
+        previous_step = self.connectome.snapshot.step if self.connectome.snapshot else None
+        self.connectome.set_telemetry(state)
+        if previous_step == state.step:
+            self.neural_event_status.setText(
+                f"OSTATNI KROK {state.step} · BRAK NOWEJ AKTYWNOŚCI")
+        else:
+            change = self.connectome.change
+            self.neural_event_status.setText(
+                f"KROK {state.step} · +{change['delta_steps']} kroków "
+                f"· +{change['new_spikes']} impulsów · "
+                f"{change['changed_weights']} zmienionych wag "
+                f"· +{change['new_neurons']} neuronów")
+        self.brain_metrics.setText(
+            f"Neurony {state.total_neurons} | Synapsy {state.total_synapses} | "
+            f"Łączne spiki {state.total_spikes} | Nowość {state.last_novelty:.4f} | "
+            f"Wzrost {state.total_grown} | Pruning {state.total_pruned}")
+        self.brain_plot.set_values(tuple(n.trace for n in state.nodes))
 
     def _build_training(self) -> None:
         _, page_layout = self._page()
@@ -449,6 +502,8 @@ class CommandCenter(QMainWindow):
         card, inner = block("Foundation Brain — trening neuronowy",
                             "Wyłącznie dokumenty zatwierdzone przez operatora do lokalnego treningu. "
                             "PyTorch [foundation] jest opcjonalny; brak automatycznego treningu.")
+        self.training_loss_plot = TrainingLossPlot()
+        inner.addWidget(self.training_loss_plot)
         self.training_status = label("Foundation training worker: NIEURUCHOMIONY")
         self._last_training_summary = ""
         inner.addWidget(self.training_status)
@@ -757,10 +812,8 @@ class CommandCenter(QMainWindow):
             f"domeny: {s.research_domains}")
         self.research_start.setEnabled(not s.research_running)
         self.research_stop.setEnabled(s.research_running)
-        self.brain_metrics.setText(
-            f"Rzeczywisty stan: neurony {s.neurons}, synapsy {s.synapses}, krok {s.brain_steps}")
         if self.pages.currentIndex() == 3:
-            self.brain_plot.set_values(self.service.neural_traces())
+            self.refresh_connectome()
         status = ("AKTYWNY" if s.training_running else "NIEURUCHOMIONY")
         measured = (f"{s.training_last_loss:.5f}" if s.training_last_loss is not None
                     else "brak pomiaru")

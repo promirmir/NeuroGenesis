@@ -65,6 +65,57 @@ class QtCommandCenterSmokeTests(unittest.TestCase):
         self.window.show_selected_source()
         self.assertIn("połączeń neuronów", self.window.source_preview.toPlainText())
 
+    def test_live_connectome_real_events_no_fake_frames_and_zoom(self):
+        self.window.navigate(3)
+        self.window.refresh_connectome()
+        graph = self.window.connectome
+        initial = graph.snapshot
+        self.assertIsNotNone(initial)
+        self.assertEqual(initial.step, self.service.memory.brain().steps)
+        self.assertEqual(len(initial.edges), len(self.service.memory.brain().synapses))
+        self.assertIn("BRAK NOWEJ AKTYWNOŚCI", self.window.neural_event_status.text())
+        graph.set_telemetry(initial)
+        self.assertFalse(graph.change["advanced"])
+        self.service.ask("Nowa obserwacja dla prawdziwego mózgu")
+        self.window.refresh_connectome()
+        self.assertGreater(graph.snapshot.step, initial.step)
+        self.assertTrue(graph.change["advanced"])
+        self.assertEqual(
+            graph.snapshot.total_spikes, self.service.memory.brain().total_spikes)
+        self.assertEqual(graph.snapshot.edges[0].weight,
+                         self.service.memory.brain().synapses[0].weight)
+        graph.resize(1100, 620)
+        graph.show()
+        self.application.processEvents()
+        image = graph.grab().toImage()
+        self.assertGreater(image.width(), 800)
+        self.assertGreaterEqual(image.height(), 390)
+        self.assertFalse(self.service.network_enabled)
+        self.window.refresh_connectome()
+        self.assertIn("BRAK NOWEJ AKTYWNOŚCI", self.window.neural_event_status.text())
+
+    def test_training_graph_only_changes_on_actual_progress_events(self):
+        import json
+        from neurogenesis.connectome_view import TrainingLossPlot
+        self.window.navigate(4)
+        plot = self.window.training_loss_plot
+        self.assertIsInstance(plot, TrainingLossPlot)
+        self.assertEqual(plot.points, ())
+        self.service._events.put(("train_progress", json.dumps({
+            "step": 1, "total": 5, "loss": 5.721})))
+        self.window.poll_study_events()
+        self.assertEqual(plot.points, ((1, 5.721),))
+        self.window.refresh()
+        self.assertEqual(plot.points, ((1, 5.721),))
+        self.service._events.put(("train_progress", json.dumps({
+            "step": 2, "total": 5, "loss": 5.681})))
+        self.window.poll_study_events()
+        self.assertEqual(plot.points, ((1, 5.721), (2, 5.681)))
+        plot.add_real_loss(1, 5.44)
+        self.assertEqual(plot.points, ((1, 5.44),))
+        with self.assertRaises(ValueError):
+            plot.add_real_loss(3, float("nan"))
+
     def test_inference_lab_requires_explicit_trusted_file_and_is_offline(self):
         self.window.navigate(4)
         self.assertFalse(self.window.trust_checkpoint.isChecked())

@@ -273,10 +273,17 @@ def launch(db_path: Path) -> int:
     status_text = tk.StringVar(value="Odczytywanie stanu...")
     tk.Label(brain_tab, textvariable=status_text, bg="#111827", fg="#e2e8f0",
              justify="left", anchor="nw", font=("Consolas", 12)).pack(fill="x", padx=24, pady=(24, 14))
-    canvas = tk.Canvas(brain_tab, bg="#172237", highlightthickness=0, height=205)
-    canvas.pack(fill="x", padx=24, pady=(0, 16))
-    ttk.Label(brain_tab, text="Wykres przedstawia aktualne ślady aktywności neuronów; nie jest miarą świadomości.",
-              wraplength=730).pack(anchor="w", padx=24)
+    canvas = tk.Canvas(brain_tab, bg="#060c17", highlightthickness=0, height=420)
+    canvas.pack(fill="both", expand=True, padx=24, pady=(0, 12))
+    from .tk_connectome import TkConnectome
+    from .neural_telemetry import snapshot_neural_telemetry
+    neural_graph = TkConnectome(canvas)
+    ttk.Label(brain_tab, text=(
+        "Rzeczywista mapa sieci LIF: światło oznacza zapisane impulsy, "
+        "linie — faktyczne synapsy, barwa i grubość — ich wagi. "
+        "Przy braku nowych kroków graf pozostaje nieruchomy. "
+        "Kółko myszy = przybliżanie. To nie jest mapa Foundation Brain ani świadomości."),
+        wraplength=750).pack(anchor="w", padx=24)
     autonomy_controls = tk.Frame(brain_tab, bg="#111827")
     autonomy_controls.pack(fill="x", padx=24, pady=(12, 4))
     autonomy_enabled = tk.BooleanVar(value=False)
@@ -427,15 +434,9 @@ def launch(db_path: Path) -> int:
                 f"Samorozwój: {'AUTO' if autonomy_enabled.get() else 'ręczny'}; "
                 f"nowe doświadczenia {health['new_events']}/{WINDOW}; "
                 f"próby {health['cycles']}; zatwierdzone {health['promotions']}")
-            traces = memory.brain().traces
-            canvas.delete("all")
-            canvas.update_idletasks()
-            width = max(200, canvas.winfo_width())
-            for i, t in enumerate(traces[:96]):
-                bw = width / max(1, len(traces[:96]))
-                height = min(180, max(1, 180 * float(t) / 5))
-                canvas.create_rectangle(i*bw+1, 195-height, (i+1)*bw-1, 195,
-                                        fill="#34d399", outline="")
+            # The separately scheduled visible-pane poll below renders the
+            # actual connectome only after a *new persisted brain step*.
+            # Never invent neural activity by redrawing per UI refresh.
         except (ValueError, OSError, KeyError) as exc:
             status_text.set(f"Błąd odczytu stanu: {exc}")
 
@@ -553,6 +554,19 @@ def launch(db_path: Path) -> int:
     fetch_button.configure(command=web_request)
     root.after(250, poll_web_queue)
     root.after(300_000, periodic_web)
+
+    def poll_neural_graph() -> None:
+        if tabs.select() == str(brain_tab):
+            try:
+                neural_graph.render(snapshot_neural_telemetry(memory.brain()))
+            except (ValueError, OSError, RuntimeError):
+                status_text.set("Nie można odczytać zweryfikowanego stanu sieci.")
+        root.after(650, poll_neural_graph)
+
+    canvas.bind("<Configure>", lambda _event: (
+        neural_graph.render(neural_graph._latest, force=True)
+        if neural_graph._latest is not None else None))
+    root.after(650, poll_neural_graph)
 
     def refresh_tick() -> None:
         refresh()
