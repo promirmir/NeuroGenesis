@@ -72,6 +72,11 @@ def install_autonomy_hub(
         model_stop: Callable[[], None],
         choose_training_folder: Callable[[], None],
         allowed_web: Callable[[], bool],
+        study_topic: tk.StringVar | None = None,
+        study_status: tk.StringVar | None = None,
+        study_autopilot: tk.BooleanVar | None = None,
+        study_start: Callable[[], None] | None = None,
+        study_stop: Callable[[], None] | None = None,
 ) -> ttk.Frame:
     tab = ttk.Frame(parent)
     parent.add(tab, text="AUTONOMIA")
@@ -226,6 +231,44 @@ def install_autonomy_hub(
     ttk.Button(line, text="ZATRZYMAJ AI", command=model_stop).pack(
         side="left")
 
+    _label(body, "CEL BADAWCZY / NAUKA Z PUBLICZNYCH ŹRÓDEŁ", 12, CYAN, True).pack(
+        anchor="w", pady=(4, 6))
+    study_frame = tk.Frame(body, bg=BG2, padx=14, pady=11,
+                           highlightbackground=LINE, highlightthickness=1)
+    study_frame.pack(fill="x", pady=(0, 13))
+    _label(
+        study_frame,
+        "Wpisz temat. NeuroGenesis może samodzielnie sprawdzać źródła "
+        "związane z tematem, ale TYLKO po włączeniu zgody HTTPS "
+        "w karcie Internet. Limit: 3 odrębne sesje na uruchomienie.",
+        9, DIM, bg=BG2).pack(fill="x", pady=(0, 8))
+    row = ttk.Frame(study_frame)
+    row.pack(fill="x", pady=(0, 5))
+    subject = study_topic if study_topic is not None else tk.StringVar()
+    field = ttk.Entry(row, textvariable=subject)
+    field.pack(side="left", fill="x", expand=True, padx=(0, 8))
+    ttk.Button(row, text="BADANIE / START",
+               command=(study_start if study_start is not None
+                        else lambda: None),
+               state="normal" if study_start is not None else "disabled").pack(
+                   side="left", padx=(0, 6))
+    ttk.Button(row, text="STOP",
+               command=(study_stop if study_stop is not None
+                        else lambda: None),
+               state="normal" if study_stop is not None else "disabled").pack(
+                   side="left")
+    autopilot_var = (study_autopilot if study_autopilot is not None
+                     else tk.BooleanVar(value=False))
+    ttk.Checkbutton(
+        study_frame,
+        variable=autopilot_var,
+        text="SAMODZIELNIE KONTYNUUJ BADANIE (po zgodzie HTTPS, z limitami)"
+    ).pack(anchor="w", pady=(2, 5))
+    live_study = study_status if study_status is not None else tk.StringVar(
+        value="Moduł badań nie jest dostępny w tym trybie testowym.")
+    ttk.Label(study_frame, textvariable=live_study, wraplength=910).pack(
+        fill="x", pady=(0, 3))
+
     _label(body, "RZECZYWISTE ZDARZENIA / OSTATNIE ZMIANY", 12, CYAN, True).pack(
         anchor="w", pady=(2, 7))
     log = tk.Text(body, height=8, bg="#061a27", fg="#d4f1ef",
@@ -283,7 +326,9 @@ def install_autonomy_hub(
                 "HTTPS / ZE ZGODĄ" if allowed_web() else "HTTPS / WYŁĄCZONY")
             monitor_desc.set(
                 f"Rzeczywiste dokumenty źródłowe: {neural['knowledge']['documents']}\n"
-                "Dostęp sieciowy nie jest nadawany automatycznie.")
+                + (("Badanie celu: " + subject.get()[:75])
+                   if autopilot_var.get() and allowed_web()
+                   else "Dostęp sieciowy wymaga oddzielnej zgody."))
             snapshot = {
                 "steps": brain["steps"], "neurons": brain["neurons"],
                 "synapses": brain["synapses"], "docs": sources["files"],
@@ -291,6 +336,7 @@ def install_autonomy_hub(
                 "approved": autonomy["promotions"],
                 "model": model_text,
                 "model_ready": ready,
+                "study": live_study.get(),
             }
             if not previous:
                 record("Pierwszy odczyt zapisanego stanu: LIF " +
@@ -308,6 +354,7 @@ def install_autonomy_hub(
                     "approved": "Zatwierdzono zmianę po walidacji",
                     "model": "Zmiana stanu lokalnego modelu",
                     "model_ready": "Gotowość silnika językowego",
+                    "study": "Postęp badań źródłowych",
                 }
                 for key, value in snapshot.items():
                     if value != previous.get(key):
