@@ -201,26 +201,41 @@ def launch(db_path: Path) -> int:
         return 1
 
     root = tk.Tk()
-    root.title("NeuroGenesis — cyfrowy mózg")
-    root.geometry("960x720")
-    root.minsize(720, 560)
-    root.configure(bg="#111827")
+    root.title("NeuroGenesis — Neural Command Center · REAL-TIME")
+    root.geometry("1380x840")
+    root.minsize(920, 650)
+    root.configure(bg="#081420")
 
     style = ttk.Style(root)
     style.theme_use("clam")
-    style.configure("TNotebook", background="#111827", borderwidth=0)
-    style.configure("TNotebook.Tab", padding=(20, 11), font=("Segoe UI", 10))
-    style.configure("TFrame", background="#111827")
-    style.configure("TLabel", background="#111827", foreground="#e5e7eb", font=("Segoe UI", 10))
-    style.configure("TCheckbutton", background="#111827", foreground="#cbd5e1")
-    style.configure("TButton", font=("Segoe UI", 10), padding=(13, 8))
+    style.configure("TNotebook", background="#081420", borderwidth=0)
+    style.configure("TNotebook.Tab", padding=(25, 13),
+                    font=("Segoe UI Semibold", 10), foreground="#a1c5d7",
+                    background="#15283b", borderwidth=0)
+    style.map("TNotebook.Tab",
+              background=[("selected", "#15566b"), ("active", "#1a3f52")],
+              foreground=[("selected", "#f4fcff"), ("active", "#d5edf7")])
+    style.configure("TFrame", background="#081420")
+    style.configure("TLabel", background="#081420", foreground="#d4e9f5",
+                    font=("Segoe UI", 10))
+    style.configure("TCheckbutton", background="#081420", foreground="#cbdfe9")
+    style.configure("TButton", font=("Segoe UI Semibold", 10), padding=(14, 9),
+                    background="#18435b", foreground="#ecfaff")
+    style.map("TButton", background=[("active", "#1d6780")],
+              foreground=[("disabled", "#73899a")])
 
-    header = tk.Frame(root, bg="#111827")
-    header.pack(fill="x", padx=18, pady=(16, 8))
-    tk.Label(header, text="NeuroGenesis", bg="#111827", fg="#f8fafc",
-             font=("Segoe UI", 21, "bold")).pack(side="left")
-    tk.Label(header, text="Miron przy pomocy AI  •  LOKALNIE  •  SIEĆ TYLKO PO ZGODZIE",
-             bg="#111827", fg="#93a4bc", font=("Segoe UI", 9)).pack(side="right", padx=(10, 0))
+    header = tk.Frame(root, bg="#081420")
+    header.pack(fill="x", padx=20, pady=(12, 6))
+    tk.Label(header, text="N E U R O G E N E S I S",
+             bg="#081420", fg="#7cf5e8",
+             font=("Segoe UI", 24, "bold")).pack(side="left")
+    tk.Label(header, text="NEURAL COMMAND CENTER  /  LIVE RESEARCH SYSTEM",
+             bg="#081420", fg="#8fbcd8", font=("Consolas", 11)).pack(
+                 side="left", padx=(25, 0))
+    tk.Label(header, text="MIRON PRZY POMOCY AI  •  OFFLINE-FIRST",
+             bg="#081420", fg="#6795ac",
+             font=("Consolas", 9)).pack(side="right")
+    tk.Frame(root, bg="#1e7180", height=2).pack(fill="x", padx=20, pady=(0, 8))
     tabs = ttk.Notebook(root)
     tabs.pack(fill="both", expand=True, padx=14, pady=(0, 14))
     chat_tab = ttk.Frame(tabs)
