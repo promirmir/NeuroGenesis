@@ -1,3 +1,7 @@
+## Stan zweryfikowany (8 listopada 2026)
+
+PR #48 został scalony do `main` jako `caa544798c5c20ac1cc7cb523e82a9593bd513f2`. Finalne testy jego gałęzi zakończyły się powodzeniem: Python 3.11–3.13, prywatność, Qt Windows/Ubuntu, spakowany technicznie Qt i starszy Windows Tk EXE. Sprawdziłem rzeczywiste zrzuty ekranu w obu systemach; usunięto prostokątne tła napisów i problem czcionek w bezekranowym CI Windows. Wersja Qt jest funkcjonalna *w kodzie źródłowym*, lecz publiczne niezależne Qt EXE wymaga osobnej zgodnej licencyjnie dystrybucji. Nowy launcher `.cmd` wymaga instalacji Python 3.12 i jawnej zgody na pobranie PySide6. Brak AGI, zmierzonej przewagi CUDA i niezależnie potwierdzonej jakości naturalnej rozmowy.
+
 # NeuroGenesis Mission Control — standard docelowego interfejsu
 
 **Autorstwo publiczne: Miron przy pomocy AI.** Wersja badawcza 0.7.x — bez nieuzasadnionych deklaracji AGI.
