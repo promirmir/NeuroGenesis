@@ -141,7 +141,11 @@ class SemanticNeuralMemoryTests(unittest.TestCase):
         self.assertEqual(restored.status(), before)
         restored.learn(self.attestation())
         self.assertEqual(restored.status()["model"]["observations"], 9)
-        self.assertEqual(self.store.sync()["processed"], 1)
+        # Both handles share the SAME atomic checkpoint; the second
+        # reader must NOT train this event twice after another handle
+        # persisted it.
+        self.assertEqual(self.store.sync()["processed"], 0)
+        self.assertEqual(self.store.status()["model"]["observations"], 9)
 
     def test_malformed_or_nonlocal_attestation_never_advances_state(self):
         baseline = self.store.status()
