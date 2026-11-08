@@ -14,6 +14,7 @@ from tkinter import ttk, messagebox
 
 from .agent_goals import GoalStore, prompt_for_goal
 from .autonomy import AutonomicSupervisor, WINDOW
+from .acf_memory import FabricMemoryObserver
 from .bundled_llm import BundledModelSession, has_bundled_model
 from .local_knowledge import LocalKnowledge
 from .memory import ExperienceMemory
@@ -43,9 +44,14 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
     parent.insert(0, tab)
     model = BundledModelSession(
         knowledge=knowledge, web_memory=memory, max_tokens=240)
+    # ACF is independent of the legacy LIF database schema and weights.
+    # It learns from existing hashed eight-channel observations ONLY.
+    fabric_observer = FabricMemoryObserver(
+        memory.path, memory.path.with_name("adaptive_fabric.acf.json"))
+    fabric_events: queue.SimpleQueue = queue.SimpleQueue()
     events: queue.SimpleQueue = queue.SimpleQueue()
     running: dict[str, object] = {
-        "job": None, "brain_job": None, "ready": False,
+        "job": None, "brain_job": None, "acf_job": None, "ready": False,
         "starting": False, "closing": False, "pending_message": None,
     }
     own_brain_enabled = brain_enabled or tk.BooleanVar(master=tab, value=True)
@@ -385,6 +391,9 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
     brain_card = brain_footer
     _caption(brain_card, "NEURAL FABRIC / RZECZYWISTY LIF")
     brain_activity = tk.StringVar(master=tab, value="Stan bez nowych impulsów.")
+    fabric_status = tk.StringVar(
+        master=tab,
+        value="ACF / oddzielna sieć predykcyjna; oczekiwanie na pomiary SQLite")
     tk.Label(brain_card, textvariable=brain_activity,
              bg=PANEL, fg=MUTED, anchor="w", wraplength=345).pack(
                  fill="x", padx=10, pady=(0, 5))
@@ -397,6 +406,16 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
     ttk.Checkbutton(brain_card, text="AUTO: testuj rozwój LIF po 40 nowych bodźcach",
                     variable=own_brain_enabled).pack(
                         anchor="w", padx=10, pady=(0, 6))
+    _caption(brain_card, "ACF / AUTONOMICZNA PLASTYCZNOŚĆ I SAMOMODEL")
+    tk.Label(brain_card, textvariable=fabric_status, bg=PANEL, fg=CYAN,
+             justify="left", anchor="w", wraplength=345,
+             font=("Consolas", 9)).pack(fill="x", padx=10, pady=(0, 4))
+    tk.Label(brain_card, text=(
+        "Uczy się rzeczywistych 8 kanałów cech, porównuje wzrost LIF "
+        "z kontrolą i prostymi bazami. Nie mierzy rozumienia języka."),
+        bg=PANEL, fg=MUTED, justify="left", anchor="w",
+        wraplength=345, font=("Segoe UI", 8)).pack(
+            fill="x", padx=10, pady=(0, 6))
 
     def redraw_connectome(*, force=False):
         if running["closing"]:
@@ -442,6 +461,24 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
         except Exception as exc:
             goals.fail(claimed, str(exc))
             raise
+
+    def acf_tick():
+        if running["closing"]:
+            return
+        if own_brain_enabled.get():
+            job = running["acf_job"]
+            if not isinstance(job, threading.Thread) or not job.is_alive():
+                def measure():
+                    try:
+                        fabric_events.put(("ok", fabric_observer.poll(limit=96)))
+                    except (OSError, ValueError, RuntimeError, KeyError) as exc:
+                        fabric_events.put(("error", str(exc)[:220]))
+                new_job = threading.Thread(
+                    target=measure, daemon=True, name="NeuroGenesis-ACF-sensory")
+                running["acf_job"] = new_job
+                new_job.start()
+        if tab.winfo_exists():
+            tab.after(8_000, acf_tick)
 
     def autonomy_tick():
         if running["closing"]:
@@ -533,6 +570,26 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
                         state_agent.set("LIF / błąd cyklu: " + str(value)[:100])
         except queue.Empty:
             pass
+        try:
+            while True:
+                status, data = fabric_events.get_nowait()
+                if status == "error":
+                    fabric_status.set("ACF / zatrzymany błąd odczytu: " + str(data))
+                    continue
+                sm = data["self_model"]
+                structural = sm["adaptive_structure"]
+                fixed = sm["fixed_structure"]
+                recent = sm["route_mean_mse_recent"]
+                selected = sm["selected_route"]
+                mse = recent[selected]
+                label = f"{mse:.5f}" if mse is not None else "brak pomiaru"
+                fabric_status.set(
+                    f"Bodźce: {sm['observations']} · nowe: {data['processed']}\n"
+                    f"Neurony {structural['neurons']} vs kontrola {fixed['neurons']} "
+                    f"· zmiany +{structural['total_grown']} / -{structural['total_pruned']}\n"
+                    f"Przewidywanie: {selected} · zmierzony MSE: {label}")
+        except queue.Empty:
+            pass
         if tab.winfo_exists():
             tab.after(140, poll)
 
@@ -543,6 +600,7 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
 
     tab.bind("<Destroy>", on_destroy, add="+")
     tab.after(0, refresh_status)
+    tab.after(1200, acf_tick)
     if auto_start:
         tab.after(400, initialize_model)
     tab.after(500, poll)
