@@ -44,7 +44,7 @@ class AutonomousAgentGoalsTests(unittest.TestCase):
         self.goals.complete(empty, "Plan działania bez danych.")
         source = self.root / "indukcyjność.txt"
         source.write_text(
-            "Indukcyjność jest związana z polem magnetycznym. "
+            "Właściwości indukcyjności są związane z polem magnetycznym. "
             "Zmiana prądu w cewce indukuje siłę elektromotoryczną. " * 33,
             encoding="utf-8")
         indexed = self.knowledge.import_txt(source, approved=True)
