@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import queue
 import threading
+from typing import Callable
 import tkinter as tk
 from tkinter import ttk, messagebox
 
@@ -34,12 +35,14 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
                             knowledge: LocalKnowledge,
                             supervisor: AutonomicSupervisor, goals: GoalStore,
                             *, brain_enabled: tk.BooleanVar | None = None,
-                            auto_start: bool = True) -> ttk.Frame:
+                            auto_start: bool = True,
+                            open_research: Callable[[], None] | None = None) -> ttk.Frame:
     """Install as first and default page, without adding fake demo metrics."""
     tab = ttk.Frame(parent)
     parent.add(tab, text="  NEUROGENESIS  ")
     parent.insert(0, tab)
-    model = BundledModelSession(knowledge=knowledge, max_tokens=240)
+    model = BundledModelSession(
+        knowledge=knowledge, web_memory=memory, max_tokens=240)
     events: queue.SimpleQueue = queue.SimpleQueue()
     running: dict[str, object] = {
         "job": None, "brain_job": None, "ready": False,
@@ -73,6 +76,10 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
     ttk.Button(top_buttons, text="DODAJ WIEDZĘ",
                command=lambda: select_named_tab(parent, "Trening TXT")).pack(
                    side="left", padx=(7, 0))
+    if open_research is not None:
+        ttk.Button(top_buttons, text="BADAJ ŹRÓDŁA",
+                   command=open_research).pack(
+                       side="left", padx=(7, 0))
 
     states = tk.Frame(tab, bg=BG)
     states.pack(fill="x", padx=16, pady=(0, 9))
