@@ -75,3 +75,7 @@ Kod jest testowany w Pythonie **3.11, 3.12 i 3.13**. Oddzielne kontrole uruchami
 Podstawowe informacje do bezstratnej kontynuacji: [PROJECT_STATE.md](docs/PROJECT_STATE.md), [DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md), [AGENTS.md](AGENTS.md).
 
 **Status produktu:** stabilizowane narzędzie badawcze, nie ukończona sztuczna inteligencja ogólna. Najważniejszą otwartą kwestią pozostaje niezależnie potwierdzona jakość rzeczywistego rozumowania i odpowiedzi.
+
+## Podgląd pracy mózgu — nowy Qt Connectome (kandydat)
+
+Na podstawie prawdziwych, odczytanych z prywatnej bazy neuronów, ich potencjałów i spike'ów oraz zapisanych połączeń i wag nowy interaktywny widok Qt rysuje futurystyczną mapę sieci. Układ nie tworzy losowych impulsów, a aktualizacje pokazują tylko rzeczywiste kroki. W panelu treningu wykres loss powstaje z prawdziwych zdarzeń PyTorch. Dotychczasowy pobierany Windows EXE pozostaje Tk; nowe Qt oczekuje na testy i prawnie zgodny pakiet. Szczegóły: [Command Center](docs/COMMAND_CENTER.md).
