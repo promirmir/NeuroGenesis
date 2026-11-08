@@ -20,6 +20,13 @@
 
 # NeuroGenesis — durable project state and recovery
 
+## 2026-11-08 — PR #23 conflict resolution candidate (not yet validated)
+
+- The original CI coverage PR #23 was behind main and conflicted on durable docs; its first head had passing Python 3.11/3.12/3.13 and real PyTorch CPU tests, but lacked the Windows EXE run because the existing Windows workflow pull-request path filter did not select foundation workflow changes.
+- Resolved the candidate against main `542ba8272ceb4c0c13871b9f9fd954c23d4c4cdb` on the original PR branch; dedicated PyTorch CI pull_request paths now include the byte-baseline module/test, the CPU job explicitly runs baseline tests, and Windows EXE PR path filters include changes to foundation-cpu.yml. Preserves all runtime/SQLite state; no model or user data changes.
+- Do NOT merge until new branch head has successful Python 3.11–3.13, real PyTorch CPU, Windows standalone EXE and privacy test results. This note describes candidate source, not delivered functionality.
+
+
 Last documentation review: **2026-11-07**. This file is intended to survive chat interruptions and model/context changes.
 
 ## 2026-11-07 — Permanent mission and current v0.6.0 web-sense candidate

@@ -10,6 +10,7 @@ on:
       - 'desktop_launcher.py'
       - 'tests/**'
       - '.github/workflows/windows-exe.yml'
+      - '.github/workflows/foundation-cpu.yml'
 
 permissions:
   contents: read

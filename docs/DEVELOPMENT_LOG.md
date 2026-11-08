@@ -105,3 +105,8 @@ Feature head `c90126532de97189d3717b4adabb25d71a0b55fe` passed Python 3.11–3.1
 ## 2026-11-08 — Original vision versus deliverables audit (documentation)
 
 Measured development status against `docs/VISION.md` using repository `main` `db0b2210bb97c422d83d27f963725d3d6941c067` and the public release `v0.6.0-main.db0b2210`. Wrote `docs/DELIVERY_AUDIT.md` with a code-grounded feature matrix, critical missing web→knowledge→Foundation→conversation integration, missing UI quality/observability, no verified GPU performance/distributed execution, and staged measurable acceptance for v1. Audit did not run an independent user-facing Windows GUI session or real public web crawl; GitHub CI evidence is not substituted for those tests. No Python implementation change in this documentation PR.
+
+## 2026-11-08 — PR #23 current-main reconciliation candidate
+
+- Reconciled old PR #23 with current main `542ba8272ceb4c0c13871b9f9fd954c23d4c4cdb` while retaining prior PR changes. Added a missing Windows-EXE workflow PR trigger for `.github/workflows/foundation-cpu.yml` so this CI-only change can receive its previously absent Windows regression/packaging gate. The dedicated real-PyTorch job now includes held-out baseline tests on relevant file changes.
+- No runtime code, SQLite schema, neural training or release change. Pending fresh CI and explicit merge decision; do not count old green checks as validating the updated head.
