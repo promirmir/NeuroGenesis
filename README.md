@@ -1,3 +1,7 @@
+## Stan zweryfikowany — NeuroGenesis (8 listopada 2026)
+
+**Kod scalony w `main`:** pozyskanie źródeł HTTPS → prywatna wiedza z cytatami, prawdziwy lokalny trening PyTorch, opcjonalne wnioskowanie z wag, kontrola regresji poprzednich umiejętności i kontynuacja trenowania z wcześniejszego checkpointu **bez nadpisywania poprzedniego pliku**. PR #32–#34 są scalone, a testy Python, CPU PyTorch i Windows/Qt przeszły. Model generuje nadal eksperymentalne bajty, **nie sprawdzoną inteligentną rozmowę**. Wyniki syntetycznych testów nie dorównują jeszcze silnym prostym punktom odniesienia. Nowe Qt Command Center jest funkcjonalne w kodzie i testach, ale jego pakiet redystrybucyjny wciąż czeka na weryfikację licencji. [Bieżący stan](docs/PROJECT_STATE.md).
+
 ## Kontynuacja rzeczywistego uczenia — PR kandydat
 
 Nowa sesja badawcza może **kontynuować wagi Foundation Brain z poprzedniego, zaufanego pliku** zamiast zaczynać od losowego modelu. Wymaga bieżącej zgody na korpus, zgodnej architektury i wyraźnego potwierdzenia checkpointu. Zapis następuje zawsze do nowego pliku; poprzednie wagi i prywatna baza pozostają nietknięte. Optymalizator AdamW startuje na nowo. Opcjonalne Command Center otrzymało osobny przełącznik tej funkcji. Rozwój musi przejść testy CPU/Windows/Qt i [kontrolę retencji](docs/RETENTION_GATE.md), zanim będzie można mówić o poprawie zdolności modelu. [Szczegóły](docs/KNOWLEDGE_TRAIN.md).

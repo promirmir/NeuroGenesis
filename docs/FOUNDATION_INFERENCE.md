@@ -41,3 +41,7 @@ Dedicated GitHub `foundation-cpu.yml` installs real PyTorch CPU, runs this suite
 A byte-level GRU trained on a few local documents is **not yet a competent language model**. Before its output can become a conversational answer, establish an independent licensed natural-language/QA corpus, prospective document-disjoint evaluation, comparisons against Markov and matched baselines, grounded source attribution, calibrated abstention, old-skill retention and safe candidate promotion/rollback. Neural output must never inherit a URL merely because a separate retrieval component found it; claims must be traceable to source evidence independently.
 
 No v1, AGI, consciousness, or claimed human-brain equivalence follows from this step.
+
+## Verified experimental inference milestone — PR #32 merged (November 8, 2026)
+
+PR #32 merged `ec5bc9fcfdbc2fa7c940e33fc8b090a48ed610b7` after actual CPU Torch, Python 3.11–3.13, privacy, Qt Windows/Ubuntu and frozen Tk+Qt EXE checks all passed. This establishes genuine checkpoint next-byte decoding in a separate lab only, not natural-language answer competence or a redistributable Qt release.
