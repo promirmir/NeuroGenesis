@@ -849,6 +849,11 @@ def launch(db_path: Path) -> int:
     tabs.select(operations_tab)
     mission.refresh()
     refresh()
+    # The FULL onefile EXE contains the offline LLM. Load it proactively in
+    # the background after the GUI appears so the user can begin talking
+    # immediately; startup integrity checks never block Tk's event loop.
+    # The AI can still be stopped from AUTONOMIA or ROZMOWA AI.
+    root.after(1100, model_chat_tab.ng_model_start)
 
     def on_close() -> None:
         if backup_pending["value"]:
