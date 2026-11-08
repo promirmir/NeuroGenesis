@@ -64,6 +64,7 @@ class HolographicBrain:
         self.motion = True
         self._timer: str | None = None
         self._event_frames = 0
+        self._step_frames = 0
         self._event_step: int | None = None
         canvas.bind("<Map>", self._on_map, add="+")
         canvas.bind("<Unmap>", self._on_unmap, add="+")
@@ -76,7 +77,9 @@ class HolographicBrain:
             # A memory restore can rewind the view, but must not fabricate
             # a fresh activity event.
             self._event_frames = 0
+            self._step_frames = 0
         if self.latest is not None and data.step > self.latest.step:
+            self._step_frames = EVENT_FRAMES
             self._event_frames = EVENT_FRAMES if any(n.fired for n in data.nodes) else 0
             self._event_step = data.step  # recorded step even if no neuron fired
         updated = self.latest is None or data.step != self.latest.step
@@ -111,7 +114,9 @@ class HolographicBrain:
             self.angle = (self.angle + .016) % (math.pi * 2)
         if self._event_frames:
             self._event_frames -= 1
-        if self.motion or self._event_frames:
+        if self._step_frames:
+            self._step_frames -= 1
+        if self.motion or self._event_frames or self._step_frames:
             self.draw()
         self._timer = self.canvas.after(FRAME_MS, self._tick)
 
@@ -130,6 +135,13 @@ class HolographicBrain:
                       fill="#102c40")
         c.create_line(cx, cy - scale * .94, cx, cy + scale * .94,
                       fill="#102c40")
+        if self._step_frames:
+            # A saved step occurred; this ring is a bounded event indicator,
+            # not a claim that any neuron spiked.
+            progress = (EVENT_FRAMES - self._step_frames) / EVENT_FRAMES
+            r = scale * (.74 + .25 * progress)
+            c.create_oval(cx-r, cy-r*.86, cx+r, cy+r*.86,
+                          outline="#2c7e91", width=2)
         # Two independently rounded cortical lobes form a cinematic
         # WIREFRAME shell. These lines are decorative coordinates; only
         # actual LIF nodes/edges below represent measured neural state.
