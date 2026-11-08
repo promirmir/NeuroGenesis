@@ -2,6 +2,10 @@
 
 **Read this file first in every new chat, automation, agent session or developer handoff.** Source of truth is `promirmir/NeuroGenesis` on GitHub (`main`), not an assistant's recollection.
 
+## Audyt dostarczenia i jakości (2026-11-08)
+
+Read [docs/DELIVERY_AUDIT.md](docs/DELIVERY_AUDIT.md) after [docs/VISION.md](docs/VISION.md). It reconciles original intent with verified v0.6.0 code/CI and prioritizes **a real end-to-end knowledge-to-answer path plus a professional Windows GUI** over adding more disconnected features. This is a source audit, not proof of real-world internet coverage or of AGI. Follow the measurable release gates and preserve release/backward compatibility.
+
 ## Highest-priority permanent contract
 
 Read [docs/VISION.md](docs/VISION.md) before planning new changes. The user explicitly wants a powerful and novel self-learning, GPU-scalable, human-neurobiology-inspired cognitive engine, permissioned live Internet knowledge perception, meaningful Windows conversation, rich realtime visual observability, long-lived memory and continuity across chats. A 24-neuron/8-channel toy or a list of handwritten replies is not the target; retain those as research baselines only. No unverified promise of human brain emulation, consciousness or global breakthrough is allowed.
