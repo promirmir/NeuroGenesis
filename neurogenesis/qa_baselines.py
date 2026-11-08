@@ -10,6 +10,7 @@ from collections import Counter
 from contextlib import closing
 import json
 import math
+import re
 from pathlib import Path
 import sqlite3
 import statistics
@@ -60,7 +61,7 @@ def bm25_excerpt(passages: list[tuple[str, str, tuple[str, ...]]],
     min_match = 1 if len(qterms) == 1 else 2
     polar = question.casefold().lstrip().startswith(("czy ", "a czy "))
     requested = set(qterms)
-    query_negated = bool(__import__("re").search(r"\b(?:nie|not|never)\b", question.casefold()))
+    query_negated = bool(re.search(r"\b(?:nie|not|never)\b", question.casefold()))
     winner: tuple[str, str] | None = None
     top = float("-inf")
     for (body, url, tokens), length in zip(passages, lengths):
@@ -88,16 +89,17 @@ def bm25_excerpt(passages: list[tuple[str, str, tuple[str, ...]]],
     return winner
 
 
-def _score(outcomes: list[tuple[dict[str, Any], tuple[str, str] | None]]) -> dict[str, Any]:
+def _score(outcomes: list[tuple[dict[str, Any], list[tuple[str, str]]]]) -> dict[str, Any]:
     supported = sum(c["answerable"] for c, _ in outcomes)
     unsupported = len(outcomes) - supported
-    answered = sum(hit is not None for _, hit in outcomes)
+    answered = sum(bool(hits) for _, hits in outcomes)
     correct = sum(
-        case["answerable"] and hit is not None
-        and hit[1] == case["expected_source_url"]
-        and case["required_quote"].casefold() in hit[0].casefold()
-        for case, hit in outcomes)
-    abstained = sum(not case["answerable"] and hit is None for case, hit in outcomes)
+        case["answerable"] and any(
+            hit[1] == case["expected_source_url"]
+            and case["required_quote"].casefold() in hit[0].casefold()
+            for hit in hits)
+        for case, hits in outcomes)
+    abstained = sum(not case["answerable"] and not hits for case, hits in outcomes)
     return {
         "supported_literal_quote_recall": correct / supported,
         "unsupported_false_citation_rate": 1 - abstained / unsupported,
@@ -135,13 +137,12 @@ def compare_bm25(db_path: str | Path, audit_path: str | Path, *,
             started = time.perf_counter()
             answer = answer_question(con, case["question"])
             current_seconds.append(max(0.0, time.perf_counter() - started))
-            src = (answer["quoted_evidence"][0]["text"],
-                   answer["quoted_evidence"][0]["url"]) if answer else None
+            src = [(q["text"], q["url"]) for q in answer["quoted_evidence"]] if answer else []
             actual.append((case, src))
             started = time.perf_counter()
             bm25 = bm25_excerpt(passages, case["question"])
             baseline_seconds.append(max(0.0, time.perf_counter() - started))
-            baseline.append((case, bm25))
+            baseline.append((case, [bm25] if bm25 is not None else []))
     a = _score(actual)
     b = _score(baseline)
     return {
