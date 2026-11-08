@@ -16,6 +16,7 @@ import sqlite3
 from typing import Any
 
 from .local_knowledge import LocalKnowledge
+from .memory import ExperienceMemory
 
 MAX_ACTIVE = 12
 MAX_ATTEMPTS = 32
@@ -113,8 +114,13 @@ class GoalStore:
                  "sources": json.loads(cites), "updated_utc": stamp}
                 for i, g, st, a, result, cites, stamp in rows]
 
-    def claim(self, knowledge: LocalKnowledge) -> dict[str, Any] | None:
-        """Claim at most one goal only when local knowledge materially changed."""
+    def claim(self, knowledge: LocalKnowledge,
+              web_memory: ExperienceMemory | None = None) -> dict[str, Any] | None:
+        """Claim work on NEW real TXT or approved HTTPS evidence, not clock ticks.
+
+        Web material is an inert, source-labelled quotation. No network is
+        accessed by claim(); only existing user-authorized SQLite is read.
+        """
         corpus_digest = knowledge.corpus_fingerprint()
         with closing(self._connect()) as con:
             with con:
@@ -129,6 +135,26 @@ class GoalStore:
                     if attempts >= MAX_ATTEMPTS:
                         continue
                     passages = knowledge.retrieve(goal, limit=4)
+                    if web_memory is not None:
+                        # The web evidence retriever has a strict 512-char
+                        # budget; goals themselves may contain 600 chars.
+                        evidence = web_memory.answer_from_knowledge(goal[:512])
+                        if evidence is not None and evidence.get("sources"):
+                            # A concise previously saved source excerpt is
+                            # sufficient to trigger re-analysis of this goal.
+                            # Do not treat an unverified quote as truth.
+                            for source in evidence["sources"][:2]:
+                                url, digest = source["url"], source["sha256"]
+                                if not isinstance(url, str) or not isinstance(digest, str):
+                                    continue
+                                excerpt = evidence.get("answer", "")[:1200]
+                                if excerpt and len(passages) < 4:
+                                    passages.append({
+                                        "text": "NIEZWERYFIKOWANA TREŚĆ ŹRÓDŁA HTTPS:\n" + excerpt,
+                                        "file": url,
+                                        "sha256": digest,
+                                        "rank": len(passages) + 1,
+                                    })
                     digest = goal_fingerprint(passages, corpus_digest)
                     if prior_digest == digest and attempts > 0:
                         continue
@@ -203,13 +229,13 @@ def prompt_for_goal(claimed: dict[str, Any]) -> str:
     if claimed["sources"]:
         return (
             "Zadanie autonomiczne NeuroGenesis. Cel: " + goal +
-            "\n\nPrzeanalizuj dostępne lokalne źródła, przedstaw konkretny "
+            "\n\nPrzeanalizuj dostępne zatwierdzone źródła lokalne i HTTPS, przedstaw konkretny "
             "wynik, ryzyka i czego nie można jeszcze potwierdzić. "
             "Nie wymyślaj faktów. To WERSJA DO WERYFIKACJI, "
             "nie wdrażaj zmian, nie deklaruj pełnego wykonania.")
     return (
         "Zadanie autonomiczne NeuroGenesis. Cel: " + goal +
-        "\n\nBrak odpowiednich lokalnych źródeł. Sporządź maksymalnie "
+        "\n\nBrak odpowiednich zatwierdzonych źródeł (TXT i HTTPS). Sporządź maksymalnie "
         "trzy konkretne kroki PLANU i wskaż jakie dane trzeba "
         "pozyskać. Nie twierdź, że zadanie zostało zrealizowane. "
         "Nie wymyślaj wyników ani nie wykonuj zewnętrznych działań.")
