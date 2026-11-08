@@ -188,6 +188,8 @@ def ui_self_test() -> int:
         root.withdraw()
         try:
             root.geometry("1350x830")
+            from .tk_theme import apply_dark_tk_theme
+            apply_dark_tk_theme(root)
             tabs = ttk.Notebook(root)
             tabs.pack(fill="both", expand=True)
             dashboard = ttk.Frame(tabs)
@@ -258,29 +260,8 @@ def launch(db_path: Path) -> int:
     root.minsize(min(940, available_width), min(620, available_height))
     root.configure(bg="#07111d")
 
-    style = ttk.Style(root)
-    style.theme_use("clam")
-    style.configure("TNotebook", background="#07111d", borderwidth=0,
-                    lightcolor="#07111d", darkcolor="#07111d")
-    style.configure("TNotebook.Tab", padding=(21, 12), borderwidth=0,
-                    font=("Segoe UI", 10, "bold"),
-                    background="#112637", foreground="#a5c6d3",
-                    focuscolor="#112637")
-    style.map("TNotebook.Tab",
-              background=[("selected", "#135468"), ("active", "#1a4155")],
-              foreground=[("selected", "#e8ffff"), ("active", "#ffffff")],
-              expand=[("selected", (0, 0, 0, 0))])
-    style.configure("TFrame", background="#07111d")
-    style.configure("TLabel", background="#07111d", foreground="#cde9ef",
-                    font=("Segoe UI", 10))
-    style.configure("TCheckbutton", background="#07111d", foreground="#cde9ef")
-    style.map("TCheckbutton", background=[("active", "#07111d")],
-              foreground=[("active", "#ffffff")])
-    style.configure("TButton", font=("Segoe UI", 10, "bold"), padding=(14, 10),
-                    background="#164056", foreground="#e8fcff",
-                    relief="flat", borderwidth=0)
-    style.map("TButton", background=[("active", "#1c6678")],
-              foreground=[("active", "#ffffff")])
+    from .tk_theme import apply_dark_tk_theme
+    apply_dark_tk_theme(root)
 
     header = tk.Frame(root, bg="#07111d")
     header.pack(fill="x", padx=24, pady=(16, 10))
