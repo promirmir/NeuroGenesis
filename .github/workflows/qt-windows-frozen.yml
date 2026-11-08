@@ -5,6 +5,11 @@ on:
     paths:
       - 'command_center_launcher.py'
       - 'neurogenesis/command_center.py'
+      - 'neurogenesis/connectome_view.py'
+      - 'neurogenesis/mission_widgets.py'
+      - 'neurogenesis/neural_telemetry.py'
+      - 'scripts/qt_visual_smoke.py'
+      - 'Launch-NeuroGenesis-Mission-Control.cmd'
       - 'neurogenesis/command_service.py'
       - '.github/workflows/qt-windows-frozen.yml'
   push:
@@ -12,6 +17,11 @@ on:
     paths:
       - 'command_center_launcher.py'
       - 'neurogenesis/command_center.py'
+      - 'neurogenesis/connectome_view.py'
+      - 'neurogenesis/mission_widgets.py'
+      - 'neurogenesis/neural_telemetry.py'
+      - 'scripts/qt_visual_smoke.py'
+      - 'Launch-NeuroGenesis-Mission-Control.cmd'
       - 'neurogenesis/command_service.py'
       - '.github/workflows/qt-windows-frozen.yml'
   workflow_dispatch:

@@ -4,6 +4,11 @@ on:
   pull_request:
     paths:
       - 'neurogenesis/command_center.py'
+      - 'neurogenesis/connectome_view.py'
+      - 'neurogenesis/mission_widgets.py'
+      - 'neurogenesis/neural_telemetry.py'
+      - 'scripts/qt_visual_smoke.py'
+      - 'Launch-NeuroGenesis-Mission-Control.cmd'
       - 'neurogenesis/command_service.py'
       - 'neurogenesis/knowledge.py'
       - 'neurogenesis/memory.py'
@@ -15,6 +20,11 @@ on:
     branches: [main]
     paths:
       - 'neurogenesis/command_center.py'
+      - 'neurogenesis/connectome_view.py'
+      - 'neurogenesis/mission_widgets.py'
+      - 'neurogenesis/neural_telemetry.py'
+      - 'scripts/qt_visual_smoke.py'
+      - 'Launch-NeuroGenesis-Mission-Control.cmd'
       - 'neurogenesis/command_service.py'
       - 'neurogenesis/knowledge.py'
       - 'neurogenesis/memory.py'
@@ -63,3 +73,13 @@ jobs:
         run: python -m unittest tests.test_command_center_qt -v
       - name: Test headless service and old SQLite compatibility
         run: python -m unittest tests.test_command_service tests.test_knowledge tests.test_desktop -v
+
+      - name: Render REAL Mission Control screenshot from isolated fictional SQLite
+        run: python -m scripts.qt_visual_smoke --output preview/Mission-Control.png
+      - name: Save human-review Qt Mission Control screenshot (synthetic fixture)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mission-Control-Visual-${{ matrix.os }}
+          path: preview/Mission-Control.png
+          if-no-files-found: error
+          retention-days: 14

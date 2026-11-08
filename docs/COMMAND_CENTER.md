@@ -1,3 +1,11 @@
+## 2026-11-08 — nowy Mission Control Qt (PR kandydat, bez automatycznej dystrybucji)
+
+- Bieżący `main` rozpoczęcia: `d5e0fcec24efd99f6363a6f09328141039023c24`, bez otwartych PR i z zielonymi testami źródeł Tk/Qt/Windows. Rozbieżna gałąź `feat/live-neural-network-command-visualization-20261108` miała 14 commitów ahead / 2 behind i czerwone Python CI (metadane 0.8 vs README 0.7); **nie scalać jej automatycznie, nie usuwać**.
+- Nowa gałąź `feat/command-center-mission-control-20261108`: spójny ciemny układ Qt z 4 rzeczywistymi kaflami SQLite/LIF, dużym graficznym Neural Fabric również na głównym Dashboard, panelem realnych impulsów krok-po-kroku, dziennikiem zaobserwowanych zmian, rozdzielonymi statusami modułów HTTPS / SQLite / LIF / Foundation i nawigacją Ctrl+1…7. QPainter pokazuje tylko faktyczne neurony, synapsy, wagi i spiki; świetlne przejście (max 0,8 sekundy) tylko przy nowo zapisanym kroku. Droga światła jest **umowną animacją**, nie pomiarem szybkości impulsu.
+- `Launch-NeuroGenesis-Mission-Control.cmd` uruchamia prawdziwy Qt ze źródeł przez prywatne Python 3.12 `.venv` i przed pierwszym pobraniem PySide6 prosi o zgodę; bez zmian w user SQLite lub autostartu HTTPS. To nie jest standalone EXE Qt.
+- Dedykowany `scripts/qt_visual_smoke.py` renderuje prawdziwe Qt na **wyłącznie fikcyjnej lokalnej SQLite** i CI Windows/Ubuntu dołącza PNG screenshot do przeglądu. Testy sprawdzają spójność dwóch widoków, prawdziwe wartości, brak generowanych zdarzeń przy spoczynku i klawiaturową nawigację. Stary Tk Windows EXE pozostaje domyślnym, aż do pełnych testów oraz rozwiązania wymogów prawnych Qt LGPLv3. [MISSION_CONTROL.md](MISSION_CONTROL.md).
+- Kandydat **oczekuje na CI**. Nie nazywać projektem AGI, nie deklarować gotowej nowej instalki lub jakości wykraczającej poza testy. Realizacja graficznej wizji nadal odrębna od realnej inteligencji językowej.
+
 ## 2026-11-08 — VERIFIED LIVE CONNECTOME RELEASE (supersedes historical candidates)
 
 - **Released:** PR #46 merged in `main` commit `7cb03e3a4728f36c9a27a672ca4bc4d60ddcd76f`. GitHub Actions post-merge research-core, actual Qt on Windows/Ubuntu, Windows frozen technical Qt, Windows frozen Tk EXE and source-SHA-bound release publisher all **SUCCESS**.

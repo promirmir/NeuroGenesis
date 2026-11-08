@@ -13,16 +13,17 @@ import time
 
 # Qt is an OPTIONAL runtime dependency; legacy desktop never imports this file.
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QColor, QFont, QPainter, QPen, QTextCursor
+from PySide6.QtGui import QColor, QFont, QPainter, QPen, QTextCursor, QShortcut, QKeySequence
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
     QMessageBox, QPlainTextEdit, QPushButton, QSpinBox, QStackedWidget, QTableWidget,
     QTableWidgetItem, QTextEdit, QVBoxLayout, QWidget, QSizePolicy, QHeaderView,
-    QComboBox, QFileDialog, QScrollArea,
+    QComboBox, QFileDialog, QScrollArea, QGridLayout, QSplitter,
 )
 
 from .command_service import CommandService
 from .connectome_view import ConnectomeView, TrainingLossPlot
+from .mission_widgets import MetricTile, PipelineStep, SignalHistory
 
 PANELS = (
     ("Przegląd", "Stan systemu"),
@@ -35,30 +36,46 @@ PANELS = (
 )
 
 STYLE = """
-QWidget { background: #0b1220; color: #e2e8f0; font: 10pt 'Segoe UI'; }
-QMainWindow, QFrame#sidebar { background: #0b1220; }
-QFrame#card { background: #151f30; border: 1px solid #2b3950; border-radius: 12px; }
-QFrame#topbar { background: #101a29; border-bottom: 1px solid #2b3950; }
-QLabel#heading { color: #f5f9ff; font: 700 20pt 'Segoe UI'; }
+QWidget { background: #07111c; color: #e9f6ff; font: 10pt 'Segoe UI'; }
+QLabel { background: transparent; }
+QWidget#pageRoot, QWidget#scrollContent { background: #07111c; }
+QScrollArea, QScrollArea > QWidget > QWidget { background: #07111c; border: 0; }
+QMainWindow, QFrame#sidebar { background: #060e19; }
+QFrame#sidebar { border-right: 1px solid #1b3648; }
+QFrame#card { background: #0d1c2b; border: 1px solid #254359; border-radius: 14px; }
+QFrame#topbar { background: #0a1726; border-bottom: 1px solid #294256; }
+QLabel#heading { color: #f7fcff; font: 700 20pt 'Segoe UI'; }
+QLabel#cardTitle { color: #f2fcff; font: 600 12pt 'Segoe UI'; }
+QLabel#brand { color: #ecfffc; font: 800 17pt 'Segoe UI'; letter-spacing: 1px; }
+QLabel#eyebrow { color: #52ddca; font: 700 9pt 'Consolas'; }
 QLabel#metric { color: #eff9ff; font: 700 19pt 'Segoe UI'; }
-QLabel#subtle { color: #93a6bf; }
-QLabel#status { color: #8ee5c9; font: 600 10pt 'Segoe UI'; }
-QPushButton { background: #1a2a41; border: 1px solid #31465e; padding: 11px 14px;
+QLabel#subtle { color: #91aebd; }
+QLabel#status { color: #67f2d4; font: 700 9pt 'Consolas'; }
+QPushButton { background: #11273a; border: 1px solid #31566c; padding: 11px 14px;
               border-radius: 8px; color: #eaf2fb; text-align: center; }
-QPushButton:hover { background: #263c56; }
+QPushButton:hover { background: #1b4255; border-color: #43b7c7; }
 QPushButton:pressed { background: #162637; }
 QPushButton:disabled { color: #67768b; background: #132034; }
-QPushButton#primary { background: #087e88; border-color: #159ba4; font-weight: 600; color: #ffffff; }
-QPushButton#primary:hover { background: #0b909a; }
-QPushButton#nav { text-align: left; border: 0; border-radius: 8px; background: transparent; padding: 12px 16px; }
-QPushButton#nav:checked { background: #173c49; border-left: 3px solid #38c9c7; }
-QPushButton#nav:hover { background: #1b2e42; }
+QPushButton#primary { background: #067e87; border-color: #42d5cf; font-weight: 700; color: #ffffff; }
+QPushButton#primary:hover { background: #0da5ad; }
+QPushButton#nav { text-align: left; border: 0; border-radius: 8px; background: transparent; padding: 14px 15px; color: #a2c2d1; }
+QPushButton#nav:checked { background: #123a48; color: #ecfffc; border-left: 3px solid #41e2c8; }
+QPushButton#nav:hover { background: #13293b; }
+QLabel#metricCaption { color: #83afc2; font: 700 9pt 'Consolas'; }
+QLabel#metricValue { color: #dffef7; font: 800 26pt 'Segoe UI'; }
+QLabel#metricFootnote { color: #759eae; font: 9pt 'Segoe UI'; }
+QFrame#metricTile { background: #0c2432; border: 1px solid #296074; border-radius: 13px; }
+QFrame#pipelineStep { background: #102335; border: 1px solid #244259; border-radius: 9px; }
+QLabel#pipelineHeading { color: #75d8d6; font: 700 9pt 'Consolas'; }
+QLabel#pipelineValue { color: #f1fcff; font: 600 11pt 'Segoe UI'; }
+QLabel#pipelineHint { color: #7c9cad; font: 9pt 'Segoe UI'; }
 QLineEdit, QPlainTextEdit, QTextEdit, QSpinBox, QTableWidget {
     background: #0d1929; border: 1px solid #304158; border-radius: 8px;
     padding: 9px; selection-background-color: #19646e; color: #e9f3fa;
 }
 QCheckBox { color: #d5e4ef; spacing: 9px; }
-QHeaderView::section { background: #192b41; color: #d4e7f0; padding: 8px; border: 0; }
+QHeaderView::section { background: #153044; color: #d4e7f0; padding: 8px; border: 0; }
+QSplitter::handle { background: #07111c; width: 8px; }
 QTableWidget { gridline-color: #304158; }
 QScrollBar:vertical { background: #111f30; width: 10px; }
 QScrollBar::handle:vertical { background: #3b536a; border-radius: 4px; min-height: 20px; }
@@ -79,7 +96,7 @@ def block(title: str, subtitle: str = "") -> tuple[QFrame, QVBoxLayout]:
     layout = QVBoxLayout(frame)
     layout.setContentsMargins(20, 18, 20, 18)
     layout.setSpacing(12)
-    layout.addWidget(label(title, kind="heading"))
+    layout.addWidget(label(title, kind="cardTitle"))
     if subtitle:
         layout.addWidget(label(subtitle, kind="subtle"))
     return frame, layout
@@ -130,7 +147,7 @@ class CommandCenter(QMainWindow):
     def __init__(self, service: CommandService):
         super().__init__()
         self.service = service
-        self.setWindowTitle("NeuroGenesis — Command Center")
+        self.setWindowTitle("NeuroGenesis / Mission Control — REAL DATA")
         self.resize(1460, 900)
         self.setMinimumSize(880, 610)
         self.setStyleSheet(STYLE)
@@ -141,23 +158,28 @@ class CommandCenter(QMainWindow):
         shell.setSpacing(0)
         sidebar = QFrame()
         sidebar.setObjectName("sidebar")
-        sidebar.setFixedWidth(228)
+        sidebar.setFixedWidth(246)
         nav = QVBoxLayout(sidebar)
-        nav.setContentsMargins(18, 26, 18, 20)
+        nav.setContentsMargins(18, 25, 18, 20)
         nav.setSpacing(7)
-        nav.addWidget(label("NEUROGENESIS", kind="heading"))
-        nav.addWidget(label("COMMAND CENTER  •  EXPERIMENTAL", kind="subtle"))
-        nav.addSpacing(24)
+        nav.addWidget(label("NEUROGENESIS", kind="brand"))
+        nav.addWidget(label("MISSION / CONTROL", kind="eyebrow"))
+        nav.addWidget(label("BADANIA · PRYWATNE · LOKALNE", kind="subtle"))
+        nav.addSpacing(27)
         self.pages = QStackedWidget()
         self._nav_buttons: list[QPushButton] = []
         for index, (name, description) in enumerate(PANELS):
-            button = QPushButton(name)
+            button = QPushButton(f"{index + 1:02d}    {name.upper()}")
             button.setObjectName("nav")
+            button.setToolTip(f"Ctrl+{index + 1} · {description}")
             button.setCheckable(True)
             button.clicked.connect(lambda checked=False, i=index: self.navigate(i))
             self._nav_buttons.append(button)
             nav.addWidget(button)
         nav.addStretch()
+        nav.addWidget(label("●  KONTROLOWANE ŹRÓDŁA", kind="eyebrow"))
+        nav.addWidget(label("MODEL: BADAWCZY  /  NIE AGI", kind="subtle"))
+        nav.addSpacing(15)
         nav.addWidget(label("Miron przy pomocy AI", kind="subtle"))
         shell.addWidget(sidebar)
         main = QVBoxLayout()
@@ -169,8 +191,11 @@ class CommandCenter(QMainWindow):
         top.setContentsMargins(28, 18, 28, 18)
         self.page_title = label("Przegląd", kind="heading")
         self.network_indicator = label("HTTPS WYŁĄCZONY", kind="status")
+        self.local_indicator = label("● LOKALNA PAMIĘĆ", kind="eyebrow")
         top.addWidget(self.page_title)
         top.addStretch()
+        top.addWidget(self.local_indicator)
+        top.addSpacing(22)
         top.addWidget(self.network_indicator)
         main.addWidget(topbar)
 
@@ -184,6 +209,11 @@ class CommandCenter(QMainWindow):
         main.addWidget(self.pages, 1)
         shell.addLayout(main, 1)
         self.setCentralWidget(frame)
+        self._shortcuts = []
+        for index in range(len(PANELS)):
+            shortcut = QShortcut(QKeySequence(f"Ctrl+{index + 1}"), self)
+            shortcut.activated.connect(lambda i=index: self.navigate(i))
+            self._shortcuts.append(shortcut)
         self.navigate(0)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.refresh)
@@ -200,6 +230,7 @@ class CommandCenter(QMainWindow):
 
     def _page(self) -> tuple[QWidget, QVBoxLayout]:
         widget = QWidget()
+        widget.setObjectName("pageRoot")
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(28, 26, 28, 28)
         layout.setSpacing(18)
@@ -213,27 +244,113 @@ class CommandCenter(QMainWindow):
             button.setChecked(i == index)
         if index == 5:
             self.refresh_sources()
-        if index == 3:
+        if index in (0, 3):
             self.refresh_connectome()
 
     def _build_overview(self) -> None:
-        _, layout = self._page()
-        intro, inner = block("System badawczy", "Rzeczywiste dane z lokalnej pamięci — bez fikcyjnych wskaźników inteligencji.")
-        self.overview_metrics = label("Odczytywanie stanu...")
-        self.overview_metrics.setFont(QFont("Consolas", 12))
-        inner.addWidget(self.overview_metrics)
-        layout.addWidget(intro)
-        split = QHBoxLayout()
-        for title, text in [
-            ("Wiedza", "Fragmenty dokumentów HTTPS pozostają lokalne; cytat nie oznacza potwierdzonej prawdziwości."),
-            ("Model neuronowy", "Trenowany Foundation Brain jest nadal osobnym modułem badawczym, nie silnikiem rozmowy."),
-            ("Zasoby", "Sieć domyślnie wyłączona. Żadnych ukrytych zadań GPU, chmury ani innych komputerów."),
+        _, page = self._page()
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        content = QWidget()
+        content.setObjectName("scrollContent")
+        content.setMinimumWidth(680)
+        layout = QVBoxLayout(content)
+        layout.setContentsMargins(3, 2, 3, 13)
+        layout.setSpacing(16)
+        scroll.setWidget(content)
+        page.addWidget(scroll, 1)
+
+        header = QHBoxLayout()
+        headlines = QVBoxLayout()
+        headlines.setSpacing(4)
+        headlines.addWidget(label("01 / LIVE RESEARCH ENVIRONMENT", kind="eyebrow"))
+        headlines.addWidget(label("MISSION CONTROL", kind="heading"))
+        self.overview_metrics = label("Odczytywanie rzeczywistych danych z pamięci...")
+        self.overview_metrics.setObjectName("subtle")
+        headlines.addWidget(self.overview_metrics)
+        header.addLayout(headlines, 1)
+        self.mission_status = label("SYSTEM IDLE", kind="status")
+        header.addWidget(self.mission_status)
+        layout.addLayout(header)
+
+        strip = QHBoxLayout()
+        strip.setSpacing(12)
+        self.mission_tiles = {
+            "steps": MetricTile("LIF / KROKI", "Zapisane aktualizacje"),
+            "neurons": MetricTile("NEURONY", "Istniejące w sieci LIF"),
+            "synapses": MetricTile("SYNAPSY", "Rzeczywiste połączenia"),
+            "documents": MetricTile("BAZA WIEDZY", "Zapisane dokumenty"),
+        }
+        for tile in self.mission_tiles.values():
+            strip.addWidget(tile, 1)
+        layout.addLayout(strip)
+
+        middle = QSplitter(Qt.Orientation.Horizontal)
+        middle.setChildrenCollapsible(False)
+        hero, hero_layout = block(
+            "NEURAL FABRIC / SYSTEM MAP",
+            "Połączenia, wagi, impulsy i plastyczność pochodzą wyłącznie z zapisanej sieci LIF.")
+        self.mission_connectome = ConnectomeView()
+        self.mission_connectome.setMinimumHeight(320)
+        hero_layout.addWidget(self.mission_connectome, 1)
+        jump = QPushButton("OTWÓRZ PEŁNY MONITOR NEURONOWY")
+        jump.clicked.connect(lambda: self.navigate(3))
+        hero_layout.addWidget(jump)
+        middle.addWidget(hero)
+
+        rail = QWidget()
+        rail.setMinimumWidth(230)
+        rail_layout = QVBoxLayout(rail)
+        rail_layout.setContentsMargins(0, 0, 0, 0)
+        rail_layout.setSpacing(12)
+        signal_card, signal_layout = block(
+            "SIGNAL TRACE / MEASURED", "Próbka tylko po nowym zapisanym kroku mózgu")
+        self.signal_history = SignalHistory()
+        signal_layout.addWidget(self.signal_history)
+        rail_layout.addWidget(signal_card, 1)
+        stream_card, stream_layout = block(
+            "EVENT JOURNAL", "Rzeczywiste zmiany, bez udawanych zdarzeń")
+        self.mission_event_log = QPlainTextEdit()
+        self.mission_event_log.setObjectName("eventJournal")
+        self.mission_event_log.setReadOnly(True)
+        self.mission_event_log.document().setMaximumBlockCount(100)
+        self.mission_event_log.setPlaceholderText("Nie zarejestrowano jeszcze nowego kroku.")
+        self.mission_event_log.setMinimumHeight(118)
+        stream_layout.addWidget(self.mission_event_log, 1)
+        rail_layout.addWidget(stream_card, 1)
+        middle.addWidget(rail)
+        middle.setStretchFactor(0, 5)
+        middle.setStretchFactor(1, 2)
+        middle.setSizes([880, 330])
+        layout.addWidget(middle, 5)
+
+        stages, stages_layout = block(
+            "SYSTEM MODULES / STAN FAKTYCZNY",
+            "Źródła → SQLite → cytowana rozmowa; model PyTorch pozostaje osobnym eksperymentem.")
+        flow = QHBoxLayout()
+        flow.setSpacing(10)
+        self.pipeline_steps = {
+            "internet": PipelineStep("PERCEPTION / HTTPS", "Tylko po wyraźnej zgodzie"),
+            "memory": PipelineStep("LONG-TERM MEMORY", "Trwała lokalna SQLite"),
+            "lif": PipelineStep("NEURAL LIF", "Plastyczna sieć eksperymentalna"),
+            "foundation": PipelineStep("FOUNDATION", "Oddzielny trening PyTorch"),
+        }
+        for step in self.pipeline_steps.values():
+            flow.addWidget(step, 1)
+        stages_layout.addLayout(flow)
+        layout.addWidget(stages, 1)
+
+        actions = QHBoxLayout()
+        for text, page_index in [
+            ("ROZMOWA ZE ŹRÓDŁAMI", 1),
+            ("BADANIE DZIEDZINY", 2),
+            ("TRENING MODELU", 4),
         ]:
-            card, content = block(title)
-            content.addWidget(label(text, kind="subtle"))
-            split.addWidget(card)
-        layout.addLayout(split)
-        layout.addStretch()
+            action = QPushButton(text)
+            action.clicked.connect(lambda checked=False, i=page_index: self.navigate(i))
+            actions.addWidget(action, 1)
+        layout.addLayout(actions)
 
     def _build_conversation(self) -> None:
         _, layout = self._page()
@@ -461,30 +578,54 @@ class CommandCenter(QMainWindow):
             kind="subtle"))
 
     def refresh_connectome(self) -> None:
-        if self.pages.currentIndex() != 3:
+        """One measured LIF sample updates the active graph, never synthesizes work."""
+        page = self.pages.currentIndex()
+        if page not in (0, 3):
             return
         try:
             state = self.service.neural_connectome()
-        except (ValueError, OSError, RuntimeError) as exc:
-            self.neural_event_status.setText("BŁĄD ODCZYTU RZECZYWISTEJ SIECI")
+        except (ValueError, OSError, RuntimeError):
+            if page == 3:
+                self.neural_event_status.setText("BŁĄD ODCZYTU RZECZYWISTEJ SIECI")
+            else:
+                self.mission_status.setText("BŁĄD ODCZYTU SIECI")
             return
-        previous_step = self.connectome.snapshot.step if self.connectome.snapshot else None
-        self.connectome.set_telemetry(state)
-        if previous_step == state.step:
-            self.neural_event_status.setText(
-                f"OSTATNI KROK {state.step} · BRAK NOWEJ AKTYWNOŚCI")
-        else:
-            change = self.connectome.change
-            self.neural_event_status.setText(
-                f"KROK {state.step} · +{change['delta_steps']} kroków "
-                f"· +{change['new_spikes']} impulsów · "
-                f"{change['changed_weights']} zmienionych wag "
-                f"· +{change['new_neurons']} neuronów")
-        self.brain_metrics.setText(
-            f"Neurony {state.total_neurons} | Synapsy {state.total_synapses} | "
-            f"Łączne spiki {state.total_spikes} | Nowość {state.last_novelty:.4f} | "
-            f"Wzrost {state.total_grown} | Pruning {state.total_pruned}")
-        self.brain_plot.set_values(tuple(n.trace for n in state.nodes))
+        previous = getattr(self, "_last_brain_state", None)
+        advanced = previous is not None and state.step > previous.step
+        if previous is None or state.step > previous.step:
+            self._last_brain_state = state
+            self.signal_history.ingest(state)
+        if advanced:
+            new_spikes = max(0, state.total_spikes - previous.total_spikes)
+            new_synapses = max(0, state.total_synapses - previous.total_synapses)
+            self.mission_event_log.appendPlainText(
+                f"LIF / KROK {state.step}  +{state.step - previous.step} kroków"
+                f"  /  +{new_spikes} spike  /  +{new_synapses} synaps")
+        # The dashboard and dedicated monitor are two views of the SAME stored
+        # neural state, never two independently animated synthetic networks.
+        if page == 0:
+            self.mission_connectome.set_telemetry(state)
+            self.mission_status.setText(
+                f"LIF / KROK {state.step}" if advanced
+                else "LIF / BRAK NOWEGO KROKU")
+        if page == 3:
+            self.connectome.set_telemetry(state)
+            old_step = self.connectome.change["delta_steps"]
+            if old_step:
+                delta = self.connectome.change
+                self.neural_event_status.setText(
+                    f"KROK {state.step} · +{delta['delta_steps']} kroków "
+                    f"· +{delta['new_spikes']} impulsów · "
+                    f"{delta['changed_weights']} zmienionych wag "
+                    f"· +{delta['new_neurons']} neuronów")
+            else:
+                self.neural_event_status.setText(
+                    f"OSTATNI KROK {state.step} · BRAK NOWEJ AKTYWNOŚCI")
+            self.brain_metrics.setText(
+                f"Neurony {state.total_neurons} | Synapsy {state.total_synapses} | "
+                f"Łączne spiki {state.total_spikes} | Nowość {state.last_novelty:.4f} | "
+                f"Wzrost {state.total_grown} | Pruning {state.total_pruned}")
+            self.brain_plot.set_values(tuple(n.trace for n in state.nodes))
 
     def _build_training(self) -> None:
         _, page_layout = self._page()
@@ -802,10 +943,25 @@ class CommandCenter(QMainWindow):
             return
         self.network_indicator.setText("HTTPS WŁĄCZONY" if s.network_enabled else "HTTPS WYŁĄCZONY")
         self.overview_metrics.setText(
-            f"Dokumenty: {s.documents}     Fragmenty: {s.passages}\n"
-            f"Obserwacje: {s.observations}     Kroki mózgu: {s.brain_steps}\n"
-            f"Neurony: {s.neurons}     Synapsy: {s.synapses}\n"
-            f"Badanie: {'AKTYWNE' if s.research_running else 'BRAK'}")
+            f"Dokumenty: {s.documents}  ·  Fragmenty: {s.passages}  ·  "
+            f"Obserwacje: {s.observations}  ·  Pomiary z SQLite")
+        for key, value in (
+            ("steps", s.brain_steps),
+            ("neurons", s.neurons),
+            ("synapses", s.synapses),
+            ("documents", s.documents),
+        ):
+            self.mission_tiles[key].set_value(value)
+        self.pipeline_steps["internet"].set_state(
+            "ZEZWOLONO" if s.network_enabled else "WYŁĄCZONY")
+        self.pipeline_steps["memory"].set_state(
+            f"{s.documents} dok. · {s.passages} frag.")
+        self.pipeline_steps["lif"].set_state(f"{s.brain_steps} zapisanych kroków")
+        self.pipeline_steps["foundation"].set_state(
+            f"TRENING {s.training_step}/{s.training_total}" if s.training_running
+            else "NIEURUCHOMIONY")
+        if self.pages.currentIndex() == 0:
+            self.refresh_connectome()
         self.research_status.setText(
             f"Próby: {s.research_attempted} · zapisano: {s.research_accepted} · "
             f"błędy: {s.research_errors} · odkryto: {s.research_discovered} · "

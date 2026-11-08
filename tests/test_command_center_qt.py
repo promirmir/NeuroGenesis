@@ -44,6 +44,62 @@ class QtCommandCenterSmokeTests(unittest.TestCase):
         self.window.refresh()
         self.assertIn("NIEURUCHOMIONY", self.window.training_status.text())
 
+    def test_mission_dashboard_actual_data_and_no_invented_events(self):
+        self.window.navigate(0)
+        self.window.refresh()
+        self.assertEqual(self.window.mission_tiles["documents"].value_label.text(), "0")
+        self.assertEqual(self.window.mission_tiles["steps"].value_label.text(),
+                         str(self.service.memory.brain().steps))
+        self.assertEqual(self.window.mission_tiles["neurons"].value_label.text(),
+                         str(len(self.service.memory.brain().voltages)))
+        self.assertEqual(self.window.pipeline_steps["internet"].state_label.text(),
+                         "WYŁĄCZONY")
+        self.assertEqual(self.window.pipeline_steps["foundation"].state_label.text(),
+                         "NIEURUCHOMIONY")
+        self.assertFalse(self.service.network_enabled)
+        initial = self.window.mission_connectome.snapshot
+        self.assertIsNotNone(initial)
+        self.assertEqual(initial.total_synapses, len(self.service.memory.brain().synapses))
+        samples_before = self.window.signal_history.samples
+        events_before = self.window.mission_event_log.toPlainText()
+        for _ in range(3):
+            self.window.refresh_connectome()
+        self.assertEqual(self.window.signal_history.samples, samples_before)
+        self.assertEqual(self.window.mission_event_log.toPlainText(), events_before)
+        self.service.ask("Rzeczywisty lokalny bodziec do zapisanej sieci")
+        self.window.refresh_connectome()
+        self.assertEqual(self.window.mission_connectome.snapshot.step,
+                         self.service.memory.brain().steps)
+        self.assertGreater(len(self.window.signal_history.samples), len(samples_before))
+        self.assertIn("LIF / KROK", self.window.mission_event_log.toPlainText())
+        evidence = self.window.mission_event_log.toPlainText()
+        self.window.refresh_connectome()
+        self.assertEqual(self.window.mission_event_log.toPlainText(), evidence)
+        self.assertEqual(self.window.signal_history.samples[-1][0],
+                         self.service.memory.brain().steps)
+        self.assertEqual(len(self.window._shortcuts), len(PANELS))
+
+    def test_mission_navigation_and_controls_preserve_user_data(self):
+        self.window.navigate(0)
+        self.window.refresh()
+        self.assertIn("Dokumenty: 0", self.window.overview_metrics.text())
+        self.assertFalse(self.window.allow_https.isChecked())
+        self.assertEqual(self.window.pipeline_steps["memory"].state_label.text(),
+                         "0 dok. · 0 frag.")
+        self.assertEqual(self.window.pipeline_steps["lif"].state_label.text(),
+                         f"{self.service.memory.brain().steps} zapisanych kroków")
+        self.window.navigate(1)
+        self.assertEqual(self.window.pages.currentIndex(), 1)
+        self.window.navigate(0)
+        self.assertEqual(self.window.pages.currentIndex(), 0)
+        self.window.mission_connectome.resize(960, 510)
+        self.window.mission_connectome.show()
+        self.application.processEvents()
+        image = self.window.mission_connectome.grab().toImage()
+        self.assertGreaterEqual(image.width(), 600)
+        self.assertGreaterEqual(image.height(), 320)
+        self.assertFalse(self.service.network_enabled)
+
     def test_chat_uses_sqlite_source_not_hardcoded_gui_response(self):
         text = "Plastyczność synaptyczna umożliwia zmianę siły połączeń neuronów."
         self.service.memory.observe_web(WebObservation(
