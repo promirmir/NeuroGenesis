@@ -1,3 +1,7 @@
+## Klasyczny punkt odniesienia BM25 — PR kandydat
+
+Dodano eksperymentalne, lokalne porównanie dotychczasowego cytowania źródeł z **BM25** (algorytm wyszukiwania informacji), na identycznych pytaniach i tej samej prywatnej bazie SQLite. Weryfikowane są poprawne cytaty oraz fałszywe odpowiedzi, a nie tylko szybkość. System **nie przełącza** automatycznie metody wyszukiwania ani nie deklaruje poprawy bez wyniku testowego. [Dokumentacja](docs/BM25_BASELINE.md).
+
 ## Niezależna kontrola jakości cytowania źródeł — PR kandydat
 
 Do dotychczasowego lokalnego testu pytań dodano ostrzejszą ocenę na **oddzielnym zestawie nowych pytań**, z wykrywaniem powtórzeń, uwzględnieniem niepewności statystycznej, pomiarem fałszywych cytowań oraz porównaniem z systemem, który zawsze odmawia odpowiedzi. Wynik korzysta z rzeczywistej lokalnej bazy SQLite, ale nie zmienia pamięci. **Nie jest to dowód rozumowania ani weryfikacji prawdy**. Kod wymaga CI i prawdziwego, niezależnego zbioru pytań, zanim będzie można deklarować jakość działania. [Procedura](docs/QA_ACCEPTANCE.md).
