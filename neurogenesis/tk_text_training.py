@@ -271,10 +271,22 @@ def install_text_training(parent) -> ttk.Frame:
         current = running["thread"]
         if isinstance(current, threading.Thread) and current.is_alive():
             return
+        desired = override_target or target.get()
+        # The shared output entry starts as .pt; suggest coherent, clearly
+        # visible default paths for downloaded model, corpus and LoRA.
+        if override_target is None:
+            if task == "ultrachat" and not desired.lower().endswith(".txt"):
+                desired = str(Path.home() / "NeuroGenesis-UltraChat-300.txt")
+            elif task == "qwen" and desired.lower().endswith(".pt"):
+                desired = str(Path.home() / "NeuroGenesis-Qwen3-0.6B")
+            elif task == "lora" and desired.lower().endswith(".pt"):
+                desired = str(Path.home() / "NeuroGenesis-LoRA-candidate")
+            if desired != target.get():
+                target.set(desired)
         try:
             argv = local_training_command(
                 python.get(), task=task, input_txt=source.get(),
-                output=override_target or target.get(), model_dir=model.get(),
+                output=desired, model_dir=model.get(),
                 steps=int(steps.get()), device=device.get(), rights=rights.get(),
                 trusted_model=trusted.get(), download_consent=downloads.get(),
                 dataset_limit=int(size.get()))
@@ -306,6 +318,10 @@ def install_text_training(parent) -> ttk.Frame:
                 start_btn.configure(state="normal")
                 running["worker"] = None
                 if kind == "ok":
+                    if value.get("status") == "local_pretrained_model_downloaded":
+                        model.set(value["directory"])
+                    elif value.get("status") == "opt_in_dataset_export":
+                        source.set(value["file"])
                     status.set("ZAKOŃCZONO / sprawdź raport i walidację; kandydat nie jest aktywny")
                     show(json.dumps(value, ensure_ascii=False, indent=2))
                 else:
