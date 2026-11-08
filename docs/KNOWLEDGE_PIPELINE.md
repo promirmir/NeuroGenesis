@@ -34,6 +34,10 @@ The predeclared five-question synthetic fixture contains **three source-answerab
 
 The Windows onefile EXE `--self-test` independently checks a source-to-answer path after SQLite reopening. GitHub Actions on Python 3.11–3.13, Windows tests/packaging, privacy and PyTorch CPU where applicable are required before merge/release. Actual Windows GUI usability, real-site research success, model quality and CUDA remain separate acceptance gates.
 
+## Later model-training candidate (requires explicit rights and action)
+
+A separate later PR adds per-revision operator approval for local training, a rights audit table, and actual PyTorch Foundation Brain next-byte learning on eligible **latest** source documents with a whole document held out for validation. It never triggers automatically from browsing or citations, does not use unapproved documents, and produces only a private candidate checkpoint — not a trained conversational inference model. See [KNOWLEDGE_TRAIN.md](KNOWLEDGE_TRAIN.md). This is not part of the original PR #27 release until separately tested and merged.
+
 ## Next gate
 
 Build a source explorer with explicit deletion/rights, independent source ranking and contradiction flags; add a human-reviewed question corpus and document-heldout evaluation. Only then promote a separately licensed training path into Foundation Brain with genuine inference, retention tests and actual CUDA measurements.
