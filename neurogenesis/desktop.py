@@ -179,6 +179,8 @@ def ui_self_test() -> int:
     from tkinter import ttk
     from .tk_mission import MissionDashboard
     from .tk_foundation_lab import install_foundation_lab
+    from .tk_text_training import install_text_training
+    from .tk_local_chat import install_local_chat
 
     with tempfile.TemporaryDirectory(prefix="ng-public-tk-ui-check-") as folder:
         memory = ExperienceMemory(Path(folder) / "synthetic-private.sqlite3")
@@ -193,6 +195,11 @@ def ui_self_test() -> int:
             foundation_tab = install_foundation_lab(tabs)
             if tabs.tab(foundation_tab, "text") != "Foundation Lab":
                 return 37
+            training_tab = install_text_training(tabs)
+            model_chat_tab = install_local_chat(tabs)
+            if (tabs.tab(training_tab, "text") != "Trening TXT"
+                    or tabs.tab(model_chat_tab, "text") != "Model Chat"):
+                return 39
             mission = MissionDashboard(
                 dashboard, memory, navigate=lambda _where: None,
                 network_enabled=lambda: False)
@@ -410,9 +417,15 @@ def launch(db_path: Path) -> int:
     web_auto = tk.BooleanVar(value=False)
     from .tk_mission import MissionDashboard
     from .tk_foundation_lab import install_foundation_lab
+    from .tk_text_training import install_text_training
+    from .tk_local_chat import install_local_chat
     foundation_tab = install_foundation_lab(tabs)
+    training_tab = install_text_training(tabs)
+    model_chat_tab = install_local_chat(tabs)
     targets = {
         "foundation": foundation_tab,
+        "training": training_tab,
+        "local_chat": model_chat_tab,
         "chat": chat_tab,
         "brain": brain_tab,
         "web": web_tab,
