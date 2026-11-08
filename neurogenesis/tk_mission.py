@@ -227,8 +227,10 @@ class MissionDashboard:
         ):
             _action(quick, label, lambda section=where: navigate(section),
                     primary=where == "chat").pack(side="left", padx=(0, 10))
-        _label(quick, "STATUS BADAWCZY · NIE AGI · BEZ UKRYTEJ SIECI",
-               size=9, color=MUTED).pack(side="right")
+        _action(quick, "FOUNDATION LAB / WYUCZONE WAGI",
+                lambda: navigate("foundation")).pack(side="left", padx=(0, 10))
+        _label(self.body, "STATUS BADAWCZY · NIE AGI · BEZ UKRYTEJ SIECI · FOUNDATION WYMAGA PYTORCH",
+               size=9, color=MUTED).pack(anchor="w", pady=(4, 0))
 
     def _toggle_neural_view(self) -> None:
         # Preserve 3D↔2D semantics for existing users/tests. Clicking
@@ -330,7 +332,7 @@ class MissionDashboard:
             f"{status['knowledge']['documents']} dok. / "
             f"{status['knowledge']['passages']} frag.")
         self.modules["lif"].set(f"KROK {values['steps']}")
-        self.modules["foundation"].set("TRENING OSOBNO")
+        self.modules["foundation"].set("LAB / ZEWN. PYTHON")
         brain = self.memory.brain()
         state = snapshot_neural_telemetry(brain)
         self.capacity_text.set(
