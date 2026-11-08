@@ -19,7 +19,7 @@ from neurogenesis.local_dialogue import (
     MODEL_ID, MODEL_REVISION, validate_messages, validate_model_dir,
     download_local_model,
 )
-from neurogenesis.lora_train import parse_dialogues, validate_training_paths
+from neurogenesis.lora_train import parse_dialogues, validate_training_paths, masked_assistant_tokens
 from neurogenesis.tk_text_training import local_training_command
 from neurogenesis.tk_local_chat import build_local_chat_command
 
@@ -165,6 +165,25 @@ class LocalTrainingTests(unittest.TestCase):
                 load_dataset=fake_load_dataset)}):
             with self.assertRaises(ValueError):
                 prepare_ultrachat(path, confirm=True, max_dialogues=12)
+
+    def test_mask_only_assistant_tokens_even_when_qwen_chat_templates_differ(self):
+        class FakeQwen:
+            eos_token_id = 99
+            def apply_chat_template(self, messages, **kwargs):
+                self.kwargs = kwargs
+                # Simulates special non-thinking generation prefix:
+                return [1, 2, 3, 4, 5, 6]
+            def __call__(self, answer, **kwargs):
+                return types.SimpleNamespace(input_ids=[31, 32, 33])
+        tokenizer = FakeQwen()
+        encoded = masked_assistant_tokens(
+            tokenizer, "Jak się uczysz?", "Na danych.", seq=16)
+        self.assertEqual(encoded[0], [1, 2, 3, 4, 5, 6, 31, 32, 33, 99])
+        self.assertEqual(encoded[1], [-100]*6 + [31, 32, 33, 99])
+        self.assertFalse(tokenizer.kwargs["enable_thinking"])
+        self.assertTrue(tokenizer.kwargs["add_generation_prompt"])
+        self.assertIsNone(masked_assistant_tokens(
+            tokenizer, "długi", "test", seq=8))
 
     def test_pinned_model_download_requires_consent_never_eager(self):
         location = self.root / "weights"
