@@ -176,16 +176,16 @@ def install_local_chat(parent) -> ttk.Frame:
     ttk.Label(settings, text="Limit tokenów:").pack(side="left", padx=(15, 3))
     ttk.Entry(settings, textvariable=tokens, width=6).pack(side="left")
     ttk.Label(tab, textvariable=status, wraplength=950).pack(fill="x", padx=18, pady=3)
-    console = tk.Text(tab, height=14, wrap="word", bg="#091f2c", fg="#d4f3ed",
+    console = tk.Text(tab, height=8, wrap="word", bg="#091f2c", fg="#d4f3ed",
                       font=("Segoe UI", 10), padx=12, pady=8,
                       state="disabled")
-    console.pack(fill="both", expand=True, padx=18, pady=(7, 8))
-    entry = tk.Text(tab, height=3, bg="#102d3c", fg="#f2ffff",
+    console.pack(fill="both", expand=True, padx=18, pady=(5, 5))
+    entry = tk.Text(tab, height=2, bg="#102d3c", fg="#f2ffff",
                     insertbackground="#d4ffff", wrap="word",
                     font=("Segoe UI", 10))
     entry.pack(fill="x", padx=18)
     btns = ttk.Frame(tab)
-    btns.pack(fill="x", padx=18, pady=(8, 13))
+    btns.pack(fill="x", padx=18, pady=(5, 7))
 
     def append(text):
         console.configure(state="normal")
