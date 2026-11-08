@@ -612,7 +612,10 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
                         semantic_status.set(
                             "SEMANTYCZNY ACF / błąd klasyfikacji, "
                             "nie zapisano fikcyjnych cech: " + str(value)[:120])
-                    launch_semantic()
+                    # The worker may still be alive while its last
+                    # queue event is processed. Retry on the next Tk tick.
+                    if tab.winfo_exists():
+                        tab.after(200, launch_semantic)
                 elif task == "goal":
                     refresh_goals(force=True)
                     if kind == "ok":
