@@ -79,9 +79,11 @@ class ReadOnlyQaAuditTests(unittest.TestCase):
         self.assertEqual(report["correct_literal_citations"], 3)
         self.assertEqual(report["supported_exact_quote_recall"], 1.0)
         self.assertEqual(report["supported_source_hit_rate"], 1.0)
-        self.assertLess(report["unsupported_abstention_rate"], 1.0)
-        self.assertGreater(report["unsupported_false_citation_rate"], 0.0)
-        self.assertTrue(0.0 <= report["overall_strict_fixture_accuracy"] < 1.0)
+        # Development fixture was previously observed. A rule improvement here
+        # is NOT independent prospective semantic-answer evidence.
+        self.assertGreaterEqual(report["unsupported_abstention_rate"], 2 / 3)
+        self.assertLessEqual(report["unsupported_false_citation_rate"], 1 / 3)
+        self.assertTrue(0.0 <= report["overall_strict_fixture_accuracy"] <= 1.0)
         self.assertGreaterEqual(report["latency_p95_ms"], report["latency_p50_ms"])
         self.assertFalse(report["internet_used"])
         self.assertFalse(report["sqlite_modified"])
