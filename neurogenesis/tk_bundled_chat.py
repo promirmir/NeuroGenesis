@@ -12,9 +12,11 @@ from tkinter import ttk, messagebox
 
 from .bundled_llm import BundledModelSession, has_bundled_model
 from .local_knowledge import LocalKnowledge
+from .memory import ExperienceMemory
 
 
-def install_bundled_chat(parent, knowledge: LocalKnowledge) -> ttk.Frame:
+def install_bundled_chat(parent, knowledge: LocalKnowledge,
+                         web_memory: ExperienceMemory | None = None) -> ttk.Frame:
     tab = ttk.Frame(parent)
     parent.add(tab, text="Model Chat")
     parent.insert(2, tab)
@@ -36,7 +38,8 @@ def install_bundled_chat(parent, knowledge: LocalKnowledge) -> ttk.Frame:
              wraplength=1020, justify="left").pack(
                  fill="x", padx=14, pady=(0, 5))
 
-    model = BundledModelSession(knowledge=knowledge, max_tokens=224)
+    model = BundledModelSession(
+        knowledge=knowledge, web_memory=web_memory, max_tokens=224)
     events: queue.SimpleQueue = queue.SimpleQueue()
     running = {"thread": None, "closing": False, "ready": False, "starting": False}
     turns: list[dict[str, str]] = []
