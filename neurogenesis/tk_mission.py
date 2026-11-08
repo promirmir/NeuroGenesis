@@ -217,7 +217,9 @@ class MissionDashboard:
         self.scroll.configure(scrollregion=self.scroll.bbox("all"))
 
     def _viewport_resized(self, event) -> None:
-        self.scroll.itemconfigure(self.window_id, width=max(960, event.width))
+        # Let the page shrink on 1024px Windows/DPI desktops. Only truly
+        # narrow screens retain a minimum internal width for legibility.
+        self.scroll.itemconfigure(self.window_id, width=max(860, event.width))
 
     def _scroll_wheel(self, event) -> None:
         self.scroll.yview_scroll(-1 if event.delta > 0 else 1, "units")
