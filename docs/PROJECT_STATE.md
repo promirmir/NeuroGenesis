@@ -1,3 +1,8 @@
+## Verified Windows release after PR #38 — 2026-11-08
+
+- Latest published source SHA-bound Tk release: `v0.6.0-main.4a81cc76` at `https://github.com/promirmir/NeuroGenesis/releases/tag/v0.6.0-main.4a81cc76`, target `4a81cc76a3191ee4031e8bfde9430626a50914ad`. GitHub Windows regression/EXE self-test and release workflow succeeded. Asset `NeuroGenesis.exe` published at 2026-11-08 14:49:01 UTC; 13,044,179 bytes; SHA-256 `ad30b2f245a77055feca9557f426b77d5c6298d8e0a0e3a31cf727270e5a293d`.
+- This is the original **Tk EXE** with source evidence updates, NOT a Qt download or trained semantic model. Package has not been manually inspected on the user's computer. No physically measured CUDA.
+
 ## 2026-11-08 — verified cited-dialogue quality milestones after PR #38
 
 - **Source main:** `4a81cc76a3191ee4031e8bfde9430626a50914ad`. PR #36 `0bcfb6a158c57465b0b39dda26e4ed3ca20e22bd`, #37 `c94dce00761d938e12215b19c20dbfd9efe426a9`, #38 `4a81cc76a3191ee4031e8bfde9430626a50914ad` are **merged**. No open implementation PR at this checkpoint. Historical "PR candidate" sections below document past work, not current state.
