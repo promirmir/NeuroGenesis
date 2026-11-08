@@ -7,6 +7,7 @@ No network, brain updates, SQLite writes, per-question logging or uploads.
 from __future__ import annotations
 
 import argparse
+from contextlib import closing
 import hashlib
 import json
 import math
@@ -110,7 +111,7 @@ def evaluate_qa(database: str | Path, audit_jsonl: str | Path, *,
     # SQLite read-only URI ensures no schema migrations, no hidden SQLite
     # writes, and no accidental brain/sensory updates from test questions.
     uri = db.resolve().as_uri() + "?mode=ro"
-    with sqlite3.connect(uri, uri=True, timeout=2) as con:
+    with closing(sqlite3.connect(uri, uri=True, timeout=2)) as con:
         con.execute("PRAGMA query_only=ON")
         for case in rows:
             start = time.perf_counter()
