@@ -179,11 +179,13 @@ def ui_self_test() -> int:
     from tkinter import ttk
     from .tk_mission import MissionDashboard
     from .tk_foundation_lab import install_foundation_lab
-    from .tk_text_training import install_text_training
-    from .tk_local_chat import install_local_chat
+    from .tk_bundled_training import install_bundled_training
+    from .tk_bundled_chat import install_bundled_chat
+    from .local_knowledge import LocalKnowledge
 
     with tempfile.TemporaryDirectory(prefix="ng-public-tk-ui-check-") as folder:
         memory = ExperienceMemory(Path(folder) / "synthetic-private.sqlite3")
+        knowledge = LocalKnowledge(Path(folder) / "local-knowledge.sqlite3")
         root = tk.Tk()
         root.withdraw()
         try:
@@ -197,8 +199,8 @@ def ui_self_test() -> int:
             foundation_tab = install_foundation_lab(tabs)
             if tabs.tab(foundation_tab, "text") != "Foundation Lab":
                 return 37
-            training_tab = install_text_training(tabs)
-            model_chat_tab = install_local_chat(tabs)
+            training_tab = install_bundled_training(tabs, knowledge)
+            model_chat_tab = install_bundled_chat(tabs, knowledge)
             if (tabs.tab(training_tab, "text") != "Trening TXT"
                     or tabs.tab(model_chat_tab, "text") != "Model Chat"):
                 return 39
@@ -398,11 +400,13 @@ def launch(db_path: Path) -> int:
     web_auto = tk.BooleanVar(value=False)
     from .tk_mission import MissionDashboard
     from .tk_foundation_lab import install_foundation_lab
-    from .tk_text_training import install_text_training
-    from .tk_local_chat import install_local_chat
+    from .tk_bundled_training import install_bundled_training
+    from .tk_bundled_chat import install_bundled_chat
+    from .local_knowledge import LocalKnowledge
+    knowledge = LocalKnowledge(db_path.with_name("knowledge_local.sqlite3"))
     foundation_tab = install_foundation_lab(tabs)
-    training_tab = install_text_training(tabs)
-    model_chat_tab = install_local_chat(tabs)
+    training_tab = install_bundled_training(tabs, knowledge)
+    model_chat_tab = install_bundled_chat(tabs, knowledge)
     targets = {
         "foundation": foundation_tab,
         "training": training_tab,
@@ -778,10 +782,31 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--self-test", action="store_true", help="test brain/SQLite persistence without GUI")
     parser.add_argument("--ui-self-test", action="store_true",
                         help="open real default Tk mission widgets against synthetic local data")
+    parser.add_argument("--complete-model-test", action="store_true",
+                        help="load truly packaged GGUF and perform real offline generation")
+    parser.add_argument("--model-root", type=Path, default=None,
+                        help="CI only: staged model root; normal EXE uses built-in resources")
+    parser.add_argument("--proof-output", type=Path, default=None,
+                        help="private JSON proof path for end-to-end release gate")
     parser.add_argument("--db", type=Path, default=None, help="explicit private database path")
     args = parser.parse_args(argv)
     if args.self_test:
         return self_test()
     if args.ui_self_test:
         return ui_self_test()
+    if args.complete_model_test:
+        from .bundled_llm import offline_complete_self_test
+        import json
+        try:
+            report = offline_complete_self_test(assets_root=args.model_root)
+        except Exception as exc:
+            if args.proof_output is not None:
+                args.proof_output.write_text(
+                    json.dumps({"result": "failed", "message": str(exc)[:500]}),
+                    encoding="utf-8")
+            return 71
+        if args.proof_output is not None:
+            args.proof_output.write_text(
+                json.dumps(report, ensure_ascii=False), encoding="utf-8")
+        return 0
     return launch(args.db if args.db is not None else default_db_path())
