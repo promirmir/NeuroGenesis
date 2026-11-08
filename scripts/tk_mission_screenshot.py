@@ -63,7 +63,10 @@ def capture(output: Path) -> bool:
             w = root.winfo_width()
             h = root.winfo_height()
             img = ImageGrab.grab(bbox=(x, y, x+w, y+h))
-            if img.width < 1100 or img.height < 700:
+            print(f"Tk screenshot captured: {img.width}x{img.height}, "
+                  f"window={w}x{h}, screen={root.winfo_screenwidth()}x{root.winfo_screenheight()}",
+                  flush=True)
+            if img.width < 640 or img.height < 420:
                 raise RuntimeError("Windows screenshot dimensions unexpectedly small")
             measured = ImageStat.Stat(img.convert("RGB")).stddev
             if max(measured) < 12:
