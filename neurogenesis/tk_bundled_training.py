@@ -204,6 +204,13 @@ def install_bundled_training(parent, knowledge: LocalKnowledge) -> ttk.Frame:
             running["closing"] = True
             auto.set(False)
 
+    # Shared control-plane references: the autonomy dashboard toggles the
+    # SAME watcher rather than creating a second scanner or hidden worker.
+    tab.ng_auto = auto
+    tab.ng_folder = folder
+    tab.ng_consent = confirm_folder
+    tab.ng_choose_folder = choose_dir
+    tab.ng_training_status = status
     tab.bind("<Destroy>", on_destroy, add="+")
     tab.after(180, poll)
     tab.after(1200, scan_folder)
