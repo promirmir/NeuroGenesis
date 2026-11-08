@@ -12,6 +12,7 @@ from pathlib import Path
 import sqlite3
 import tempfile
 import unittest
+from urllib.parse import urlsplit
 
 from neurogenesis.desktop import process_message
 from neurogenesis.knowledge import passages
@@ -21,7 +22,7 @@ from neurogenesis.web_sense import WebObservation
 
 def source(text: str, url: str = "https://example.org/biology") -> WebObservation:
     data = text.encode("utf-8")
-    return WebObservation(url=url, host="example.org", text=text,
+    return WebObservation(url=url, host=urlsplit(url).hostname or "", text=text,
                           content_sha256=hashlib.sha256(data).hexdigest(),
                           retrieved_utc=datetime(2026, 11, 8, tzinfo=timezone.utc).isoformat(),
                           bytes_read=len(data))
@@ -150,6 +151,82 @@ class KnowledgePipelineTests(unittest.TestCase):
         self.assertEqual(predictions, [expected for _, expected in questions])
         # Coverage changes from 0/3 to 3/3 positive cases in this tiny
         # synthetic fixture, not 0% to 100% model accuracy or cognition.
+
+    def test_two_distinct_hosts_show_exact_quotes_and_both_citations(self):
+        first = ("Raport Fenix opisuje temperaturę graniczną 42 stopnie urządzenia. "
+                 "Metoda stanowi badanie demonstracyjne.")
+        second = ("Raport Fenix opisuje temperaturę graniczną 35 stopni urządzenia. "
+                  "Metoda stanowi badanie demonstracyjne.")
+        self.memory.observe_web(source(first, "https://research.example.org/fenix"))
+        self.memory.observe_web(source(second, "https://lab.example.net/fenix"))
+        restored = ExperienceMemory(self.path)
+        reply = process_message(
+            restored, "Co mówi raport Fenix o temperaturę graniczną urządzenia?")
+        self.assertEqual(reply["response_kind"], "source_evidence")
+        self.assertEqual(len(reply["sources"]), 2)
+        self.assertEqual(len({s["url"] for s in reply["sources"]}), 2)
+        self.assertIn("42 stopnie", reply["reply"])
+        self.assertIn("35 stopni", reply["reply"])
+        self.assertEqual(
+            reply["evidence_review"]["signals"], ["possible_numeric_difference"])
+        self.assertTrue(reply["evidence_review"]["potential_discrepancy"])
+        self.assertFalse(reply["evidence_review"]["independently_fact_checked"])
+        self.assertFalse(reply["evidence_review"]["publisher_independence_verified"])
+        self.assertIn("NIE potwierdzona sprzeczność faktów", reply["reply"])
+        self.assertEqual(restored.status()["records_with_raw_text"], 0)
+
+    def test_opposite_negation_flags_inspection_not_verified_fact(self):
+        a = "Próba Solara potwierdza obecność lodu w próbkach."
+        b = "Próba Solara nie potwierdza obecność lodu w próbkach."
+        self.memory.observe_web(source(a, "https://alpha.example.org/solara"))
+        self.memory.observe_web(source(b, "https://beta.example.net/solara"))
+        answer = self.memory.answer_from_knowledge(
+            "Czy próba Solara potwierdza obecność lodu w próbkach?")
+        self.assertIsNotNone(answer)
+        self.assertEqual(len(answer["sources"]), 2)
+        self.assertIn("possible_negation_difference",
+                      answer["evidence_review"]["signals"])
+
+    def test_same_host_variants_do_not_count_as_second_source(self):
+        a = "Raport Fenix opisuje temperaturę graniczną 42 stopnie urządzenia."
+        b = "Raport Fenix opisuje temperaturę graniczną 35 stopni urządzenia."
+        self.memory.observe_web(source(a, "https://www.example.org/lab"))
+        self.memory.observe_web(source(b, "https://example.org/other"))
+        answer = self.memory.answer_from_knowledge(
+            "Co mówi raport Fenix o temperaturę graniczną urządzenia?")
+        self.assertIsNotNone(answer)
+        self.assertEqual(len(answer["sources"]), 1)
+        self.assertFalse(answer["evidence_review"]["potential_discrepancy"])
+
+    def test_updated_latest_revision_hides_stale_numeric_claim(self):
+        url = "https://first.example.org/fenix"
+        self.memory.observe_web(source(
+            "Raport Fenix opisuje temperaturę graniczną 42 stopnie urządzenia.", url))
+        self.memory.observe_web(source(
+            "Raport Fenix opisuje temperaturę graniczną 44 stopnie urządzenia.", url))
+        self.memory.observe_web(source(
+            "Raport Fenix opisuje temperaturę graniczną 44 stopnie urządzenia.",
+            "https://other.example.net/fenix"))
+        answer = self.memory.answer_from_knowledge(
+            "Co mówi raport Fenix o temperaturę graniczną urządzenia?")
+        self.assertIsNotNone(answer)
+        self.assertEqual(len(answer["sources"]), 2)
+        self.assertNotIn("42 stopnie", answer["answer"])
+        self.assertIn("44 stopnie", answer["answer"])
+        self.assertFalse(answer["evidence_review"]["potential_discrepancy"])
+        self.assertEqual(len(self.memory.knowledge_sources()), 3)
+
+    def test_multiple_sources_do_not_mistakenly_support_unrelated_question(self):
+        self.memory.observe_web(source(
+            "Raport Fenix opisuje temperaturę graniczną 42 stopnie urządzenia.",
+            "https://first.example.org/fenix"))
+        self.memory.observe_web(source(
+            "Raport Fenix opisuje temperaturę graniczną 35 stopni urządzenia.",
+            "https://other.example.net/fenix"))
+        result = process_message(self.memory, "Dlaczego księżyc orbituje wokół planety?")
+        self.assertEqual(result["response_kind"], "sensory_acknowledgement")
+        self.assertEqual(result["sources"], [])
+        self.assertIsNone(result["evidence_review"])
 
     def test_passage_boundaries_and_rejection(self):
         self.assertTrue(all(len(p) <= 450 for p in passages("Ala." * 1200)))

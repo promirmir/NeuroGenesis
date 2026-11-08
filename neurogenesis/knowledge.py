@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 import re
 import sqlite3
 import unicodedata
+from urllib.parse import urlsplit
 from typing import Any
 
 MAX_SOURCE_CHARS = 6000
@@ -137,11 +138,35 @@ def remove_event(con: sqlite3.Connection, event_id: int) -> None:
     con.execute("DELETE FROM knowledge_sources WHERE id=?", (source_id,))
 
 
-def answer_question(con: sqlite3.Connection, question: str) -> dict[str, Any] | None:
-    """Extract a relevant *verbatim* passage from the newest source URL version.
+def _discrepancy_signals(excerpts: tuple[str, ...]) -> tuple[str, ...]:
+    """Conservative flags for HUMAN inspection, never factual contradiction proof.
 
-    Returns None for unsupported queries. Any returned text remains unverified
-    source evidence, never a claim of learned model competence or ground truth.
+    Similar lexical overlap can describe different facts, time periods or
+    predicates; a flag must never be presented as a verified contradiction.
+    """
+    if len(excerpts) < 2:
+        return ()
+    # Compare only two independently selected host excerpts, not every
+    # sentence on a page and not arbitrary older revisions of a URL.
+    a, b = excerpts[:2]
+    negation = re.compile(r"\b(?:nie|not|never)\b", re.IGNORECASE)
+    number = re.compile(r"(?<!\w)\d+(?:[.,]\d+)?(?!\w)")
+    flags: list[str] = []
+    if bool(negation.search(a)) != bool(negation.search(b)):
+        flags.append("possible_negation_difference")
+    nums_a, nums_b = set(number.findall(a)), set(number.findall(b))
+    if nums_a and nums_b and nums_a != nums_b:
+        flags.append("possible_numeric_difference")
+    return tuple(flags)
+
+
+def answer_question(con: sqlite3.Connection, question: str) -> dict[str, Any] | None:
+    """Return bounded, source-grounded excerpts, never synthesized facts.
+
+    The strongest lexical passage remains the first answer for compatibility.
+    A different HOST can be shown as an additional reviewable quotation, but
+    separate hosts are NOT evidence of independent publishers, truth or
+    corroboration. Human review is required for every discrepancy flag.
     """
     if type(question) is not str or not question.strip() or len(question) > MAX_QUERY_CHARS:
         return None
@@ -163,25 +188,71 @@ def answer_question(con: sqlite3.Connection, question: str) -> dict[str, Any] | 
         return None
     best = rows[0]
     overlap = int(best[6])
-    # At least two distinctive tokens for multi-term questions, to avoid a
-    # single common word being presented as a substantive factual answer.
     required = 1 if len(terms) == 1 else 2
     if overlap < required or overlap / len(terms) < 0.4:
         return None
-    excerpt, url, sha, timestamp, rights, source_id, _ = best
-    version = con.execute(
-        "SELECT COUNT(*) FROM knowledge_sources WHERE url=? AND id<=?",
-        (url, source_id)).fetchone()[0]
+
+    def source_record(row: tuple[Any, ...]) -> dict[str, Any]:
+        excerpt, url, sha, timestamp, rights, source_id, _ = row
+        version = con.execute(
+            "SELECT COUNT(*) FROM knowledge_sources WHERE url=? AND id<=?",
+            (url, source_id)).fetchone()[0]
+        return {
+            "url": url, "sha256": sha, "retrieved_utc": timestamp,
+            "version": version, "rights_status": rights,
+            "excerpt": excerpt,
+        }
+
+    selected = [source_record(best)]
+    primary_host = (urlsplit(selected[0]["url"]).hostname or "").removeprefix("www.")
+    # Limit disclosure to one extra short source, not 24 potentially
+    # copyrighted passages. Avoid same-host replicas masquerading as evidence.
+    for row in rows[1:]:
+        extra_overlap = int(row[6])
+        if len(terms) < 2 or extra_overlap < 2 or extra_overlap / len(terms) < 0.4:
+            continue
+        host = (urlsplit(row[1]).hostname or "").removeprefix("www.")
+        if not host or host == primary_host:
+            continue
+        selected.append(source_record(row))
+        break
+
+    flags = _discrepancy_signals(tuple(src["excerpt"] for src in selected))
+    first = selected[0]
+    answer = ("Cytat ze zgromadzonego źródła (niezależnie niezweryfikowany):\n"
+              + first["excerpt"] + "\n\nŹródło: " + first["url"]
+              + "\nWersja: " + str(first["version"])
+              + " · Uprawnienia i wiarygodność: niezależnie niepotwierdzone.")
+    if len(selected) == 2:
+        second = selected[1]
+        answer += ("\n\nDodatkowy cytat z innego hosta (niepotwierdzony):\n"
+                   + second["excerpt"] + "\nŹródło: " + second["url"]
+                   + "\nWersja: " + str(second["version"]))
+        if flags:
+            answer += ("\n\nUWAGA: wykryto potencjalną rozbieżność w brzmieniu "
+                       "lub wartościach. To sygnał do ręcznej weryfikacji, "
+                       "NIE potwierdzona sprzeczność faktów.")
+        else:
+            answer += ("\n\nDwa adresy źródeł nie oznaczają niezależnego "
+                       "potwierdzenia ani prawdziwości cytatów.")
+    # Keep legacy singular 'source' and matched_query_terms fields; the
+    # additive 'sources' array lets desktop/Qt surface exact provenance.
+    public_sources = [{k: v for k, v in src.items() if k != "excerpt"}
+                      for src in selected]
     return {
         "response_kind": "source_evidence",
-        "answer": ("Cytat ze zgromadzonego źródła (niezależnie niezweryfikowany):\n"
-                   + excerpt + "\n\nŹródło: " + url
-                   + "\nWersja: " + str(version)
-                   + " · Prawa do dalszego wykorzystania: niezweryfikowane."),
-        "source": {"url": url, "sha256": sha, "retrieved_utc": timestamp,
-                   "version": version, "rights_status": rights},
+        "answer": answer,
+        "source": public_sources[0],
+        "sources": public_sources,
         "matched_query_terms": overlap,
         "total_query_terms": len(terms),
+        "evidence_review": {
+            "different_hosts": len(selected),
+            "potential_discrepancy": bool(flags),
+            "signals": list(flags),
+            "independently_fact_checked": False,
+            "publisher_independence_verified": False,
+        },
     }
 
 

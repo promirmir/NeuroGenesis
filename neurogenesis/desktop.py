@@ -66,7 +66,8 @@ def process_message(memory: ExperienceMemory, message: str, *, store_text: bool 
         "reply": reply,
         "response_kind": ("explicit_local_teaching" if taught else
                           "source_evidence" if evidence else "sensory_acknowledgement"),
-        "sources": [evidence["source"]] if evidence else [],
+        "sources": evidence.get("sources", [evidence["source"]]) if evidence else [],
+        "evidence_review": evidence.get("evidence_review") if evidence else None,
         "event_id": result["event_id"],
         "brain_step": result["brain_step"],
         "neurons": result["neurons"],

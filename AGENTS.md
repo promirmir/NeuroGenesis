@@ -1,3 +1,9 @@
+## Active evidence quality PR candidate — November 8, 2026
+
+- Main baseline `200a78cbe7e60777a9fc6a368268c6a055b74c4d` (PR #35 merged). Branch `feat/evidence-review-multi-source-20261108` addresses P0 source quality: two bounded **verbatim newest-revision excerpts** from different hostnames, exact URLs and additive signals for possible numeric/negation divergence. Different hostnames do not establish publisher independence; flags are NOT factual contradiction proof. Keep existing deterministic lexical retrieval and manual teaching priority.
+- `process_message` passes through additive `sources` and `evidence_review` to Tk/Qt without breaking legacy `source`, SQLite schema, original private brain or Windows EXE. New regression coverage in `tests/test_knowledge.py`. Require Python 3.11–3.13, Qt Windows/Ubuntu and frozen Tk Windows EXE with privacy green before merge. No neural understanding claim.
+- On next turn: read `docs/PROJECT_STATE.md`, confirm exact PR head/main SHA and Actions status, repair failures and only then merge; document confirmed results and release SHA. Next capability is session-only follow-up context with strict abstention/independent QA evaluation, not unmeasured crawler scale.
+
 ## Verified handoff — November 8, 2026 (supersedes historical "candidate" notes)
 
 - Current source `main`: `6a45379c2310bc0622b932e21406feddbdbdcd4d`. PRs #32, #33, #34 merged after all appropriate CI: Python 3.11–3.13, privacy, genuine PyTorch CPU, actual Qt Windows/Ubuntu, old frozen Tk EXE and optional frozen Qt technical smoke.
