@@ -59,6 +59,21 @@ def capture(training_output: Path, model_chat_output: Path) -> bool:
                 raise RuntimeError("Unexpectedly empty screenshot")
         screen(training, training_output)
         screen(chat, model_chat_output)
+        # Validate that the actions needed for a REAL conversation remain
+        # visible on constrained Windows hosted desktop dimensions.
+        def find_action(widget, label):
+            if widget.winfo_class() == "TButton" and widget.cget("text") == label:
+                return widget
+            for child in widget.winfo_children():
+                found = find_action(child, label)
+                if found is not None:
+                    return found
+            return None
+        for label in ("WYŚLIJ DO MODELU OFFLINE", "STOP", "NOWA ROZMOWA"):
+            btn = find_action(chat, label)
+            if (btn is None or not btn.winfo_ismapped() or
+                    btn.winfo_rooty() + btn.winfo_height() > root.winfo_rooty() + root.winfo_height() - 3):
+                raise RuntimeError("Model Chat button is outside the visible desktop: " + label)
         return True
     finally:
         root.destroy()
