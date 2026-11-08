@@ -1,3 +1,13 @@
+## 2026-11-08 — verified milestone after PR #30 merge
+
+- Current functional integration commit: `334b1afc842f662b422b8ca81404c3fd75874523` on `main`, with PRs #23, #27, #28, #29 and #30 **merged**. No open implementation PR left from this batch.
+- #27: opt-in public HTTPS evidence → atomic private SQLite passages/version ledger → quoted URLs in existing chat after restart, with lexical retrieval (not Torch weight learning).
+- #28: separate usable PySide6 dark Command Center over true SQLite/chat/research/brain/sources; #29: actual Windows Qt frozen onedir executable built and smoke-tested via CI, but **not uploaded/released** pending Qt LGPL third-party notice and packaging compliance.
+- #30: separately operator-approved latest source revisions → actual PyTorch Foundation Brain candidate-gradient training and independently held-out **whole-document** evaluation; Markov baseline, real progress/cancel, CPU/CUDA selection and Qt controls. Chat still uses sourced extracts, **not neural model inference**.
+- Final feature-PR CI green across Python 3.11–3.13, privacy, actual PyTorch CPU, Qt offscreen Windows/Ubuntu, existing frozen Tk EXE and optional actual frozen Qt EXE. Controlled synthetic CPU fixture after **3 optimizer steps**: held-out byte CE `5.7385942 → 5.5994536` nats (about 2.42% relative improvement), against a **better** first-order Markov baseline `1.7341138` nats. This is real weight learning on tiny synthetic data, not useful general language competence.
+- Qt DLL bundle is about 112 MiB, not a released installer; CUDA hardware, independent real-language accuracy/retention, rights verification and manual Windows DPI tests remain unverified. Do not claim AGI, self-awareness, training on unrestricted internet or a completed v1.
+- Continue only from current main and [KNOWLEDGE_TRAIN.md](KNOWLEDGE_TRAIN.md)/[COMMAND_CENTER.md](COMMAND_CENTER.md). Highest next acceptance gate: evidence-grounded neural inference with independent corpus and forgetting tests, then legally compliant Qt packaging and stabilization.
+
 ## 2026-11-08 — Rights-approved web evidence → actual PyTorch training (PR candidate)
 
 - PR #29 verified and merged to main `9388e19356c2d7f49ffdd1a72d0996d3d89986b0`: Windows frozen Qt EXE `--self-test` passed actual GUI/SQLite sourced chat, packaged dynamic DLLs, EXE SHA-256 `2d563058b985f169ae04b39f8674f1f5d2a5fc85af0dbfc6d32b86c3501ac3b8`, bundle 111.95 MiB. **Not released/uploaded pending Qt LGPL distribution audit**, old Tk EXE remains released.
