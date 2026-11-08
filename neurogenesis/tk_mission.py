@@ -14,6 +14,7 @@ from .memory import ExperienceMemory
 from .neural_telemetry import NeuralTelemetry, snapshot_neural_telemetry
 from .tk_connectome import TkConnectome
 from .tk_hologram import HolographicBrain
+from .tk_avatar import NeuralAvatar
 
 
 BACKGROUND = "#07111d"
@@ -137,16 +138,20 @@ class MissionDashboard:
                                        highlightthickness=0, bd=0)
         self.graph = TkConnectome(self.neural_canvas)
         self.neural_canvas.bind("<Configure>", self._resize_graph, add="+")
+        self.avatar_canvas = tk.Canvas(neural, bg="#040d18", height=355,
+                                       highlightthickness=0, bd=0)
+        self.avatar = NeuralAvatar(self.avatar_canvas)
         self._view_mode = "3d"
         mode_row = tk.Frame(neural, bg=PANEL)
         self.mode_row = mode_row
         mode_row.pack(fill="x", padx=5, pady=(6, 0))
         self.view_label = tk.StringVar(value="HOLOGRAM 3D / PODGLĄD PRZESTRZENNY")
-        _action(mode_row, "PRZEŁĄCZ 3D / 2D", self._toggle_neural_view).pack(side="left")
-        tk.Label(mode_row, textvariable=self.view_label, bg=PANEL, fg=ACCENT,
-                 font=("Consolas", 8, "bold")).pack(side="left", padx=10)
-        _action(mode_row, "PAUZA OBROTU", self._toggle_hologram_motion).pack(side="right")
-        _label(neural, "Obrót to ruch kamery. Świetlne impulsy pojawiają się tylko po rzeczywistym kroku LIF.",
+        _action(mode_row, "3D / 2D", self._toggle_neural_view).pack(side="left")
+        _action(mode_row, "AWATAR", self._toggle_avatar_view).pack(side="left", padx=6)
+        _action(mode_row, "PAUZA", self._toggle_hologram_motion).pack(side="left")
+        tk.Label(neural, textvariable=self.view_label, bg=PANEL, fg=ACCENT,
+                 font=("Consolas", 8, "bold")).pack(anchor="w", padx=6)
+        _label(neural, "Mózg i awatar są symboliczne. Światło aktywności pojawia się wyłącznie po zapisanym kroku LIF.",
                color=MUTED, size=9, background=PANEL).pack(fill="x", padx=5, pady=(7, 1))
         _action(neural, "OTWÓRZ PEŁNY MONITOR MÓZGU  ›",
                 lambda: navigate("brain")).pack(fill="x", pady=(7, 1))
@@ -222,22 +227,40 @@ class MissionDashboard:
         ):
             _action(quick, label, lambda section=where: navigate(section),
                     primary=where == "chat").pack(side="left", padx=(0, 10))
-        _label(quick, "STATUS BADAWCZY · NIE AGI · BEZ UKRYTEJ SIECI",
-               size=9, color=MUTED).pack(side="right")
+        _action(quick, "FOUNDATION LAB / WYUCZONE WAGI",
+                lambda: navigate("foundation")).pack(side="left", padx=(0, 10))
+        _label(self.body, "STATUS BADAWCZY · NIE AGI · BEZ UKRYTEJ SIECI · FOUNDATION WYMAGA PYTORCH",
+               size=9, color=MUTED).pack(anchor="w", pady=(4, 0))
 
     def _toggle_neural_view(self) -> None:
+        # Preserve 3D↔2D semantics for existing users/tests. Clicking
+        # the button from Avatar returns to the precise 2D graph.
         if self._view_mode == "3d":
-            self.hologram_canvas.pack_forget()
-            self.neural_canvas.pack(fill="both", expand=True, before=self.mode_row)
-            self._view_mode = "2d"
-            self.view_label.set("CONNECTOME 2D / DOKŁADNA MAPA SYNAPS")
-            if self.graph._latest is not None:
-                self.graph.render(self.graph._latest, force=True)
+            self._show_neural_view("2d")
         else:
-            self.neural_canvas.pack_forget()
-            self.hologram_canvas.pack(fill="both", expand=True, before=self.mode_row)
-            self._view_mode = "3d"
-            self.view_label.set("HOLOGRAM 3D / PODGLĄD PRZESTRZENNY")
+            self._show_neural_view("3d")
+
+    def _toggle_avatar_view(self) -> None:
+        self._show_neural_view("3d" if self._view_mode == "avatar" else "avatar")
+
+    def _show_neural_view(self, mode: str) -> None:
+        if mode not in {"3d", "2d", "avatar"}:
+            raise ValueError("invalid neural presentation mode")
+        for canvas in (self.hologram_canvas, self.neural_canvas, self.avatar_canvas):
+            canvas.pack_forget()
+        canvas = {"3d": self.hologram_canvas, "2d": self.neural_canvas,
+                  "avatar": self.avatar_canvas}[mode]
+        canvas.pack(fill="both", expand=True, before=self.mode_row)
+        self._view_mode = mode
+        self.view_label.set({
+            "3d": "HOLOGRAM 3D / KAMERA",
+            "2d": "CONNECTOME 2D / SYNAPSY",
+            "avatar": "EMBODIED PRESENCE / LIF",
+        }[mode])
+        if mode == "2d" and self.graph._latest is not None:
+            self.graph.render(self.graph._latest, force=True)
+        if mode == "avatar":
+            self.avatar.draw()
 
     def _toggle_hologram_motion(self) -> None:
         moving = self.hologram.toggle_motion()
@@ -309,7 +332,7 @@ class MissionDashboard:
             f"{status['knowledge']['documents']} dok. / "
             f"{status['knowledge']['passages']} frag.")
         self.modules["lif"].set(f"KROK {values['steps']}")
-        self.modules["foundation"].set("TRENING OSOBNO")
+        self.modules["foundation"].set("LAB / ZEWN. PYTHON")
         brain = self.memory.brain()
         state = snapshot_neural_telemetry(brain)
         self.capacity_text.set(
@@ -321,6 +344,7 @@ class MissionDashboard:
         if was is None or advanced:
             self.graph.render(state)
             self.hologram.update_state(state)
+            self.avatar.update_state(state)
             self._samples.append((state.step, sum(int(n.fired) for n in state.nodes)))
             self._draw_signals()
             self.signal_label.set(
