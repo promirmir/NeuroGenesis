@@ -14,6 +14,7 @@ from tkinter import ttk
 
 from neurogenesis.tk_local_chat import install_local_chat
 from neurogenesis.tk_text_training import install_text_training
+from neurogenesis.tk_theme import apply_dark_tk_theme
 
 
 def capture(training_output: Path, model_chat_output: Path) -> bool:
@@ -25,6 +26,7 @@ def capture(training_output: Path, model_chat_output: Path) -> bool:
         raise RuntimeError("Pillow is required for Windows screenshots") from exc
     root = tk.Tk()
     try:
+        apply_dark_tk_theme(root)
         width = min(1250, max(760, root.winfo_screenwidth() - 24))
         height = min(850, max(540, root.winfo_screenheight() - 92))
         root.geometry(f"{width}x{height}+8+8")
