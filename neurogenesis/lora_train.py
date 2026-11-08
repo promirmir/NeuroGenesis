@@ -64,6 +64,31 @@ def parse_dialogues(text: str) -> list[tuple[str, str]]:
     return pairs
 
 
+def masked_assistant_tokens(tokenizer: Any, question: str,
+                            answer: str, *, seq: int) -> tuple[list[int], list[int]] | None:
+    """Match the *generation* prefix and compute loss on assistant tokens only.
+
+    Qwen3's add_generation_prompt can contain an empty <think></think>
+    prefix that historical completed-turn serialization does not include.
+    Avoid inferring alignment from full-chat rendering.
+    """
+    prefix = tokenizer.apply_chat_template(
+        [{"role": "user", "content": question}],
+        tokenize=True, add_generation_prompt=True, enable_thinking=False)
+    if not isinstance(prefix, list):
+        raise ValueError("Tokenizer nie obsługuje szablonu rozmowy.")
+    answer_ids = tokenizer(answer, add_special_tokens=False).input_ids
+    if not isinstance(answer_ids, list) or tokenizer.eos_token_id is None:
+        raise ValueError("Brak tokenów odpowiedzi albo EOS.")
+    if len(prefix) >= seq - 4:
+        return None
+    tokens = (prefix + answer_ids + [tokenizer.eos_token_id])[:seq]
+    labels = [-100] * len(prefix) + tokens[len(prefix):]
+    if len(labels) != len(tokens) or sum(x != -100 for x in labels) < 2:
+        return None
+    return tokens, labels
+
+
 def validate_training_paths(model_dir: str | Path, input_txt: str | Path,
                             output_dir: str | Path, *, rights: bool,
                             trust_model: bool, steps: int,
@@ -134,28 +159,10 @@ def finetune_local_dialogue(model_dir: str | Path, input_txt: str | Path,
         raise ValueError("Żaden parametr LoRA nie jest trenowany.")
 
     def encode_pair(pair):
-        question, answer = pair
-        prompt_tokens = tokenizer.apply_chat_template(
-            [{"role": "user", "content": question}],
-            tokenize=True, add_generation_prompt=True,
-            enable_thinking=False)
-        if not isinstance(prompt_tokens, list):
-            raise ValueError("Tokenizer nie obsługuje szablonu rozmowy.")
-        # Qwen3's generated assistant prefix with /no_think differs from
-        # serialization of a completed historical assistant turn. Never
-        # assume that apply_chat_template(full) starts with prompt_tokens:
-        # build the next-response target after the very SAME generation
-        # prefix used at runtime, with only assistant bytes contributing
-        # to the loss. This also avoids a chat-template prefix mismatch.
-        answer_tokens = tokenizer(answer, add_special_tokens=False).input_ids
-        if not isinstance(answer_tokens, list) or tokenizer.eos_token_id is None:
-            raise ValueError("Tokenizer bez tokenów odpowiedzi albo EOS.")
-        if len(prompt_tokens) >= seq - 4:
+        encoded = masked_assistant_tokens(tokenizer, pair[0], pair[1], seq=seq)
+        if encoded is None:
             return None
-        tokens = (prompt_tokens + answer_tokens + [tokenizer.eos_token_id])[:seq]
-        labels = [-100] * len(prompt_tokens) + tokens[len(prompt_tokens):]
-        if len(labels) != len(tokens) or sum(x != -100 for x in labels) < 2:
-            return None
+        tokens, labels = encoded
         return (
             torch.tensor([tokens], dtype=torch.long, device=device),
             torch.tensor([labels], dtype=torch.long, device=device),
