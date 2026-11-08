@@ -21,7 +21,7 @@ from neurogenesis.tk_mission import MissionDashboard
 from neurogenesis.web_sense import WebObservation
 
 
-def capture(output: Path) -> bool:
+def capture(output: Path, avatar_output: Path | None = None) -> bool:
     if sys.platform != "win32":
         raise RuntimeError("Windows screenshot only")
     try:
@@ -79,6 +79,21 @@ def capture(output: Path) -> bool:
                 raise RuntimeError("Desktop session did not yield a visible GUI screenshot")
             output.parent.mkdir(parents=True, exist_ok=True)
             img.save(str(output), "PNG")
+            if avatar_output is not None:
+                view._toggle_avatar_view()
+                root.update_idletasks()
+                root.update()
+                if view._view_mode != "avatar" or view.avatar.latest is None:
+                    raise AssertionError("Real avatar not connected to saved LIF state")
+                avatar_image = ImageGrab.grab(bbox=(x, y, x+w, y+h))
+                if avatar_image.size != img.size:
+                    raise AssertionError("Avatar screenshot resized unexpectedly")
+                if max(ImageStat.Stat(avatar_image.convert("RGB")).stddev) < 12:
+                    raise RuntimeError("Avatar view did not render a visible GUI")
+                avatar_output.parent.mkdir(parents=True, exist_ok=True)
+                avatar_image.save(str(avatar_output), "PNG")
+                if avatar_output.stat().st_size < 20_000:
+                    raise RuntimeError("Real avatar screenshot suspiciously small")
             return output.stat().st_size > 25_000
         finally:
             root.destroy()
@@ -87,8 +102,10 @@ def capture(output: Path) -> bool:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Capture real Tk dashboard, fictional SQLite only")
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--avatar-output", type=Path,
+                        help="capture actual avatar mode on synthetic SQLite, too")
     args = parser.parse_args(argv)
-    if not capture(args.output):
+    if not capture(args.output, args.avatar_output):
         raise SystemExit("No valid screenshot produced")
     print("Public Windows Tk Mission Control visual QA: real UI, fictional data")
     return 0
