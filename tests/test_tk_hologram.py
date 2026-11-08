@@ -41,6 +41,7 @@ class HolographicBrainTests(unittest.TestCase):
         initial = snapshot_neural_telemetry(brain)
         self.assertTrue(view.update_state(initial))
         self.assertEqual(view._event_frames, 0)
+        self.assertEqual(view._step_frames, 0)
         self.assertFalse(view.update_state(initial))
         self.assertEqual(set(project_real_nodes(initial, .45, 900, 500)),
                          {node.index for node in initial.nodes})
@@ -54,6 +55,7 @@ class HolographicBrainTests(unittest.TestCase):
         self.assertEqual(view.latest.total_spikes, brain.total_spikes)
         self.assertEqual(view._event_step, brain.steps)
         self.assertEqual(view._event_frames, EVENT_FRAMES)
+        self.assertEqual(view._step_frames, EVENT_FRAMES)
         self.assertFalse(view.update_state(updated))
         self.assertEqual(view._event_frames, EVENT_FRAMES)
         # Rendering an idle step does NOT invent a new event.
