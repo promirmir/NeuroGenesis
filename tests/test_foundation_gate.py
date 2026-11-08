@@ -5,6 +5,7 @@ Only fictional local data; no network, no user SQLite, no borrowed corpus.
 from __future__ import annotations
 
 import hashlib
+import json
 import math
 from pathlib import Path
 import tempfile
@@ -87,6 +88,14 @@ class RealCheckpointRetentionTests(unittest.TestCase):
             self.incumbent, self.candidate, self.old, self.new,
             trust_checkpoints=True, confirm_corpus_rights=True,
             sequence=16, device="cpu")
+        # CI prints only fictional benchmark numbers, never private source
+        # text or a user-supplied checkpoint.
+        metrics = ("incumbent_old_ce_nats", "candidate_old_ce_nats",
+                   "incumbent_new_ce_nats", "candidate_new_ce_nats",
+                   "old_skill_retained", "new_task_improved",
+                   "passes_numeric_retention_gate")
+        print("RETENTION_AUDIT_CPU_METRICS=" +
+              json.dumps({key: report[key] for key in metrics}, sort_keys=True), flush=True)
         self.assertEqual(report["status"], "offline_paired_checkpoint_retention_audit")
         self.assertEqual(report["old_audit_sha256"], old_sha)
         self.assertEqual(report["incumbent_steps"], 3)
