@@ -1,3 +1,9 @@
+## Zweryfikowany postęp: źródła, kontekst i pomiar odpowiedzi
+
+PR **#36–#38 zostały scalone**. System może porównać krótkie dosłowne cytaty z dwóch różnych hostów, wskazać **możliwe** rozbieżności do ręcznego sprawdzenia oraz zachować temat poprzedniego źródłowego pytania **tylko przez bieżącą sesję opcjonalnego Qt**. Lokalny tester mierzy trafność dosłownych cytatów, właściwy adres źródła, odmowy odpowiedzi i czas wyszukiwania bez zmiany SQLite.
+
+Pierwszy mały **syntetyczny** test dał 3/3 poprawne literalne cytaty i tylko 2/3 prawidłowe odmowy; jedno pytanie bez odpowiedzi otrzymało fałszywą wskazówkę źródłową. To mierzalny problem przed wydaniem v1, nie dowód rozumienia języka. [Raport i zasady](docs/QA_EVALUATION.md).
+
 ## Testowalna jakość odpowiedzi — PR kandydat
 
 Nowy lokalny tester może porównać odpowiedzi z bazy wiedzy ze zbiorem pytań i ręcznie zatwierdzonych fragmentów źródeł. Mierzy poprawność **dosłownych cytatów i adresów URL**, odmawianie odpowiedzi na niepoparte pytania oraz czas wyszukiwania. Uruchamia się bez internetu, bez trenowania wag i bez modyfikowania prywatnej bazy. Wynik nie oznacza jeszcze prawdziwości cytatów ani rozumienia języka. Realne zbiory testowe wymagają praw do danych i oddzielnej walidacji. [Narzędzie i metodologia](docs/QA_EVALUATION.md).
