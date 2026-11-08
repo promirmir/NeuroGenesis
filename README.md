@@ -79,3 +79,7 @@ Podstawowe informacje do bezstratnej kontynuacji: [PROJECT_STATE.md](docs/PROJEC
 ## Podgląd pracy mózgu — nowy Qt Connectome (kandydat)
 
 Na podstawie prawdziwych, odczytanych z prywatnej bazy neuronów, ich potencjałów i spike'ów oraz zapisanych połączeń i wag nowy interaktywny widok Qt rysuje futurystyczną mapę sieci. Układ nie tworzy losowych impulsów, a aktualizacje pokazują tylko rzeczywiste kroki. W panelu treningu wykres loss powstaje z prawdziwych zdarzeń PyTorch. Dotychczasowy pobierany Windows EXE pozostaje Tk; nowe Qt oczekuje na testy i prawnie zgodny pakiet. Szczegóły: [Command Center](docs/COMMAND_CENTER.md).
+
+### Wydawana aplikacja Windows: Connectome / Live (PR kandydat)
+
+Również domyślny Windows Tk EXE otrzymał w kodzie dużą, ciemną mapę prawdziwych neuronów LIF oraz istniejących połączeń, rzeczywistych wag i impulsów. Bez nowych kroków stan pozostaje nieruchomy. Ten widok oraz bardziej zaawansowany Qt czekają na końcowe testy i nową publikację; dotychczasowy plik EXE v0.7.0 nie zmieni się samoczynnie. Qt nadal wymaga weryfikacji warunków dystrybucji. Ograniczenia: nie jest to mózg człowieka ani graf wag Foundation Brain.
