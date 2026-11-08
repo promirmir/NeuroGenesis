@@ -122,9 +122,7 @@ class FabricTests(unittest.TestCase):
         self.assertEqual(
             a["adaptive_better_than_fixed_on_return"],
             a["adaptive_gain_vs_fixed_return_mse"] > 0.0005)
-        self.assertIn("not presumed", a["after"]["limitations"]
-                      if "not presumed" in a["after"]["limitations"]
-                      else a["limitations"] + " not presumed")
+        self.assertIn("not presumed", a["limitations"])
 
 
 class FabricMemoryTests(unittest.TestCase):
@@ -169,7 +167,10 @@ class FabricMemoryTests(unittest.TestCase):
             observer = FabricMemoryObserver(db, state)
             self.assertEqual(observer.poll()["processed"], 1)
             previous = state.read_bytes()
-            with memory._connect() as con:
+            # Deliberate corruption of one local feature row; no personal
+            # content is written, and the checkpoint must stay unchanged.
+            from contextlib import closing
+            with closing(memory._connect()) as con:
                 with con:
                     con.execute(
                         "INSERT INTO observations"
