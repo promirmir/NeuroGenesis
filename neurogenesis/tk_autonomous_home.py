@@ -261,7 +261,7 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
 
     # Always-visible real neural monitor: separate from the scrolling
     # autonomous goals, so the user can inspect both on a 768p laptop.
-    brain_footer = tk.Frame(right_container, bg=PANEL, height=250,
+    brain_footer = tk.Frame(right_container, bg=PANEL, height=318,
                             highlightbackground=BORDER, highlightthickness=1)
     brain_footer.pack(side="bottom", fill="x", pady=(6, 0))
     brain_footer.pack_propagate(False)
@@ -406,7 +406,7 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
     tk.Label(brain_card, textvariable=brain_activity,
              bg=PANEL, fg=MUTED, anchor="w", wraplength=345).pack(
                  fill="x", padx=10, pady=(0, 5))
-    neural_canvas = tk.Canvas(brain_card, width=320, height=146,
+    neural_canvas = tk.Canvas(brain_card, width=320, height=108,
                               bg="#041624", highlightthickness=0)
     neural_canvas.pack(fill="x", padx=10, pady=(0, 6))
     neural_canvas.bind("<Configure>",
@@ -420,9 +420,8 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
              justify="left", anchor="w", wraplength=345,
              font=("Consolas", 9)).pack(fill="x", padx=10, pady=(0, 4))
     tk.Label(brain_card, text=(
-        "ACF sensoryczny: haszowane 8 cech; osobny ACF semantyczny: "
-        "osiem kategorii rozpoznanych przez prawdziwy Qwen. "
-        "Żaden z tych wskaźników nie dowodzi wzrostu jakości rozmowy."),
+        "Sensoryczny: hashe · semantyczny: Qwen; "
+        "MSE nie mierzy jakości rozmowy."),
         bg=PANEL, fg=MUTED, justify="left", anchor="w",
         wraplength=345, font=("Segoe UI", 8)).pack(
             fill="x", padx=10, pady=(0, 3))
