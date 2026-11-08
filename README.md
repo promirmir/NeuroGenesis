@@ -1,3 +1,16 @@
+## NeuroGenesis 0.10 — Trening TXT + prawdziwa rozmowa z lokalnym modelem
+
+**Nowe funkcje w kodzie Windows EXE (przed publikacją wydania):**
+
+- **Trening TXT**: odczyt lokalnych plików UTF-8 i dwa rzeczywiste tryby uczenia: mały badawczy Foundation GRU (zwykły tekst) oraz LoRA/PEFT (uporządkowane pary `USER:/ASSISTANT:`) dla lokalnego modelu instrukcyjnego. Zapisywanie **nowych** wag-kandydatów, ewaluacja oddzielnych przykładów i STOP.
+- **Model Chat**: lokalna rozmowa z rzeczywistym modelem `Qwen/Qwen3-0.6B` (Apache-2.0), po świadomym pobraniu ~1,5 GB wag i przygotowaniu środowiska Python+Torch/Transformers. Opcjonalnie ręcznie wybrany adapter LoRA. **Brak zdalnego API podczas rozmowy.**
+- **Pobieranie danych**: po zgodzie można pobrać do nowego TXT ograniczony zbiór anglojęzycznych dialogów UltraChat 200k (deklaracja licencji MIT w karcie) do weryfikacji praw i dalszego treningu. Przygotowany jest również [autorski polski plik przykładów](training/starter_dialogues_pl.txt).
+- **Autonauka w granicach praw i zasobów**: opcjonalne monitorowanie wskazanego lokalnego TXT; zmiana danych może uruchomić trening nowego kandydata LoRA. **Bez automatycznej podmiany używanego modelu, bez ukrytego crawlowania i bez działania po zamknięciu aplikacji.**
+
+[**Pełna instrukcja instalacji, danych, treningu i uruchamiania offline**](docs/TRAINING_AND_LOCAL_CHAT.md).
+
+**Granica:** mała sieć GRU nie staje się kompetentnym chatbotem po wczytaniu TXT. Realny dialog korzysta z wcześniej wytrenowanego modelu zewnętrznego, działającego lokalnie. Pełna, niezależna samodzielność rozwojowa bez danych i zasobów nie jest możliwa do zapewnienia; nie deklarujemy AGI ani ukończonej kompetencji. **Kod 0.10 czeka na testy i publiczne EXE; najnowsze opublikowane wydanie może nadal być wcześniejsze.**
+
 ## NeuroGenesis 0.9.0 — awatar i działające laboratorium Foundation
 
 **W kodzie programu:** [EMBODIED FOUNDATION](docs/EMBODIED_FOUNDATION.md).
@@ -25,7 +38,7 @@ nie należy mylić starszego EXE 0.8.0 z nowymi funkcjami.
 
 # NeuroGenesis — Mission Control
 
-**research prototype v0.9.0.**  
+**research prototype v0.10.0.**  
 **Publiczne autorstwo: Miron przy pomocy AI.**
 
 NeuroGenesis to lokalny projekt badawczy AI: rzeczywista mała sieć neuronowa LIF ze strukturalną plastycznością, prywatna trwała baza SQLite, kontrolowane zdobywanie informacji ze źródeł HTTPS, ekstrakcyjne cytowanie oraz odrębny eksperymentalny model Foundation Brain trenowany w PyTorch. **System nie jest AGI, świadomością, modelem ludzkiego mózgu ani niezależnie zweryfikowanym systemem rozumienia języka naturalnego.**
