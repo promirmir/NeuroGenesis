@@ -58,11 +58,14 @@ jobs:
           if ($size -lt 1000000000 -or $size -gt 1800000000) { throw "GGUF invalid size: $size" }
       - name: Prove REAL local pretrained model inference from staged engine
         shell: pwsh
+        env:
+          NEUROGENESIS_CI_STARTUP_LOG: 'llama-startup-ci.log'
         run: |
           $ErrorActionPreference = 'Stop'
           & python desktop_launcher.py --complete-model-test --model-root bundle --proof-output local-model-proof.json
           if ($LASTEXITCODE -ne 0) {
             if (Test-Path local-model-proof.json) { Get-Content local-model-proof.json }
+            if (Test-Path llama-startup-ci.log) { Get-Content llama-startup-ci.log -Tail 70 }
             throw 'Real local GGUF inference failed'
           }
           $proof = Get-Content local-model-proof.json -Raw | ConvertFrom-Json
