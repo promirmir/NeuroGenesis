@@ -181,7 +181,7 @@ class KnowledgePipelineTests(unittest.TestCase):
         self.memory.observe_web(source(a, "https://alpha.example.org/solara"))
         self.memory.observe_web(source(b, "https://beta.example.net/solara"))
         answer = self.memory.answer_from_knowledge(
-            "Czy próba Solara potwierdza obecność lodu w próbkach?")
+            "Co mówi próba Solara o obecność lodu w próbkach?")
         self.assertIsNotNone(answer)
         self.assertEqual(len(answer["sources"]), 2)
         self.assertIn("possible_negation_difference",
