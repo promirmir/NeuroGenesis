@@ -78,7 +78,7 @@ class HolographicBrain:
             self._event_frames = 0
         if self.latest is not None and data.step > self.latest.step:
             self._event_frames = EVENT_FRAMES if any(n.fired for n in data.nodes) else 0
-            self._event_step = data.step if self._event_frames else None
+            self._event_step = data.step  # recorded step even if no neuron fired
         updated = self.latest is None or data.step != self.latest.step
         self.latest = data
         if updated:
