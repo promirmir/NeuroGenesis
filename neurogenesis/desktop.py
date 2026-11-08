@@ -204,7 +204,7 @@ def ui_self_test() -> int:
                 return 37
             training_tab = install_bundled_training(tabs, knowledge)
             model_chat_tab = install_autonomous_home(
-                tabs, memory, knowledge, supervisor, goals)
+                tabs, memory, knowledge, supervisor, goals, auto_start=False)
             if (tabs.tab(training_tab, "text") != "Trening TXT"
                     or tabs.tab(model_chat_tab, "text").strip() != "NEUROGENESIS"
                     or tabs.index(model_chat_tab) != 0):
