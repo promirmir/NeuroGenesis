@@ -121,6 +121,10 @@ class CommandService:
         return tuple(self.memory.brain().traces)
 
     def set_source_training_rights(self, source_id: int, approved: bool) -> dict[str, Any]:
+        if approved is False:
+            # An in-progress worker must not keep writing a candidate after
+            # permission is revoked through this desktop service.
+            self.stop_training()
         return self.memory.set_source_training_rights(source_id, approved)
 
     def start_training(self, output: str | Path, *, confirmed: bool,
