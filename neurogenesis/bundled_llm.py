@@ -189,17 +189,34 @@ class BundledModelSession:
             "--chat-template-kwargs", '{"enable_thinking":false}',
         ]
         creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
-        proc = subprocess.Popen(
-            args, cwd=str(server.parent), stdin=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-            creationflags=creationflags)
+        # Explicitly enabled ONLY in the synthetic GitHub CI release gate.
+        # Never persist real user chat or server logs in normal app operation.
+        ci_debug = bool(os.environ.get("GITHUB_ACTIONS") == "true"
+                        and self.assets_root is not None
+                        and os.environ.get("NEUROGENESIS_CI_STARTUP_LOG"))
+        diagnostic = (Path(os.environ["NEUROGENESIS_CI_STARTUP_LOG"])
+                      if ci_debug else None)
+        sink = open(diagnostic, "wb") if diagnostic is not None else subprocess.DEVNULL
+        try:
+            proc = subprocess.Popen(
+                args, cwd=str(server.parent), stdin=subprocess.DEVNULL,
+                stdout=sink, stderr=sink,
+                creationflags=creationflags)
+        finally:
+            if diagnostic is not None:
+                sink.close()
         with self._lock:
             self._proc, self._port = proc, port
         started = time.monotonic()
         try:
             while time.monotonic() - started < deadline_seconds:
                 if proc.poll() is not None:
-                    raise RuntimeError("Lokalny silnik llama.cpp zakończył pracę przed załadowaniem wag.")
+                    reason = ("Lokalny silnik llama.cpp zakończył pracę przed załadowaniem wag "
+                              + "(kod " + str(proc.returncode) + ").")
+                    if diagnostic is not None and diagnostic.is_file():
+                        reason += " Dziennik CI: " + diagnostic.read_text(
+                            encoding="utf-8", errors="replace")[-1800:]
+                    raise RuntimeError(reason)
                 try:
                     response = _http_request(port, self._key, "/health", timeout=1.5)
                     if response.get("status") == "ok":
