@@ -1,3 +1,8 @@
+## 2026-11-08 — public Windows Tk also gets real Connectome (PR #46 amendment)
+
+- User-visible default Tk EXE now replaces the primitive 205 px trace-bar area with a dark 420 px **true LIF network graph** via `tk_connectome.py`, built from exactly the same `neural_telemetry.py` as Qt. It renders actual neuron positions, saved synapse edges/weights and recorded spikes, and updates only after new persisted steps; 650ms visible-pane polling, wheel zoom, no random firing/animation. The optional Qt view offers richer interactive hover and 350ms polling plus true PyTorch loss plotting.
+- Dependency-free `tests/test_tk_connectome.py` asserts exact true edge count/spike signal and zero redraw when idle. Public Tk onefile Windows EXE **must pass its real frozen build test** before claiming availability. This closes the gap where a fancy graph existed only in optional Qt without approved redistributable packaging; it does **not** make Tk a Qt-quality app or show hidden PyTorch weights.
+
 ## 2026-11-08 — rzeczywisty futurystyczny Connectome / Live (PR kandydat)
 
 - Zgłoszono rozbieżność z ustaloną wizją: oficjalnie wydawany EXE v0.7 pozostaje prostą aplikacją Tkinter, a wcześniejszy opcjonalny Qt miał jedynie słupki `Brain.traces`. Sama zmiana kolorów nie realizuje pełnej interaktywnej wizualizacji. To nowa faktyczna implementacja w Qt, ale nie jest jeszcze nowym publicznym EXE.
