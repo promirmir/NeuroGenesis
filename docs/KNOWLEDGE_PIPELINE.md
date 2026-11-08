@@ -41,3 +41,7 @@ A separate later PR adds per-revision operator approval for local training, a ri
 ## Next gate
 
 Build a source explorer with explicit deletion/rights, independent source ranking and contradiction flags; add a human-reviewed question corpus and document-heldout evaluation. Only then promote a separately licensed training path into Foundation Brain with genuine inference, retention tests and actual CUDA measurements.
+
+## Two-host evidence review (later PR candidate)
+
+A new backward-compatible retrieval pass can return a second **short verbatim quotation** from a different hostname in the most recent retained URL version, with its own SHA-256 URL/version metadata. It optionally flags **potential** numeric or explicit negation differences between the two extracts; these are merely review triggers with false-positive potential. The system never concludes the sources objectively contradict, prove truth, are independently authored or license each other's reuse. Manual teachings remain first. Unknown questions abstain, prior SQLite state/teaching is retained, and the old `source` field stays valid. Offline tests verify same-host exclusion, superseded revisions and synthetic conflicting excerpts. This functionality is a candidate until merged and passed Windows EXE and Python/Qt CI.
