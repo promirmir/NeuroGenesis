@@ -95,6 +95,26 @@ class QtCommandCenterSmokeTests(unittest.TestCase):
         self.assertEqual(self.service.memory.status()["knowledge"]["documents"], before)
         self.assertEqual(self.service.memory.status()["records_with_raw_text"], 0)
 
+    def test_memory_backup_panel_runs_real_offline_verified_service(self):
+        self.window.navigate(6)
+        self.assertTrue(self.window.backup_button.isEnabled())
+        self.assertTrue(self.window.verify_button.isEnabled())
+        output = self.db.parent / "qt-backup.sqlite3"
+        self.service.start_memory_backup(output)
+        self.service._memory_maintenance.join(timeout=30)
+        self.assertFalse(self.service._memory_maintenance.is_alive())
+        self.window.poll_study_events()
+        self.assertTrue(output.exists())
+        self.assertIn("SHA-256", self.window.backup_status.text())
+        self.service.start_memory_verification(output)
+        self.service._memory_maintenance.join(timeout=30)
+        self.assertFalse(self.service._memory_maintenance.is_alive())
+        self.window.poll_study_events()
+        self.assertIn("Integralność kopii zweryfikowana",
+                      self.window.backup_status.text())
+        self.assertFalse(self.service.network_enabled)
+        self.assertTrue(self.window.backup_button.isEnabled())
+
     def test_consent_updates_real_service_and_stops_on_close(self):
         self.window.navigate(6)
         self.window.allow_https.setChecked(True)
