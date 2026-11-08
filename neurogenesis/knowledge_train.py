@@ -12,7 +12,8 @@ import json
 import math
 from pathlib import Path
 import time
-from typing import Any
+import threading
+from typing import Any, Callable
 
 from .foundation import FoundationBrain, FoundationConfig, torch
 from .foundation_train import evaluate_holdout
@@ -41,7 +42,10 @@ def train_approved_knowledge(db_path: str | Path, output: str | Path, *,
                              confirm_rights: bool = False, steps: int = 20,
                              sequence: int = 32, batch: int = 2,
                              hidden: int = 32, seed: int = 1234,
-                             device: str = "cpu") -> dict[str, Any]:
+                             device: str = "cpu",
+                             cancel_event: threading.Event | None = None,
+                             on_progress: Callable[[int, dict[str, float]], None] | None = None
+                             ) -> dict[str, Any]:
     """Train a fresh *candidate* checkpoint; never overwrite active chat model.
 
     This is a self-supervised next-byte research task, not semantic question
@@ -60,6 +64,10 @@ def train_approved_knowledge(db_path: str | Path, output: str | Path, *,
         raise ValueError("invalid bounded model training configuration")
     if device == "cuda" and not torch.cuda.is_available():
         raise ValueError("CUDA unavailable; explicit GPU training refused")
+    if cancel_event is not None and not isinstance(cancel_event, threading.Event):
+        raise ValueError("cancel_event must be a threading.Event")
+    if on_progress is not None and not callable(on_progress):
+        raise ValueError("on_progress must be callable")
     memory = ExperienceMemory(db_path)
     docs = memory.approved_training_documents()
     if len(docs) < 3:
@@ -89,7 +97,9 @@ def train_approved_knowledge(db_path: str | Path, output: str | Path, *,
         torch.cuda.synchronize()
     start_time = time.perf_counter()
     last = {}
-    for _ in range(steps):
+    for step in range(steps):
+        if cancel_event is not None and cancel_event.is_set():
+            raise InterruptedError("operator cancelled training; candidate not written")
         samples = []
         for _ in range(batch):
             doc_index = int(torch.randint(0, len(training), (1,), generator=generator).item())
@@ -98,6 +108,10 @@ def train_approved_knowledge(db_path: str | Path, output: str | Path, *,
                                        (1,), generator=generator).item())
             samples.append(source[offset:offset + sequence])
         last = model.train_batch(torch.stack(samples).to(device), optimizer)
+        if on_progress is not None:
+            on_progress(step + 1, last)
+    if cancel_event is not None and cancel_event.is_set():
+        raise InterruptedError("operator cancelled training; candidate not written")
     if device == "cuda":
         torch.cuda.synchronize()
     elapsed = max(time.perf_counter() - start_time, 1e-9)
@@ -111,6 +125,8 @@ def train_approved_knowledge(db_path: str | Path, output: str | Path, *,
         raise ValueError("checkpoint cannot overwrite local SQLite memory")
     if destination.suffix.lower() not in (".pt", ".pth"):
         raise ValueError("checkpoint must use private .pt or .pth extension")
+    if cancel_event is not None and cancel_event.is_set():
+        raise InterruptedError("operator cancelled before checkpoint write")
     model.save_checkpoint(destination, training_steps=steps)
     return {
         "status": "candidate_self_supervised_weights_trained",
