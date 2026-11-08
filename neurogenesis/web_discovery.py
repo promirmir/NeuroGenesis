@@ -43,6 +43,9 @@ def fetch_public_robots(host: str, *, resolver=None, connection_factory=None) ->
             return ""
         if response.status != 200:
             raise WebSenseError("robots.txt niedostępny lub zabroniony")
+        media_type = response.getheader("Content-Type", "text/plain").split(";", 1)[0].strip().lower()
+        if media_type not in ("text/plain", "text/x-robots"):
+            raise WebSenseError("Niepoprawny typ pliku robots.txt")
         encoding = response.getheader("Content-Encoding", "identity").lower()
         if encoding not in ("identity", ""):
             raise WebSenseError("Niedozwolona kompresja robots.txt")
