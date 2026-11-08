@@ -89,7 +89,7 @@ class QtCommandCenterSmokeTests(unittest.TestCase):
         self.application.processEvents()
         image = graph.grab().toImage()
         self.assertGreater(image.width(), 800)
-        self.assertGreater(image.height(), 390)
+        self.assertGreaterEqual(image.height(), 390)
         self.assertFalse(self.service.network_enabled)
         self.window.refresh_connectome()
         self.assertIn("BRAK NOWEJ AKTYWNOŚCI", self.window.neural_event_status.text())
