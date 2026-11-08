@@ -63,6 +63,9 @@ class CommandService:
         self._training_last_loss: float | None = None
         self._inference_thread: threading.Thread | None = None
         self._inference_cancel: threading.Event | None = None
+        # Volatile ONLY: no raw conversation history is saved to SQLite.
+        self._last_grounded_question: str | None = None
+        self._last_grounded_source_url: str | None = None
 
     @property
     def network_enabled(self) -> bool:
@@ -111,7 +114,38 @@ class CommandService:
             inference_running=inference_thread is not None and inference_thread.is_alive())
 
     def ask(self, question: str) -> dict[str, Any]:
-        return process_message(self.memory, question)
+        from .dialogue_context import expand_followup
+        with self._state_lock:
+            previous_question = self._last_grounded_question
+            previous_url = self._last_grounded_source_url
+        proposal = (expand_followup(question, previous_question)
+                    if previous_question is not None and previous_url is not None else None)
+        if proposal is None:
+            result = process_message(self.memory, question)
+        else:
+            # Both the old anchor URL and novel lexical terms must appear
+            # in the same saved, newest-revision passage to answer.
+            result = process_message(
+                self.memory, question, evidence_query=proposal.query,
+                evidence_source_url=previous_url,
+                evidence_focus_terms=proposal.mandatory_focus_terms)
+        with self._state_lock:
+            if result["response_kind"] == "source_evidence":
+                if proposal is None:
+                    self._last_grounded_question = question
+                    self._last_grounded_source_url = result["sources"][0]["url"]
+            else:
+                # No stale topic may leak through an intervening failed
+                # question, new teaching or unrelated conversational turn.
+                self._last_grounded_question = None
+                self._last_grounded_source_url = None
+        return result
+
+    def clear_conversation_context(self) -> None:
+        """Forget only transient topic carryover, never persistent SQLite."""
+        with self._state_lock:
+            self._last_grounded_question = None
+            self._last_grounded_source_url = None
 
     def teach(self, question: str, answer: str) -> dict[str, Any]:
         return self.memory.teach(question, answer)
