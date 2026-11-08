@@ -1,3 +1,19 @@
+2026-11-08 — VERSION 0.12.0, PR #57, autonomy + integrated UI. Public author ONLY Miron przy pomocy AI.
+
+Latest confirmed public release 0.11 FULL at tag v0.11.0-main.4fffde76, with >1.1 GB model Qwen3-1.7B GGUF and native llama.cpp, validated frozen EXE. Preserve this core.
+
+New branch feat/autonomous-command-center-20261108: real default AUTONOMIA dashboard (neurogenesis/tk_autonomy_hub.py) with status and actionable controls for LIVE GGUF model, approved local TXT knowledge, verified LIF autonomous cycles, and HTTPS research specialist. New first tabs: AUTONOMIA, ROZMOWA AI, WIEDZA TXT, MÓZG LIVE. Live events only on real state changes (SQLite and actual process); static data-flow diagram labelled schematic, NOT simulated neuronal activity. LIF bounded 40-fresh-event trial process runs off main Tk thread, locally enabled on startup; existing guard/validation/promotion unchanged. Model loads automatically off UI thread on startup, with cancellation-safe epoch in bundled_llm.py so STOP/close during hash scan doesn't orphan a llama server.
+
+Extend existing SpecialistStudy to opt-in autonomous subject research (topic, separate HTTPS consent, max 3 sessions, >=30 min gap; robots.txt and rate limits still inherited). A shared topic field and start/stop/auto controls exist in AUTONOMIA; additional status recorded. Research stored as existing verified source excerpts via ExperienceMemory. Bundled Qwen now retrieves BOTH locally approved TXT passages and actual approved public HTTPS snippets via ExperienceMemory.answer_from_knowledge; both are untrusted RAG data with provenance, NOT gradient fine-tuning or guaranteed truth. No automatic Internet access by default. Shared UI pointers from chat/training/study tabs prevent duplicate hidden workers.
+
+Source-only screenshot scripts/tk_training_screenshot.py now captures ACTUAL new Tk autonomy panel alongside training and chat. CI workflows upload screenshot. Real Windows --ui-self-test instantiates and refreshes new autonomy board. Tests/test_autonomy_operations.py covers opt-in policy and RAG source integration. Public version pyproject/__init__ 0.12.0. README docs/AUTONOMY_CENTER_012.md describes exact behavior/limitations. THIS IS NOT AGI or unlimited independent continual model retraining; autonomy executes bounded loops on hardware/data and external permission.
+
+At moment of note, PR #57 is open and new code not yet verified merged/released. Do not mark complete until full Python 3.11-3.13, Windows standalone+frozen UI, mandatory 1.1GB complete Windows GGUF real-inference workflow, QA screenshots and GitHub Release all pass. User hates false screenshots and empty claims; only actual UI evidence.
+
+Never propose Work mode in conversation (user previously explicitly rejected it). Continue directly using connected GitHub connector.
+
+---
+
 2026-11-08 - v0.11 FULL one-file offline corrective work, branch feat/complete-offline-llm-windows-20261108.
 
 NEVER substitute stock/Agent Forge imagery for our real Tk app. User specifically needs an EXE that contains ALL dependencies required for local dialogue. Previously 0.10 had only 13MB GUI and a separate Python+PyTorch/model requirement, which was unacceptable.
