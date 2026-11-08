@@ -402,7 +402,10 @@ def launch(db_path: Path) -> int:
     web_enabled = tk.BooleanVar(value=False)
     web_auto = tk.BooleanVar(value=False)
     from .tk_mission import MissionDashboard
+    from .tk_foundation_lab import install_foundation_lab
+    foundation_tab = install_foundation_lab(tabs)
     targets = {
+        "foundation": foundation_tab,
         "chat": chat_tab,
         "brain": brain_tab,
         "web": web_tab,
