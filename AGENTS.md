@@ -1,3 +1,11 @@
+## 2026-11-08 — HOLOGRAPHIC CORE development candidate, not released
+
+- Feature branch `feat/holographic-neural-core-and-capacity-20261108`, preserving confirmed 0.8.0 Windows release and all local user memory. Actual public EXE is still Tk; 3D-like orbit is implemented IN the default Tk Mission, not only optional Qt.
+- New pure telemetry-driven `neurogenesis/tk_hologram.py`: geometric camera rotates at 90ms only while mapped, new spike event wave only for increased saved LIF step; explicit symbolic topology disclaimer, bounded 144 nodes/360 synapses. Switch 3D/2D with original `TkConnectome` retained.
+- New `BrainConfig` ceilings 512 neurons/4096 synapses/1024 patterns are for new memories ONLY; SQLite snapshot config is not silently migrated, initial count 24 remains, no measured performance/intelligence claim. Actual per-user ceiling is visible in UI.
+- Tests: `tests/test_tk_hologram.py` for telemetry/projection/old memory, extended Windows Tk dashboard tests. New documentation `docs/HOLOGRAPHIC_CORE.md`.
+- NOT YET RELEASED. Required: Python 3.11–3.13, privacy, PyTorch CPU, Qt Windows/Ubuntu, real Tk Windows GUI/frozen EXE smoke and post-merge source-verified release. Do not state the previous release includes these changes.
+
 ## 2026-11-08 — VERIFIED published default Windows Mission Control v0.8.0
 
 - **Root cause fixed:** A user's screenshot showed that the last official onefile `NeuroGenesis.exe` displayed the old plain Tk chat, despite the separate optional Qt Mission Control already being source-tested. This was a delivery mismatch. PR #50 upgraded the **actual default public Windows application**, not just another non-distributed Qt prototype.
