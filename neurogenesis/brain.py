@@ -21,9 +21,12 @@ from .origin import origin_record, validate_origin
 class BrainConfig:
     input_size: int = 8
     initial_neurons: int = 24
-    max_neurons: int = 128
-    max_synapses: int = 1024
-    max_patterns: int = 256
+    # Expanded capacity for NEW memory databases only. Existing snapshots
+    # persist their own configuration and are never silently migrated.
+    # This is additional headroom, not a benchmark or a claim of improved AI.
+    max_neurons: int = 512
+    max_synapses: int = 4096
+    max_patterns: int = 1024
     membrane_decay: float = 0.65
     threshold: float = 0.9
     input_gain: float = 1.2
