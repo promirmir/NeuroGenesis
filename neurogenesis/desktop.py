@@ -60,7 +60,7 @@ def process_message(memory: ExperienceMemory, message: str, *, store_text: bool 
     reply = (taught["answer"] if taught is not None else
              evidence["answer"] if evidence is not None else
              "Odebrano bodziec i zaktualizowano stan sieci. "
-             "Nie znalazłem popartej źródłem odpowiedzi. Wpisz ją w polu nauki "
+             "Nie znam jeszcze odpowiedzi. Nie znalazłem też odpowiedniego źródła. Wpisz ją w polu nauki "
              "i kliknij «Naucz odpowiedzi».")
     return {
         "reply": reply,
