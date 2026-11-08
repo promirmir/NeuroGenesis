@@ -1,3 +1,15 @@
+## NeuroGenesis 0.12.4 — rzeczywiste znaczenie trafia do plastycznej sieci
+
+Po każdej udanej rozmowie (przy włączonej zgodzie na uczenie) **wbudowany Qwen3-1.7B** osobno klasyfikuje znaczenie wypowiedzi w ośmiu kategoriach. Powstaje rzeczywisty modelowy wektor semantyczny — nie dotychczasowy hash liter. Trafia on do drugiego, niezależnego ACF, który autonomicznie uczy się przewidywać kolejne kategorie, porównuje plastykę strukturalną z nierozrastającą się kontrolą i zapisuje mierzalny samomodel.
+
+Całość działa lokalnie, asynchronicznie i bez zapisywania treści rozmowy. Główny ekran pokazuje liczbę rzeczywiście zebranych próbek i zmierzony błąd MSE. Nieprawidłowa klasyfikacja **nie powoduje tworzenia fikcyjnego treningu**. Gotowy EXE musi wykazać zarówno prawdziwą generację tekstu, jak i faktyczną klasyfikację semantyczną Qwen.
+
+[**Pełna architektura, ograniczenia i prywatność**](docs/SEMANTIC_ACF_0124.md).
+
+**Granica:** osiem kategorii znaczeniowych to uproszczony, dyskretny sygnał z modelu językowego, a nie gęste embeddingi i nie dowód zwiększenia zdolności Qwen. ACF nie zmienia jeszcze wag językowych ani polityki autonomicznego planowania. Projekt nie jest ukończony.
+
+---
+
 ## NeuroGenesis 0.12.3 — ACF: plastyczność neuronalna z rzeczywistym samomodelem
 
 Nie kolejna zakładka: uruchamiamy eksperymentalny **Adaptive Cognitive Fabric (ACF)** wewnątrz głównego NeuroGenesis. Uczy się sam z nowych, rzeczywiście zapisanych doświadczeń SQLite (tylko ośmiokanałowe cechy, bez tekstu prywatnych rozmów), zachowuje stan po zamknięciu aplikacji i może autonomicznie zmieniać połączenia w osobnej sieci LIF. Porównuje wzrost sieci z identyczną kontrolą bez wzrostu, poprzednim bodźcem oraz prostą wartością stałą. Mechanizm samomodelowania wybiera metodę przewidywania na podstawie **faktycznie zmierzonych wcześniejszych błędów**, nie deklaracji o rosnącej inteligencji.
@@ -105,7 +117,7 @@ nie należy mylić starszego EXE 0.8.0 z nowymi funkcjami.
 
 # NeuroGenesis — Mission Control
 
-**research prototype v0.12.3.**  
+**research prototype v0.12.4.**  
 **Publiczne autorstwo: Miron przy pomocy AI.**
 
 NeuroGenesis to lokalny projekt badawczy AI: rzeczywista mała sieć neuronowa LIF ze strukturalną plastycznością, prywatna trwała baza SQLite, kontrolowane zdobywanie informacji ze źródeł HTTPS, ekstrakcyjne cytowanie oraz odrębny eksperymentalny model Foundation Brain trenowany w PyTorch. **System nie jest AGI, świadomością, modelem ludzkiego mózgu ani niezależnie zweryfikowanym systemem rozumienia języka naturalnego.**
