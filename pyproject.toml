@@ -15,6 +15,7 @@ dependencies = []
 
 [project.optional-dependencies]
 foundation = ["torch>=2.5,<3"]
+command-center = ["PySide6-Essentials>=6.8,<7"]
 
 [project.scripts]
 neurogenesis = "neurogenesis.__main__:main"
