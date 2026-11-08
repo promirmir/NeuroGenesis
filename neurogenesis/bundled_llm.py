@@ -46,9 +46,12 @@ def resource_root(base: str | Path | None = None) -> Path:
 
 
 def bundle_paths(base: str | Path | None = None) -> tuple[Path, Path]:
-    root = resource_root(base)
-    return (root / "ng_runtime" / "llama-server.exe",
-            root / "ng_assets" / MODEL_FILE)
+    # The server process uses cwd=server.parent for its native DLLs.
+    # Absolute resource paths are REQUIRED; otherwise a relative --model
+    # accidentally resolves below ng_runtime and llama.cpp immediately exits.
+    root = resource_root(base).resolve()
+    return ((root / "ng_runtime" / "llama-server.exe").resolve(),
+            (root / "ng_assets" / MODEL_FILE).resolve())
 
 
 def has_bundled_model(base: str | Path | None = None) -> bool:
@@ -183,10 +186,9 @@ class BundledModelSession:
         args = [
             str(server), "-m", str(model), "--host", "127.0.0.1",
             "--port", str(port), "--api-key", self._key,
-            "--no-webui", "--parallel", "1", "--ctx-size", "3072",
+            "--no-ui", "--parallel", "1", "--ctx-size", "3072",
             "--threads", str(min(max(os.cpu_count() or 4, 2), 10)),
             "--gpu-layers", "0", "--reasoning", "off",
-            "--chat-template-kwargs", '{"enable_thinking":false}',
         ]
         creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
         # Explicitly enabled ONLY in the synthetic GitHub CI release gate.
