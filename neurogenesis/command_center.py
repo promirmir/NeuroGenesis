@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
 )
 
 from .command_service import CommandService
-from .connectome_view import ConnectomeView
+from .connectome_view import ConnectomeView, TrainingLossPlot
 
 PANELS = (
     ("Przegląd", "Stan systemu"),
@@ -387,6 +387,8 @@ class CommandCenter(QMainWindow):
                 metrics = json.loads(description)
                 self.training_log.appendPlainText(
                     f"Krok {metrics['step']}/{metrics['total']} · rzeczywista strata {metrics['loss']:.5f}")
+                self.training_loss_plot.add_real_loss(
+                    int(metrics["step"]), float(metrics["loss"]))
                 continue
             if kind == "train_done":
                 measured = json.loads(description)
@@ -500,6 +502,8 @@ class CommandCenter(QMainWindow):
         card, inner = block("Foundation Brain — trening neuronowy",
                             "Wyłącznie dokumenty zatwierdzone przez operatora do lokalnego treningu. "
                             "PyTorch [foundation] jest opcjonalny; brak automatycznego treningu.")
+        self.training_loss_plot = TrainingLossPlot()
+        inner.addWidget(self.training_loss_plot)
         self.training_status = label("Foundation training worker: NIEURUCHOMIONY")
         self._last_training_summary = ""
         inner.addWidget(self.training_status)
