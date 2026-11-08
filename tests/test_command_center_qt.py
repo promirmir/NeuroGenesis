@@ -69,6 +69,7 @@ class QtCommandCenterSmokeTests(unittest.TestCase):
         self.window.navigate(4)
         self.assertFalse(self.window.trust_checkpoint.isChecked())
         self.assertEqual(self.window.inference_bytes.value(), 16)
+        self.assertFalse(self.window.training_resume.isChecked())
         self.assertFalse(self.service.snapshot().inference_running)
         self.assertFalse(self.service.network_enabled)
         self.assertIn("predykcję", self.window.inference_start.text().lower())

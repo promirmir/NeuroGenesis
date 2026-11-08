@@ -1,3 +1,7 @@
+## Kontynuacja rzeczywistego uczenia — PR kandydat
+
+Nowa sesja badawcza może **kontynuować wagi Foundation Brain z poprzedniego, zaufanego pliku** zamiast zaczynać od losowego modelu. Wymaga bieżącej zgody na korpus, zgodnej architektury i wyraźnego potwierdzenia checkpointu. Zapis następuje zawsze do nowego pliku; poprzednie wagi i prywatna baza pozostają nietknięte. Optymalizator AdamW startuje na nowo. Opcjonalne Command Center otrzymało osobny przełącznik tej funkcji. Rozwój musi przejść testy CPU/Windows/Qt i [kontrolę retencji](docs/RETENTION_GATE.md), zanim będzie można mówić o poprawie zdolności modelu. [Szczegóły](docs/KNOWLEDGE_TRAIN.md).
+
 ## Porównanie checkpointów i kontrola zapominania — PR kandydat
 
 Nowe lokalne narzędzie badawcze porównuje stary i nowy model PyTorch **na tych samych dwóch zestawach testowych**: wcześniejszej dziedzinie i nowym zadaniu. Zapisuje cztery rzeczywiste błędy predykcji oraz określa, czy kandydat poprawił nowy wynik bez przekroczenia dozwolonej regresji starego. Nie instaluje żadnych wag automatycznie i nie uznaje tego za test rozumowania. Wymaga zaufanych lokalnych checkpointów i praw do tekstów. [Metoda i ograniczenia](docs/RETENTION_GATE.md).

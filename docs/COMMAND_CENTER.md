@@ -61,3 +61,7 @@ The Qt source browser now includes an explicit per-source-revision training righ
 ## Optional next lab — trained-checkpoint inference (PR candidate)
 
 The Qt Training panel now proposes a **separate actual-weight inference** experiment, never automatically loaded or used for regular chat. The operator chooses a *trusted local checkpoint*, confirms provenance, enters a text prefix, and requests at most 64 deterministic predicted next-byte outputs, with real measured throughput and raw hexadecimal representation. The Qt controller dispatches all PyTorch work away from the UI thread and supports explicit stop. This is not semantic answering, evidence grounding or model deployment. See `docs/FOUNDATION_INFERENCE.md`; merge contingent on fresh real PyTorch and Windows/Qt gates, and no Qt redistributable is published by this change.
+
+## Optional continuation control (PR candidate)
+
+Qt Training has a disabled-by-default `Kontynuuj wagami` checkbox. When selected, the operator chooses the previous local `.pt/.pth` with the existing file picker, separately confirms trust and current source-corpus rights, and triggers a CPU/CUDA worker to load real weights and run bounded additional training steps. It produces an independent candidate filename, reports cumulative steps and explicitly notes that AdamW optimizer state starts fresh. No checkpoint is installed into chat or overwrites existing files. Implemented only as candidate until offscreen Qt Windows/Linux, real PyTorch CPU and both Windows frozen EXE regressions succeed.

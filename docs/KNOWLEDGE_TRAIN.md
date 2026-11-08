@@ -71,3 +71,17 @@ Required premerge: Python 3.11–3.13, real PyTorch CPU, Windows native/legacy f
 ## Next independent scientific gates
 
 Natural held-out source corpora with verified permissions; document/domain splits and independent audit sets; calibrated source/fact quality and contradiction tracking; per-task evaluation of actual answers; retention and catastrophic-forgetting tests before any checkpoint promotion; matched Markov/GRU/Transformer comparisons at equal training compute; operator-controlled checkpoint rollback; GPU benchmarks on physical hardware. Do not present byte loss reduction as evidence of AGI or verified contextual reasoning.
+
+## Subsequent controlled continuation (PR candidate)
+
+The original pilot always initialized new random weights. This follow-up adds an **explicit** `--resume-from` option that loads a trusted **existing trained** Foundation Brain numerical checkpoint with `weights_only=True`, requires the **identical model architecture**, and continues actual PyTorch gradient updates on *currently operator-approved* source versions.
+
+```powershell
+py -3.12 -m neurogenesis.knowledge_train --db "C:\\private\\experiences.sqlite3" --resume-from "C:\\private\\foundation-candidate.pt" --confirm-trusted-resume --output "C:\\private\\foundation-next.pt" --confirm-corpus-rights --steps 20 --sequence 32 --hidden 32 --device cpu
+```
+
+The resumed checkpoint contributes **weights and prior training step count only**. A **new AdamW optimizer** is created for this stage; optimizer moments and byte-exact uninterrupted training are *not* preserved. Reports distinguish steps in the current session, cumulative checkpoint steps, and SHA-256 of the prior local checkpoint. Continuation does not authorize old removed/revoked document rights, auto-download data, promote to chat or claim improvement.
+
+The output path must be a **new nonexisting .pt/.pth file** and must never equal the input SQLite or previous checkpoint. Old source checkpoint is read-only; an incompatible, missing, untrusted or untrained file fails closed. Cancellation writes no candidate. No implicit overwrites, no silent migration, no automatic release. The optional Qt Training view has a continuation checkbox and uses the existing trusted file picker, still requiring separate current corpus approval.
+
+**Before any real checkpoint replacement**, run the separate paired old/new evaluation described in [RETENTION_GATE.md](RETENTION_GATE.md) using actual previously untouched documents. A numerical pass does not prove natural-language understanding. Tests and GitHub Actions must pass before the option is considered delivered.
