@@ -40,6 +40,7 @@ class CommandSnapshot:
     training_step: int
     training_total: int
     training_last_loss: float | None
+    inference_running: bool
 
 
 class CommandService:
@@ -60,6 +61,8 @@ class CommandService:
         self._training_step = 0
         self._training_total = 0
         self._training_last_loss: float | None = None
+        self._inference_thread: threading.Thread | None = None
+        self._inference_cancel: threading.Event | None = None
 
     @property
     def network_enabled(self) -> bool:
@@ -87,6 +90,7 @@ class CommandService:
             training_step = self._training_step
             training_total = self._training_total
             training_last_loss = self._training_last_loss
+            inference_thread = self._inference_thread
         progress = study.progress() if study is not None else None
         return CommandSnapshot(
             cpu_threads=os.cpu_count(), database=str(self.memory.path),
@@ -103,7 +107,8 @@ class CommandService:
             research_domains=progress.domains if progress else 0,
             training_running=training_thread is not None and training_thread.is_alive(),
             training_step=training_step, training_total=training_total,
-            training_last_loss=training_last_loss)
+            training_last_loss=training_last_loss,
+            inference_running=inference_thread is not None and inference_thread.is_alive())
 
     def ask(self, question: str) -> dict[str, Any]:
         return process_message(self.memory, question)
@@ -144,6 +149,8 @@ class CommandService:
                 raise RuntimeError("Trening jest już aktywny")
             if self._thread is not None and self._thread.is_alive():
                 raise RuntimeError("Zatrzymaj badanie źródeł przed treningiem")
+            if self._inference_thread is not None and self._inference_thread.is_alive():
+                raise RuntimeError("Zatrzymaj eksperyment generowania przed treningiem")
             self._training_cancel = threading.Event()
             cancel = self._training_cancel
             self._training_step = 0
@@ -178,6 +185,54 @@ class CommandService:
     def stop_training(self) -> None:
         with self._state_lock:
             cancel = self._training_cancel
+        if cancel is not None:
+            cancel.set()
+
+    def start_candidate_inference(self, checkpoint: str | Path, prompt: str, *,
+                                  confirmed: bool, max_new_bytes: int = 32,
+                                  device: str = "cpu") -> None:
+        """Run real checkpoint logits without promoting raw output to chat."""
+        if confirmed is not True:
+            raise PermissionError("Potwierdź zaufane pochodzenie lokalnego checkpointu")
+        if importlib.util.find_spec("torch") is None:
+            raise RuntimeError("PyTorch nie jest zainstalowany")
+        # Reject invalid requests before launching the worker.
+        if type(prompt) is not str or len(prompt) > 512 or len(prompt.encode("utf-8")) < 2:
+            raise ValueError("Wprowadź 2+ bajty UTF-8 i maksymalnie 512 znaków")
+        if type(max_new_bytes) is not int or not 1 <= max_new_bytes <= 64:
+            raise ValueError("Limit wynosi 1–64 bajty")
+        if device not in ("cpu", "cuda"):
+            raise ValueError("Nieprawidłowe urządzenie")
+        path = Path(checkpoint)
+        if not path.is_file() or path.is_symlink() or path.suffix.lower() not in (".pt", ".pth"):
+            raise ValueError("Wskaż istniejący, lokalny checkpoint .pt/.pth")
+        with self._state_lock:
+            if self._inference_thread is not None and self._inference_thread.is_alive():
+                raise RuntimeError("Eksperyment wnioskowania już trwa")
+            if self._training_thread is not None and self._training_thread.is_alive():
+                raise RuntimeError("Zatrzymaj trening przed wnioskowaniem")
+            self._inference_cancel = threading.Event()
+            cancel = self._inference_cancel
+
+            def run() -> None:
+                try:
+                    from .foundation_infer import generate_candidate
+                    report = generate_candidate(
+                        path, prompt, trust_checkpoint=True, device=device,
+                        max_new_bytes=max_new_bytes, cancel_event=cancel)
+                    self._events.put(("inference_done", json.dumps(report, ensure_ascii=False)))
+                except InterruptedError:
+                    self._events.put(("inference_cancelled", "Zatrzymano eksperyment"))
+                except Exception as exc:
+                    self._events.put(("inference_fatal", type(exc).__name__ + ": " + str(exc)))
+
+            self._inference_thread = threading.Thread(
+                target=run, name="NeuroGenesis-Foundation-inference", daemon=True)
+            self._inference_thread.start()
+
+    def stop_candidate_inference(self) -> None:
+        with self._state_lock:
+            cancel = self._inference_cancel
         if cancel is not None:
             cancel.set()
 
