@@ -278,8 +278,9 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
         return inner
 
     goals_card = card("AUTONOMICZNE CELE / PLAN → ANALIZA → OCENA")
-    tk.Label(goals_card, text="Zleć cel raz. Agent sam planuje i "
-             "wznawia ocenę po pojawieniu się nowych danych TXT.",
+    tk.Label(goals_card, text="Zleć cel raz. Agent planuje i analizuje "
+             "faktyczne TXT i zatwierdzone źródła HTTPS. Ponowi analizę, "
+             "gdy pojawią się nowe dane.",
              wraplength=345, bg=PANEL, fg=MUTED, justify="left").pack(
                  fill="x", padx=10, pady=(0, 7))
     goal_entry = tk.Text(goals_card, height=2, bg="#103346",
@@ -356,7 +357,7 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
                        f"próby: {item['attempts']}\n\n" +
                        (item["result"] or "Agent nie wygenerował jeszcze raportu."))
             if item["sources"]:
-                details += "\n\nŹRÓDŁA LOKALNE:\n" + "\n".join(
+                details += "\n\nŹRÓDŁA PRZEKAZANE MODELOWI:\n" + "\n".join(
                     p["file"] + " / " + p["sha256"][:12] for p in item["sources"])
         goal_details.configure(state="normal")
         goal_details.delete("1.0", "end")
@@ -459,7 +460,7 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
             job = running["job"]
             if not isinstance(job, threading.Thread) or not job.is_alive():
                 try:
-                    claimed = goals.claim(knowledge)
+                    claimed = goals.claim(knowledge, web_memory=memory)
                     if claimed is not None:
                         state_agent.set(f"AGENT / analizuje cel #{claimed['id']}")
                         background("goal", lambda c=claimed: run_goal(c), detail=claimed)
