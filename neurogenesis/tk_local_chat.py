@@ -232,5 +232,10 @@ def install_local_chat(parent) -> ttk.Frame:
             pass
         if tab.winfo_exists():
             tab.after(200, poll)
+    def on_destroy(event):
+        if event.widget == tab:
+            stop()  # the model child process must never outlive GUI shutdown
+
+    tab.bind("<Destroy>", on_destroy, add="+")
     tab.after(200, poll)
     return tab
