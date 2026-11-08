@@ -1,3 +1,9 @@
+## 2026-11-08 — Rights-approved web evidence → actual PyTorch training (PR candidate)
+
+- PR #29 verified and merged to main `9388e19356c2d7f49ffdd1a72d0996d3d89986b0`: Windows frozen Qt EXE `--self-test` passed actual GUI/SQLite sourced chat, packaged dynamic DLLs, EXE SHA-256 `2d563058b985f169ae04b39f8674f1f5d2a5fc85af0dbfc6d32b86c3501ac3b8`, bundle 111.95 MiB. **Not released/uploaded pending Qt LGPL distribution audit**, old Tk EXE remains released.
+- Feature branch `feat/approved-web-foundation-train-20261108`: explicit per-source/revision local rights approvals with audit trail; only latest approved versions eligible; `neurogenesis/knowledge_train.py` invokes actual Foundation Brain Torch byte-prediction gradient training after a second explicit corpus-rights confirmation. Whole document held out from train, real before/after cross-entropy and Markov baseline, measured step/s, CUDA VRAM only on actual device, atomic **candidate** checkpoint and cancellation. No automatic trainer on web fetch, no trained model chat inference or independently validated semantics. Qt now presents rights controls and bounded training progress.
+- `tests/test_knowledge_training.py` includes real CPU Torch, source-rights/revocation/revision, cancellation and numeric evaluation. Dedicated real PyTorch CI trigger expanded, standard Python and Windows Qt/Tk gates preserved. Candidate source and tests are **not yet CI verified or merged**. Details [docs/KNOWLEDGE_TRAIN.md](KNOWLEDGE_TRAIN.md).
+
 ## 2026-11-08 — Windows Qt EXE technical smoke candidate (not a release)
 
 - PR #28 **merged** to main `2bd5af5a1db70dee8566f848a41d5024e8fa8bba` after actual Qt offscreen Windows and Ubuntu checks, real PyTorch CPU, Python 3.11–3.13, Windows frozen original Tk EXE and privacy gates all passed. Qt Command Center source GUI is implemented, but **no Qt EXE has been released**.
