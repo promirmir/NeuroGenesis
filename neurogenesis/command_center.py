@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
     QApplication, QCheckBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
     QMessageBox, QPlainTextEdit, QPushButton, QSpinBox, QStackedWidget, QTableWidget,
     QTableWidgetItem, QTextEdit, QVBoxLayout, QWidget, QSizePolicy, QHeaderView,
-    QComboBox,
+    QComboBox, QFileDialog,
 )
 
 from .command_service import CommandService
@@ -368,6 +368,21 @@ class CommandCenter(QMainWindow):
                     " Checkpoint KANDYDAT, nie aktywny silnik rozmowy.")
                 self.training_log.appendPlainText("ZAKOŃCZONO · " + self._last_training_summary)
                 continue
+            if kind == "inference_done":
+                report = json.loads(description)
+                self.training_log.appendPlainText(
+                    "MODELOWA KONTYNUACJA BAJTÓW (EKSPERYMENT, NIE ODPOWIEDŹ):\n"
+                    + report["generated_text_utf8_replacement"]
+                    + "\nHEX: " + report["generated_hex"]
+                    + "\nWagi po " + str(report["trained_steps_in_checkpoint"])
+                    + " krokach; " + f"{report['bytes_per_second']:.2f} bajtów/s"
+                    + "; UTF-8: " + ("poprawny" if report["generated_valid_utf8"] else
+                                     "zastąpiono uszkodzone sekwencje")
+                    + ". Brak źródeł i weryfikacji faktów.")
+                continue
+            if kind in ("inference_cancelled", "inference_fatal"):
+                self.training_log.appendPlainText(kind.upper() + " · " + description)
+                continue
             if kind in ("train_cancelled", "train_fatal"):
                 self._last_training_summary = ("Trening: " + description)
                 self.training_log.appendPlainText(kind.upper() + " · " + description)
@@ -433,7 +448,61 @@ class CommandCenter(QMainWindow):
         self.training_log.setReadOnly(True)
         self.training_log.document().setMaximumBlockCount(800)
         self.training_log.setPlaceholderText("Tutaj pojawią się rzeczywiste pomiary strat i wyniki walidacji.")
+        lab, controls = block("Eksperyment inferencji modelu",
+                              "Niezależny dekoder wag GRU — NIE jest odpowiedzią czatu ani dowodem faktów.")
+        checkpoint_row = QHBoxLayout()
+        self.checkpoint_path = QLineEdit()
+        self.checkpoint_path.setPlaceholderText("Ścieżka do własnego zaufanego checkpointu .pt")
+        checkpoint_row.addWidget(self.checkpoint_path, 1)
+        choose = QPushButton("Wybierz plik")
+        choose.clicked.connect(self.choose_checkpoint)
+        checkpoint_row.addWidget(choose)
+        controls.addLayout(checkpoint_row)
+        self.inference_prompt = QLineEdit()
+        self.inference_prompt.setPlaceholderText("Prefiks tekstu dla eksperymentalnego przewidywania")
+        controls.addWidget(self.inference_prompt)
+        choice = QHBoxLayout()
+        self.inference_bytes = QSpinBox()
+        self.inference_bytes.setRange(1, 64)
+        self.inference_bytes.setValue(16)
+        self.inference_bytes.setSuffix(" bajtów")
+        choice.addWidget(self.inference_bytes)
+        self.trust_checkpoint = QCheckBox("Potwierdzam zaufane pochodzenie lokalnego pliku")
+        choice.addWidget(self.trust_checkpoint, 1)
+        controls.addLayout(choice)
+        buttons = QHBoxLayout()
+        self.inference_start = QPushButton("Wykonaj predykcję z wag")
+        self.inference_start.clicked.connect(self.start_inference)
+        buttons.addWidget(self.inference_start)
+        self.inference_stop = QPushButton("Przerwij predykcję")
+        self.inference_stop.clicked.connect(self.service.stop_candidate_inference)
+        buttons.addWidget(self.inference_stop)
+        controls.addLayout(buttons)
+        layout.addWidget(lab)
         layout.addWidget(self.training_log, 1)
+
+    def choose_checkpoint(self) -> None:
+        selected, _ = QFileDialog.getOpenFileName(
+            self, "Wybierz lokalny zaufany checkpoint", str(self.service.memory.path.parent),
+            "Foundation Brain (*.pt *.pth)")
+        if selected:
+            self.checkpoint_path.setText(selected)
+
+    def start_inference(self) -> None:
+        if not self.trust_checkpoint.isChecked():
+            QMessageBox.warning(self, "Niezaufany checkpoint",
+                                "Potwierdź własny, lokalny checkpoint przed odczytem wag.")
+            return
+        try:
+            self.service.start_candidate_inference(
+                self.checkpoint_path.text(), self.inference_prompt.text(),
+                confirmed=True, max_new_bytes=self.inference_bytes.value(),
+                device=self.training_device.currentText())
+        except (ValueError, OSError, RuntimeError, PermissionError) as exc:
+            QMessageBox.warning(self, "Eksperyment predykcyjny", str(exc))
+            return
+        self.training_log.appendPlainText("START · rzeczywisty model, poza rozmową, bez sieci.")
+        self.refresh()
 
     def start_training(self) -> None:
         if not self.training_rights.isChecked():
@@ -450,6 +519,7 @@ class CommandCenter(QMainWindow):
             QMessageBox.warning(self, "Trening Foundation Brain", str(exc))
             return
         self._last_training_summary = ""
+        self.checkpoint_path.setText(str(output))
         self.training_log.appendPlainText("START · trening na zatwierdzonych dokumentach; sieć wyłączona.")
         self.refresh()
 
@@ -588,6 +658,8 @@ class CommandCenter(QMainWindow):
             + (self._last_training_summary or "CUDA/VRAM: brak zakończonego pomiaru"))
         self.training_start.setEnabled(not s.training_running)
         self.training_stop.setEnabled(s.training_running)
+        self.inference_start.setEnabled(not s.training_running and not s.inference_running)
+        self.inference_stop.setEnabled(s.inference_running)
         self.diag_status.setText(
             f"SQLite: {s.database}\nSieć: {'zezwolono' if s.network_enabled else 'zablokowana'}\n"
             f"Aktywna sesja badawcza: {'tak' if s.research_running else 'nie'}")
@@ -596,6 +668,7 @@ class CommandCenter(QMainWindow):
         self.service.set_network_consent(False)
         self.service.stop_study()
         self.service.stop_training()
+        self.service.stop_candidate_inference()
         super().closeEvent(event)
 
 
