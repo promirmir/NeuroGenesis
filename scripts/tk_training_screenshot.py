@@ -15,11 +15,15 @@ from tkinter import ttk
 from neurogenesis.tk_bundled_chat import install_bundled_chat
 from neurogenesis.tk_bundled_training import install_bundled_training
 from neurogenesis.local_knowledge import LocalKnowledge
+from neurogenesis.memory import ExperienceMemory
+from neurogenesis.autonomy import AutonomicSupervisor
+from neurogenesis.tk_autonomy_hub import install_autonomy_hub
 import tempfile
 from neurogenesis.tk_theme import apply_dark_tk_theme
 
 
-def capture(training_output: Path, model_chat_output: Path) -> bool:
+def capture(training_output: Path, model_chat_output: Path,
+            operations_output: Path | None = None) -> bool:
     if sys.platform != "win32":
         raise RuntimeError("Windows screenshots only")
     try:
@@ -30,6 +34,7 @@ def capture(training_output: Path, model_chat_output: Path) -> bool:
     root = tk.Tk()
     try:
         knowledge = LocalKnowledge(Path(folder.name) / "fictional-local.sqlite3")
+        memory = ExperienceMemory(Path(folder.name) / "synthetic-brain.sqlite3")
         apply_dark_tk_theme(root)
         width = min(1250, max(760, root.winfo_screenwidth() - 24))
         height = min(850, max(540, root.winfo_screenheight() - 92))
@@ -44,6 +49,23 @@ def capture(training_output: Path, model_chat_output: Path) -> bool:
         chat = install_bundled_chat(tabs, knowledge)
         if tabs.index(training) != 1 or tabs.index(chat) != 2:
             raise AssertionError("New training/chat tabs aren't visible near CENTRUM")
+        ops = install_autonomy_hub(
+            tabs, memory, knowledge, AutonomicSupervisor(memory),
+            brain_auto=tk.BooleanVar(master=root, value=False),
+            training_auto=training.ng_auto,
+            training_folder=training.ng_folder,
+            training_consent=training.ng_consent,
+            model_status=chat.ng_model_status,
+            navigate=lambda where: tabs.select(
+                {"training": training, "local_chat": chat,
+                 "brain": mission, "mission": mission, "web": mission}[where]),
+            run_brain_trial=lambda: None,
+            model_start=chat.ng_model_start,
+            model_stop=chat.ng_model_stop,
+            choose_training_folder=training.ng_choose_folder,
+            allowed_web=lambda: False,
+        )
+        ops.ng_refresh()
         def screen(tab, path):
             tabs.select(tab)
             root.update_idletasks()
@@ -63,6 +85,8 @@ def capture(training_output: Path, model_chat_output: Path) -> bool:
                 raise RuntimeError("Unexpectedly empty screenshot")
         screen(training, training_output)
         screen(chat, model_chat_output)
+        if operations_output is not None:
+            screen(ops, operations_output)
         # Validate that the actions needed for a REAL conversation remain
         # visible on constrained Windows hosted desktop dimensions.
         def find_action(widget, label):
@@ -88,8 +112,10 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Actual Windows Tk training and offline model chat screenshot")
     parser.add_argument("--training-output", type=Path, required=True)
     parser.add_argument("--model-chat-output", type=Path, required=True)
+    parser.add_argument("--operations-output", type=Path, default=None)
     args = parser.parse_args(argv)
-    if not capture(args.training_output, args.model_chat_output):
+    if not capture(args.training_output, args.model_chat_output,
+                   args.operations_output):
         return 1
     print("Actual Tk training/chat visual QA: isolated UI; no files, models, or network")
     return 0
