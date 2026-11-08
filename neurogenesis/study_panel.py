@@ -13,12 +13,19 @@ def install_study_panel(parent, memory, consent_var):
     """Attach a separate operator-controlled research tab; never auto-start."""
     tab = ttk.Frame(parent)
     parent.add(tab, text="Specjalizacja")
-    ttk.Label(tab, text="Dziedzina do badania (publiczna Wikipedia, ograniczony zakres):").pack(
+    ttk.Label(tab, text="Dziedzina: odkrywanie publicznych źródeł HTTPS, również poza Wikipedią:").pack(
         anchor="w", padx=18, pady=(18, 5))
     topic = tk.StringVar()
     ttk.Entry(tab, textvariable=topic).pack(fill="x", padx=18)
-    ttk.Label(tab, text="To gromadzenie źródeł w pamięci, nie trening wag modelu. "
-              "Internet wymaga osobnej zgody w karcie Internet.", wraplength=720).pack(
+    config_row = ttk.Frame(tab)
+    config_row.pack(fill="x", padx=18, pady=8)
+    ttk.Label(config_row, text="Maksymalna liczba stron (1–500):").pack(side="left")
+    pages = tk.StringVar(value="120")
+    ttk.Entry(config_row, width=7, textvariable=pages).pack(side="left", padx=8)
+    ttk.Label(tab, text="Wyszukiwanie przechodzi między domenami przez odnośniki "
+              "związane z tematem, respektuje robots.txt i tempo serwisów. "
+              "To pobieranie źródeł do lokalnej pamięci, NIE trening wag modelu. "
+              "Zgodę HTTPS włączasz w karcie Internet.", wraplength=720).pack(
         anchor="w", padx=18, pady=10)
     state = tk.StringVar(value="Gotowy — sieć wyłączona do chwili uruchomienia.")
     ttk.Label(tab, textvariable=state, wraplength=720).pack(fill="x", padx=18, pady=8)
@@ -51,13 +58,14 @@ def install_study_panel(parent, memory, consent_var):
                     raise TimeoutError("Brak potwierdzenia zapisu")
                 if outcome:
                     raise RuntimeError("Zapis odrzucony")
-            study = SpecialistStudy(topic.get(), persist, max_pages=6)
+            study = SpecialistStudy(topic.get(), persist, max_pages=int(pages.get()))
         except (ValueError, TypeError) as exc:
             messagebox.showerror("Nieprawidłowa dziedzina", str(exc))
             return
         current["study"] = study
         start_button.configure(state="disabled")
-        state.set("Badanie uruchomione; maksymalnie 6 stron, odstęp min. 5 s.")
+        state.set("Badanie uruchomione; limit " + str(study.max_pages) +
+                  " stron, 50 domen, co najmniej 5 s między żądaniami stron.")
         add_log("Temat: " + study.topic)
         def worker():
             try:
@@ -98,14 +106,25 @@ def install_study_panel(parent, memory, consent_var):
                 elif kind == "done":
                     result = current["study"].progress()
                     state.set(f"Zakończono: {result.attempted} prób, "
-                              f"{result.accepted} zapisanych, {result.errors} błędów.")
+                              f"{result.accepted} zapisanych, {result.errors} błędów; "
+                              f"{result.discovered} odkrytych, {result.domains} domen.")
                     start_button.configure(state="normal")
                 elif kind == "fatal":
                     add_log(url)
-                else:
+                elif kind != "discovered":
                     add_log(("Zapisano: " if kind == "saved" else "Niepowodzenie: ") + url)
         except queue.Empty:
             pass
+        if (current["thread"] is not None and current["thread"].is_alive()
+                and consent_var.get()):
+            p = current["study"].progress()
+            state.set(f"Badanie: {p.attempted}/{current['study'].max_pages} prób, "
+                      f"{p.accepted} zapisanych, {p.errors} błędów, "
+                      f"{p.discovered} odkrytych, {p.domains} domen.")
+        if int(log.index("end-1c").split(".")[0]) > 1200:
+            log.configure(state="normal")
+            log.delete("1.0", "200.0")
+            log.configure(state="disabled")
         tab.after(250, poll)
     tab.after(250, poll)
     return tab
