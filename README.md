@@ -1,3 +1,7 @@
+## Porównanie checkpointów i kontrola zapominania — PR kandydat
+
+Nowe lokalne narzędzie badawcze porównuje stary i nowy model PyTorch **na tych samych dwóch zestawach testowych**: wcześniejszej dziedzinie i nowym zadaniu. Zapisuje cztery rzeczywiste błędy predykcji oraz określa, czy kandydat poprawił nowy wynik bez przekroczenia dozwolonej regresji starego. Nie instaluje żadnych wag automatycznie i nie uznaje tego za test rozumowania. Wymaga zaufanych lokalnych checkpointów i praw do tekstów. [Metoda i ograniczenia](docs/RETENTION_GATE.md).
+
 ## Eksperymentalne wnioskowanie z wag Foundation Brain — PR kandydat
 
 Oprócz cytowanych odpowiedzi z bazy, osobne laboratorium Qt potrafi eksperymentalnie uruchomić **rzeczywisty lokalny checkpoint PyTorch** i przewidywać kolejne bajty tekstu. Nie jest to jeszcze inteligentna rozmowa; wynik może być niepoprawnym UTF-8 lub bezsensowną sekwencją. Dostęp jest wyłącznie na żądanie i z potwierdzeniem zaufanego pliku, bez sieci i bez zmiany dotychczasowej pamięci. Funkcja pozostaje kandydatem do scalenia przed pełnym CI. [Opis i ograniczenia](docs/FOUNDATION_INFERENCE.md).
