@@ -134,7 +134,8 @@ class CommandService:
 
     def start_training(self, output: str | Path, *, confirmed: bool,
                        steps: int, device: str, sequence: int = 32,
-                       hidden: int = 32) -> None:
+                       hidden: int = 32, resume_from: str | Path | None = None,
+                       trust_resume: bool = False) -> None:
         """Operator-only, bounded Torch worker, never auto-started by GUI."""
         if confirmed is not True:
             raise PermissionError("Potwierdź prawa do zatwierdzonych dokumentów")
@@ -144,6 +145,14 @@ class CommandService:
             raise RuntimeError("Zainstaluj opcjonalny PyTorch: pip install -e '.[foundation]'")
         if len(self.memory.approved_training_documents()) < 3:
             raise ValueError("Zatwierdź prawa do co najmniej 3 aktualnych dokumentów")
+        if resume_from is not None:
+            if trust_resume is not True:
+                raise PermissionError("Potwierdź zaufany lokalny checkpoint")
+            path = Path(resume_from)
+            if not path.is_file() or path.is_symlink() or path.suffix.lower() not in (".pt", ".pth"):
+                raise ValueError("Wybierz poprawny, istniejący checkpoint do kontynuacji")
+            if path.resolve() == Path(output).resolve():
+                raise ValueError("Wynik musi być zapisany do nowego pliku, nie do poprzedniego")
         with self._state_lock:
             if self._training_thread is not None and self._training_thread.is_alive():
                 raise RuntimeError("Trening jest już aktywny")
@@ -170,7 +179,9 @@ class CommandService:
                     report = train_approved_knowledge(
                         self.memory.path, output, confirm_rights=True,
                         steps=steps, sequence=sequence, hidden=hidden,
-                        device=device, cancel_event=cancel, on_progress=progress)
+                        device=device, resume_from=resume_from,
+                        trust_resume=trust_resume,
+                        cancel_event=cancel, on_progress=progress)
                     self._events.put(("train_done", json.dumps(report)))
                 except InterruptedError:
                     self._events.put(("train_cancelled",
