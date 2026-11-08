@@ -1,3 +1,7 @@
+## Niezależna kontrola jakości cytowania źródeł — PR kandydat
+
+Do dotychczasowego lokalnego testu pytań dodano ostrzejszą ocenę na **oddzielnym zestawie nowych pytań**, z wykrywaniem powtórzeń, uwzględnieniem niepewności statystycznej, pomiarem fałszywych cytowań oraz porównaniem z systemem, który zawsze odmawia odpowiedzi. Wynik korzysta z rzeczywistej lokalnej bazy SQLite, ale nie zmienia pamięci. **Nie jest to dowód rozumowania ani weryfikacji prawdy**. Kod wymaga CI i prawdziwego, niezależnego zbioru pytań, zanim będzie można deklarować jakość działania. [Procedura](docs/QA_ACCEPTANCE.md).
+
 ## Ostrzejsza kontrola źródeł w pytaniach „Czy…?” — etap testowy
 
 Dla pytań sprawdzających konkretną tezę system wymaga, aby wszystkie jej istotne słowa — oraz zgodność jawnego przeczenia — znajdowały się w **jednym zapisanym fragmencie**. Jeżeli nie ma takiego cytatu, zamiast sugerować potwierdzenie system odmawia. Nie jest to logiczne dowodzenie ani semantyczna weryfikacja faktów; niektóre poprawne parafrazy także zostaną odrzucone. Wdrożenie wymaga pełnych testów i nowego, niezależnego zbioru pytań do oceny faktycznej poprawy. [Pomiar i ograniczenia](docs/QA_EVALUATION.md).

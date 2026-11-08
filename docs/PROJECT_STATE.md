@@ -1,3 +1,10 @@
+## 2026-11-08 — prospective-source QA statistical acceptance gate (PR candidate)
+
+- Verified live `main` `da9a6c736f55c13b048101a4a07c2f5defff64a1`; no open PR, all latest main CI including actual PyTorch CPU, Windows Tk EXE, Qt Windows/Linux and publisher successful. Prior PR #36–#40 wording/claim-guard work is already merged; do **not** redo those heuristics. Historical candidate notes below must not override this.
+- Branch `feat/prospective-qa-acceptance-gate-20261108`: new `neurogenesis/qa_acceptance.py` explicitly compares **separate development and prospective rights-cleared local QA JSONL files**, rejects exact normalized question leakage, applies 95% Wilson intervals for supported quote recall and unsupported false citations, and checks gain over a trivial abstain-all baseline. Defaults require 30 positive/60 unsupported cases, lower95 quote recall >=0.70, upper95 false-citation <=0.05, improvement over abstain-all >=0.10.
+- Real synthetic SQLite tests (40 positive/100 unsupported) enforce positive/negative decision behavior, detection of unsupported added predicates, no private memory modification and no raw question logging. New `qa-acceptance.yml` CI verifies actual offline evaluator, privacy and syntax.
+- This **does not itself produce independent real QA data**. Public fictional tests are seen development data, and exact-question dedupe is not a semantic near-duplicate detector. No factual correctness, source independence, contextual neural chat, physical CUDA measurement or Qt redistributable certified. Details [QA_ACCEPTANCE.md](QA_ACCEPTANCE.md). Candidate pending complete CI.
+
 ## 2026-11-08 — conservative polar-question source answer guard (PR candidate)
 
 - Latest merged source main baseline `87127d13921a9c4840163cc67e1b3d52c6b5310a` includes PR #36–#38; #39 durable docs were merged after confirming Tk EXE release `v0.6.0-main.4a81cc76`. The 6-question synthetic *development* QA benchmark previously exposed **one false citation for 3 unsupported prompts**, not a verified independent accuracy estimate.

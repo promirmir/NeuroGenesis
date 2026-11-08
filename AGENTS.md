@@ -1,3 +1,9 @@
+## Current main and prospective QA acceptance candidate — 2026-11-08
+
+- Live `main` SHA `da9a6c736f55c13b048101a4a07c2f5defff64a1`; no open PR. Previous source corroboration, ephemeral contextual follow-ups, offline `qa_eval` and conservative polar-question guards are merged. Source-based answer remains lexical, can cite an unsupported claim, and has NO independently validated natural QA capability.
+- Branch `feat/prospective-qa-acceptance-gate-20261108` adds `qa_acceptance.py`: separate operator rights/untouched confirmed development and prospective local JSONLs, detect exact normalized overlap, measure real SQLite quote recall/false citations with conservative Wilson intervals and abstain-all baseline. CI tests fictional 40/100 supported/unsupported cases and failure on misleading claims; never print private text or mutate SQLite.
+- Strict acceptance is **only literal source attribution**; no fact verification, no semantic neural chat, no automatic release, no true independent holdout verified by code. See `docs/QA_ACCEPTANCE.md`. Run Python 3.11–3.13, dedicated QA offline CI, privacy, Windows frozen EXE and applicable CPU/Qt regressions before merge. Preserve last verified Tk EXE, local memory and optional Qt licensing gate.
+
 ## Current claim-grounding PR candidate (November 8, 2026)
 
 - Latest main baseline `87127d13921a9c4840163cc67e1b3d52c6b5310a`, including verified Tk release v0.6.0-main.4a81cc76 from prior source SHA. PR #36–#39 merged. Source QA developer fixture showed 3/3 supported quotes, 2/3 unsupported abstentions, **one false citation**.
