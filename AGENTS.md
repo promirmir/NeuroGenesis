@@ -1,3 +1,9 @@
+## Verified continuation checkpoint — November 8, 2026
+
+- `main` confirmed source integration merge `334b1afc842f662b422b8ca81404c3fd75874523`; PRs #23/#27/#28/#29/#30 completed. The previous "PR candidate" and pending-CI sections below are historical snapshots, NOT current project status.
+- Reproducible synthetic real PyTorch CPU held-out byte CE `5.7385941651 → 5.5994535677` after 3 steps; Markov baseline `1.7341137780` remains much stronger. **Never claim model has learned semantic conversation or surpassed simple baseline**. Source rights per revision remain operator assertions, not verified licenses.
+- Dependency-free legacy Tk Windows EXE and private SQLite remain; optional Qt UI actual source/Windows frozen build works in CI but Qt bundle has not been published pending legal notices. No physical CUDA benchmark. Start from `docs/PROJECT_STATE.md`, `docs/KNOWLEDGE_TRAIN.md`, `docs/COMMAND_CENTER.md`; next work: independent semantic/retention evaluation and controlled inference before any v1 status.
+
 # NeuroGenesis: durable agent / developer handoff
 
 **Read this file first in every new chat, automation, agent session or developer handoff.** Source of truth is `promirmir/NeuroGenesis` on GitHub (`main`), not an assistant's recollection.
