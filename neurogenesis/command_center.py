@@ -240,7 +240,7 @@ class CommandCenter(QMainWindow):
             button.setChecked(i == index)
         if index == 5:
             self.refresh_sources()
-        if index == 3:
+        if index in (0, 3):
             self.refresh_connectome()
 
     def _build_overview(self) -> None:
@@ -309,7 +309,7 @@ class CommandCenter(QMainWindow):
         self.mission_event_log = QPlainTextEdit()
         self.mission_event_log.setObjectName("eventJournal")
         self.mission_event_log.setReadOnly(True)
-        self.mission_event_log.setMaximumBlockCount(100)
+        self.mission_event_log.document().setMaximumBlockCount(100)
         self.mission_event_log.setPlaceholderText("Nie zarejestrowano jeszcze nowego kroku.")
         self.mission_event_log.setMinimumHeight(118)
         stream_layout.addWidget(self.mission_event_log, 1)
@@ -573,30 +573,54 @@ class CommandCenter(QMainWindow):
             kind="subtle"))
 
     def refresh_connectome(self) -> None:
-        if self.pages.currentIndex() != 3:
+        """One measured LIF sample updates the active graph, never synthesizes work."""
+        page = self.pages.currentIndex()
+        if page not in (0, 3):
             return
         try:
             state = self.service.neural_connectome()
-        except (ValueError, OSError, RuntimeError) as exc:
-            self.neural_event_status.setText("BŁĄD ODCZYTU RZECZYWISTEJ SIECI")
+        except (ValueError, OSError, RuntimeError):
+            if page == 3:
+                self.neural_event_status.setText("BŁĄD ODCZYTU RZECZYWISTEJ SIECI")
+            else:
+                self.mission_status.setText("BŁĄD ODCZYTU SIECI")
             return
-        previous_step = self.connectome.snapshot.step if self.connectome.snapshot else None
-        self.connectome.set_telemetry(state)
-        if previous_step == state.step:
-            self.neural_event_status.setText(
-                f"OSTATNI KROK {state.step} · BRAK NOWEJ AKTYWNOŚCI")
-        else:
-            change = self.connectome.change
-            self.neural_event_status.setText(
-                f"KROK {state.step} · +{change['delta_steps']} kroków "
-                f"· +{change['new_spikes']} impulsów · "
-                f"{change['changed_weights']} zmienionych wag "
-                f"· +{change['new_neurons']} neuronów")
-        self.brain_metrics.setText(
-            f"Neurony {state.total_neurons} | Synapsy {state.total_synapses} | "
-            f"Łączne spiki {state.total_spikes} | Nowość {state.last_novelty:.4f} | "
-            f"Wzrost {state.total_grown} | Pruning {state.total_pruned}")
-        self.brain_plot.set_values(tuple(n.trace for n in state.nodes))
+        previous = getattr(self, "_last_brain_state", None)
+        advanced = previous is not None and state.step > previous.step
+        if previous is None or state.step > previous.step:
+            self._last_brain_state = state
+            self.signal_history.ingest(state)
+        if advanced:
+            new_spikes = max(0, state.total_spikes - previous.total_spikes)
+            new_synapses = max(0, state.total_synapses - previous.total_synapses)
+            self.mission_event_log.appendPlainText(
+                f"LIF / KROK {state.step}  +{state.step - previous.step} kroków"
+                f"  /  +{new_spikes} spike  /  +{new_synapses} synaps")
+        # The dashboard and dedicated monitor are two views of the SAME stored
+        # neural state, never two independently animated synthetic networks.
+        if page == 0:
+            self.mission_connectome.set_telemetry(state)
+            self.mission_status.setText(
+                f"LIF / KROK {state.step}" if advanced
+                else "LIF / BRAK NOWEGO KROKU")
+        if page == 3:
+            self.connectome.set_telemetry(state)
+            old_step = self.connectome.change["delta_steps"]
+            if old_step:
+                delta = self.connectome.change
+                self.neural_event_status.setText(
+                    f"KROK {state.step} · +{delta['delta_steps']} kroków "
+                    f"· +{delta['new_spikes']} impulsów · "
+                    f"{delta['changed_weights']} zmienionych wag "
+                    f"· +{delta['new_neurons']} neuronów")
+            else:
+                self.neural_event_status.setText(
+                    f"OSTATNI KROK {state.step} · BRAK NOWEJ AKTYWNOŚCI")
+            self.brain_metrics.setText(
+                f"Neurony {state.total_neurons} | Synapsy {state.total_synapses} | "
+                f"Łączne spiki {state.total_spikes} | Nowość {state.last_novelty:.4f} | "
+                f"Wzrost {state.total_grown} | Pruning {state.total_pruned}")
+            self.brain_plot.set_values(tuple(n.trace for n in state.nodes))
 
     def _build_training(self) -> None:
         _, page_layout = self._page()
@@ -914,10 +938,25 @@ class CommandCenter(QMainWindow):
             return
         self.network_indicator.setText("HTTPS WŁĄCZONY" if s.network_enabled else "HTTPS WYŁĄCZONY")
         self.overview_metrics.setText(
-            f"Dokumenty: {s.documents}     Fragmenty: {s.passages}\n"
-            f"Obserwacje: {s.observations}     Kroki mózgu: {s.brain_steps}\n"
-            f"Neurony: {s.neurons}     Synapsy: {s.synapses}\n"
-            f"Badanie: {'AKTYWNE' if s.research_running else 'BRAK'}")
+            f"Dokumenty: {s.documents}  ·  Fragmenty: {s.passages}  ·  "
+            f"Obserwacje: {s.observations}  ·  Pomiary z SQLite")
+        for key, value in (
+            ("steps", s.brain_steps),
+            ("neurons", s.neurons),
+            ("synapses", s.synapses),
+            ("documents", s.documents),
+        ):
+            self.mission_tiles[key].set_value(value)
+        self.pipeline_steps["internet"].set_state(
+            "ZEZWOLONO" if s.network_enabled else "WYŁĄCZONY")
+        self.pipeline_steps["memory"].set_state(
+            f"{s.documents} dok. · {s.passages} frag.")
+        self.pipeline_steps["lif"].set_state(f"{s.brain_steps} zapisanych kroków")
+        self.pipeline_steps["foundation"].set_state(
+            f"TRENING {s.training_step}/{s.training_total}" if s.training_running
+            else "NIEURUCHOMIONY")
+        if self.pages.currentIndex() == 0:
+            self.refresh_connectome()
         self.research_status.setText(
             f"Próby: {s.research_attempted} · zapisano: {s.research_accepted} · "
             f"błędy: {s.research_errors} · odkryto: {s.research_discovered} · "
