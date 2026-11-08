@@ -139,6 +139,7 @@ class MissionDashboard:
         self.neural_canvas.bind("<Configure>", self._resize_graph, add="+")
         self._view_mode = "3d"
         mode_row = tk.Frame(neural, bg=PANEL)
+        self.mode_row = mode_row
         mode_row.pack(fill="x", padx=5, pady=(6, 0))
         self.view_label = tk.StringVar(value="HOLOGRAM 3D / PODGLĄD PRZESTRZENNY")
         _action(mode_row, "PRZEŁĄCZ 3D / 2D", self._toggle_neural_view).pack(side="left")
@@ -227,16 +228,14 @@ class MissionDashboard:
     def _toggle_neural_view(self) -> None:
         if self._view_mode == "3d":
             self.hologram_canvas.pack_forget()
-            self.neural_canvas.pack(fill="both", expand=True, before=self.hologram_canvas if
-                                    self.hologram_canvas.winfo_manager() else None)
+            self.neural_canvas.pack(fill="both", expand=True, before=self.mode_row)
             self._view_mode = "2d"
             self.view_label.set("CONNECTOME 2D / DOKŁADNA MAPA SYNAPS")
             if self.graph._latest is not None:
                 self.graph.render(self.graph._latest, force=True)
         else:
             self.neural_canvas.pack_forget()
-            self.hologram_canvas.pack(fill="both", expand=True, before=self.neural_canvas if
-                                      self.neural_canvas.winfo_manager() else None)
+            self.hologram_canvas.pack(fill="both", expand=True, before=self.mode_row)
             self._view_mode = "3d"
             self.view_label.set("HOLOGRAM 3D / PODGLĄD PRZESTRZENNY")
 
