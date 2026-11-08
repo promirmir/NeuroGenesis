@@ -1,3 +1,10 @@
+## Active measured grounded-QA acceptance gate (November 8, 2026)
+
+- Baseline main `c94dce00761d938e12215b19c20dbfd9efe426a9`: PR #37 source-anchored session-only followups merged after required CPU/Python/Qt/Windows/privacy CI green.
+- Branch `feat/offline-grounded-qa-benchmark-20261108` adds **read-only**, operator-rights/holdout-confirmed local JSONL evaluation of actual quoted source answers, exact URL attribution, negative abstention and p50/p95 SQLite retrieval time. A quoted true-to-source passage is NOT necessarily a correct fact or semantic answer. Tool never writes private SQLite or prints raw questions; only aggregate metrics and SHA-256.
+- Test fixture intentionally includes a lexical false-positive (unsupported claim sharing terms). Must not advertise perfect precision if unsupported queries are answered. Run Python 3.11–3.13, privacy, real Torch CPU, Windows Tk frozen EXE, Qt Windows/Linux and technical Qt frozen EXE before merging. See `docs/QA_EVALUATION.md`.
+- Next model stage requires *independent licensed human-written QA corpus* and truthful comparison to strong baselines. Do not claim source verification, generalization or v1 yet.
+
 ## Active PR candidate — evidence-grounded one-session follow-up (2026-11-08)
 
 - Baseline main `0bcfb6a158c57465b0b39dda26e4ed3ca20e22bd`; PR #36 merged with green Python, Qt Windows/Linux, real CPU Torch, Windows Tk EXE and privacy checks.
