@@ -72,6 +72,10 @@ def train_approved_knowledge(db_path: str | Path, output: str | Path, *,
     docs = memory.approved_training_documents()
     if len(docs) < 3:
         raise ValueError("at least three different latest, explicitly approved source URLs required")
+    # Distinct URLs alone are not sufficient: identical content on mirror
+    # sites would leak evaluation bytes into training.
+    if len({doc["sha256"] for doc in docs}) != len(docs):
+        raise ValueError("duplicate document hashes across sources invalidate the holdout")
     encoded = [doc["text"].encode("utf-8") for doc in docs]
     if any(len(doc) < sequence * 2 or len(doc) > MAX_DOCUMENT_BYTES for doc in encoded):
         raise ValueError("approved documents too short/large for a safe disjoint evaluation")
