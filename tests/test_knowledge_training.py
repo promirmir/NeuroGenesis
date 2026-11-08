@@ -176,6 +176,20 @@ class ApprovedKnowledgeRightsTests(unittest.TestCase):
         self.assertTrue(self.output.exists())
         self.assertEqual(service.snapshot().training_step, 1)
         self.assertFalse(service.snapshot().training_running)
+        previous_sha = hashlib.sha256(self.output.read_bytes()).hexdigest()
+        next_output = self.db.with_name("next-candidate.pt")
+        service.start_training(next_output, confirmed=True, steps=1,
+                               sequence=16, hidden=16, device="cpu",
+                               resume_from=self.output, trust_resume=True)
+        service._training_thread.join(timeout=60)
+        self.assertFalse(service._training_thread.is_alive())
+        events = service.poll_events()
+        reports = [json.loads(body) for kind, body in events if kind == "train_done"]
+        self.assertEqual(len(reports), 1, events)
+        self.assertTrue(reports[0]["resumed_from_trusted_local_checkpoint"])
+        self.assertEqual(reports[0]["checkpoint_total_training_steps"], 2)
+        self.assertEqual(hashlib.sha256(self.output.read_bytes()).hexdigest(), previous_sha)
+        self.assertEqual(FoundationBrain.load_checkpoint(next_output)[1], 2)
 
     @unittest.skipIf(torch is None, "dedicated CI installs real PyTorch CPU")
     def test_resumed_weights_keep_previous_checkpoint_and_accumulate_steps(self):
