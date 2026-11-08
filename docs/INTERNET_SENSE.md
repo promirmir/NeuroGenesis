@@ -41,6 +41,9 @@ terms and avoid high-frequency collection.
 
 ## Private state
 
+**PR #27 candidate retention change:** the original provenance-only design below retained no full page body. The new evidence-index path saves up to 6,000 characters of extracted plaintext as short **private** SQLite passages. The existing `observations.raw_text` remains NULL. This enables post-restart citations but changes local privacy/backup assumptions; source text does not automatically authorize neural training. See [Knowledge pipeline](KNOWLEDGE_PIPELINE.md). Until PR #27 is merged this remains a candidate.
+
+
 The website can see the network egress IP. Its URL may reveal browsing habits
 and is stored ONLY in the user's private SQLite database.
 

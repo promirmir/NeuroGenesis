@@ -2,6 +2,9 @@
 
 ## Current v0.6.0 candidate attack surface
 
+**PR #27 candidate privacy change (not yet released):** approved web observations additionally retain up to 6,000 characters of extracted page text as short plaintext evidence passages in the same local SQLite database. Historical `observations.raw_text` is still NULL, but the new index contains source excerpts: protect and privately back up the database. Data remains inert; a citation is not factual validation and does not permit copyright-restricted model training or redistribution. Existing HTTP safety controls are unchanged. See `docs/KNOWLEDGE_PIPELINE.md`.
+
+
 - The existing CPU neural/SQLite core and Foundation Brain experimental worker remain local. Internet tab introduces **optional, operator-enabled** read-only HTTPS perception; there is no auto network connection at startup.
 - Only public DNS HTTPS:443 URLs with no query/userinfo. DNS is resolved once, all IPs checked as global and the TLS socket connects to the verified IP while authenticating the hostname. Deny redirects, IP literals, local/private IP, compressed/binary downloads and code execution. Body capped at 128 KiB, extracted text at 6,000 characters.
 - A worker fetches inert text, the UI commits source URL/UTC/SHA-256 and neural hashed features in one SQLite transaction. Duplicate content is ignored. Full raw page content is not stored. Website sees the user's public IP.

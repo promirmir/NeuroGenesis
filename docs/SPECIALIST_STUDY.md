@@ -56,3 +56,7 @@ Relevant code: \`neurogenesis/specialist_study.py\`,
 \`neurogenesis/study_panel.py\`. Tests:
 \`tests/test_specialist_study.py\`, \`tests/test_web_discovery.py\`,
 \`tests/test_web_sense.py\`.
+
+## Subsequent integration candidate — PR #27 (not included in the historical #24 release)
+
+If PR #27 passes CI and is merged/released, each approved specialist observation will additionally be indexed as bounded local plain-text passages with source versions in the original SQLite transaction. They become available to post-restart cited *lexical retrieval* in chat. This is not model weight training, copyright license clearance or independent source-fact validation. Details: `docs/KNOWLEDGE_PIPELINE.md`.

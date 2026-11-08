@@ -6,6 +6,10 @@ verified release `v0.6.0-main.db0b2210`. This document is a *code and CI
 audit*, not a visual inspection of a running Windows app or an independent
 live-Internet benchmark.
 
+## Subsequent implementation checkpoint
+
+PR #27 (candidate, after this historical audit baseline) adds the first local source-passage-to-cited-dialogue **lexical retrieval** path and synthetic offline acceptance tests. It does not train Foundation Brain from the internet, verify facts or deliver a professional Qt UI. Remaining milestones below remain open research gates. See `docs/KNOWLEDGE_PIPELINE.md`.
+
 ## Original non-negotiable mission
 
 Build a genuinely learned, brain-inspired, GPU-scalable AI with meaningful
