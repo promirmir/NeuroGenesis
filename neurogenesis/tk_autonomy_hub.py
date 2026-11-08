@@ -331,6 +331,11 @@ def install_autonomy_hub(
         if event.widget == tab:
             closing["value"] = True
 
+    # Introspection for acceptance tests: the SAME refresh used in the
+    # default GUI is callable without timers or invented synthetic results.
+    tab.ng_status = global_status
+    tab.ng_refresh = refresh
+    tab.ng_timeline = timeline
     tab.bind("<Destroy>", close, add="+")
     tab.after(250, refresh)
     return tab
