@@ -20,6 +20,37 @@ from .foundation import FoundationBrain, FoundationConfig, torch
 MAX_CORPUS_BYTES = 32 * 1024 * 1024
 
 
+def evaluate_holdout(model, holdout_bytes: bytes, *, sequence: int, device: str):
+    """Score every non-overlapping held-out window; exclude boundaries.
+
+    This is not prospective, cross-document or out-of-distribution validation.
+    """
+    if sequence < 2 or len(holdout_bytes) < sequence:
+        raise ValueError("holdout shorter than evaluation sequence")
+    total_loss = 0.0
+    transitions = 0
+    windows = 0
+    model.eval()
+    with torch.no_grad():
+        for start in range(0, len(holdout_bytes) - 1, sequence):
+            window = holdout_bytes[start:start + sequence]
+            if len(window) < 2:
+                continue
+            tokens = torch.tensor(list(window), dtype=torch.long,
+                                  device=device).unsqueeze(0)
+            loss = float(model(tokens).token_loss.item())
+            if not math.isfinite(loss):
+                raise ValueError("non-finite held-out loss")
+            count = len(window) - 1
+            total_loss += loss * count
+            transitions += count
+            windows += 1
+    return {"next_byte_ce_nats": total_loss / transitions,
+            "scored_transitions": transitions, "windows": windows}
+
+
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Train local multi-timescale foundation brain")
     parser.add_argument("--input", required=True, type=Path,
@@ -74,14 +105,13 @@ def main(argv: list[str] | None = None) -> int:
     # This is a basic chronological split, not genuine OOD language evaluation.
     split = int(len(data) * 0.9)
     train_bytes = torch.tensor(list(data[:split]), dtype=torch.long)
-    holdout = torch.tensor(
-        list(data[split:split + args.sequence]),
-        dtype=torch.long, device=device).unsqueeze(0)
+    holdout_bytes = data[split:]
     if split <= args.sequence + 1:
         parser.error("training split too short")
     with torch.no_grad():
         model.eval()
-        before = float(model(holdout).token_loss.item())
+        before_result = evaluate_holdout(model, holdout_bytes, sequence=args.sequence, device=device)
+        before = before_result["next_byte_ce_nats"]
     generator = torch.Generator(device="cpu").manual_seed(args.seed)
     last = {}
     for _ in range(args.steps):
@@ -94,7 +124,8 @@ def main(argv: list[str] | None = None) -> int:
         last = model.train_batch(sequence, optimizer)
     model.eval()
     with torch.no_grad():
-        after = float(model(holdout).token_loss.item())
+        after_result = evaluate_holdout(model, holdout_bytes, sequence=args.sequence, device=device)
+        after = after_result["next_byte_ce_nats"]
     if not math.isfinite(after):
         raise ValueError("non-finite held-out loss; checkpoint not saved")
     model.save_checkpoint(args.output, training_steps=args.steps)
@@ -106,6 +137,9 @@ def main(argv: list[str] | None = None) -> int:
         "training_last_batch_loss": last["loss"],
         "heldout_next_byte_ce_before": before,
         "heldout_next_byte_ce_after": after,
+        "heldout_scored_transitions": after_result["scored_transitions"],
+        "heldout_windows": after_result["windows"],
+        "heldout_evaluation": "all_nonoverlapping_windows_excluding_boundaries",
         "heldout_kind": "adjacent_contiguous_corpus_segment_not_OOD",
         "context_order_retained": True,
         "pretrained_weights": False,
