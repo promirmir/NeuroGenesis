@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -51,13 +52,16 @@ def train_approved_knowledge(db_path: str | Path, output: str | Path, *,
                              sequence: int = 32, batch: int = 2,
                              hidden: int = 32, seed: int = 1234,
                              device: str = "cpu",
+                             resume_from: str | Path | None = None,
+                             trust_resume: bool = False,
                              cancel_event: threading.Event | None = None,
                              on_progress: Callable[[int, dict[str, float]], None] | None = None
                              ) -> dict[str, Any]:
-    """Train a fresh *candidate* checkpoint; never overwrite active chat model.
+    """Train a fresh or explicitly resumed *candidate*, never promote active chat.
 
-    This is a self-supervised next-byte research task, not semantic question
-    answering, truth verification or automatic deployment.
+    A resumed run restores trained weights, but deliberately starts a fresh
+    AdamW optimizer. Optimizer state is not in the numerical checkpoint.
+    This is not a byte-identical continuation of one uninterrupted job.
     """
     if confirm_rights is not True:
         raise PermissionError("explicit corpus-rights confirmation required")
@@ -72,6 +76,15 @@ def train_approved_knowledge(db_path: str | Path, output: str | Path, *,
         raise ValueError("invalid bounded model training configuration")
     if device == "cuda" and not torch.cuda.is_available():
         raise ValueError("CUDA unavailable; explicit GPU training refused")
+    destination = Path(output)
+    if destination.suffix.lower() not in (".pt", ".pth"):
+        raise ValueError("checkpoint must use private .pt or .pth extension")
+    if destination.is_symlink() or destination.exists():
+        raise ValueError("new candidate output path must not already exist")
+    if destination.resolve() == Path(db_path).resolve():
+        raise ValueError("checkpoint cannot overwrite local SQLite memory")
+    if resume_from is not None and trust_resume is not True:
+        raise PermissionError("resume requires explicit trust of LOCAL numerical checkpoint")
     if cancel_event is not None and not isinstance(cancel_event, threading.Event):
         raise ValueError("cancel_event must be a threading.Event")
     if on_progress is not None and not callable(on_progress):
@@ -97,7 +110,27 @@ def train_approved_knowledge(db_path: str | Path, output: str | Path, *,
     cfg = FoundationConfig(hidden_size=hidden, fast_layers=1, slow_layers=1,
                            max_sequence=sequence, chunk_size=8)
     torch.manual_seed(seed)
-    model = FoundationBrain(cfg).to(device)
+    initial_training_steps = 0
+    resume_sha256: str | None = None
+    if resume_from is not None:
+        prior_path = Path(resume_from)
+        if (prior_path.suffix.lower() not in (".pt", ".pth")
+                or prior_path.is_symlink() or not prior_path.is_file()
+                or prior_path.resolve() == destination.resolve()):
+            raise ValueError("resume source must be a distinct, existing local .pt/.pth")
+        if cancel_event is not None and cancel_event.is_set():
+            raise InterruptedError("training cancelled before reading previous weights")
+        model, initial_training_steps = FoundationBrain.load_checkpoint(
+            prior_path, device=device)
+        if model.config != cfg or initial_training_steps < 1:
+            raise ValueError("resume requires a trained checkpoint with identical architecture")
+        digest = hashlib.sha256()
+        with prior_path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        resume_sha256 = digest.hexdigest()
+    else:
+        model = FoundationBrain(cfg).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=0.002)
     before = evaluate_holdout(model, holdout, sequence=sequence, device=device)
     baseline_ce = markov_holdout_cross_entropy(training, holdout, sequence=sequence)
@@ -132,14 +165,11 @@ def train_approved_knowledge(db_path: str | Path, output: str | Path, *,
             before["next_byte_ce_nats"], after["next_byte_ce_nats"],
             baseline_ce, last["loss"])):
         raise ValueError("nonfinite model/holdout metrics; checkpoint not saved")
-    destination = Path(output)
-    if destination.resolve() == Path(db_path).resolve():
-        raise ValueError("checkpoint cannot overwrite local SQLite memory")
-    if destination.suffix.lower() not in (".pt", ".pth"):
-        raise ValueError("checkpoint must use private .pt or .pth extension")
     if cancel_event is not None and cancel_event.is_set():
         raise InterruptedError("operator cancelled before checkpoint write")
-    model.save_checkpoint(destination, training_steps=steps)
+    if destination.exists() or destination.is_symlink():
+        raise ValueError("candidate output appeared during training; refusing overwrite")
+    model.save_checkpoint(destination, training_steps=initial_training_steps + steps)
     return {
         "status": "candidate_self_supervised_weights_trained",
         "device": device,
@@ -150,6 +180,10 @@ def train_approved_knowledge(db_path: str | Path, output: str | Path, *,
         "holdout_split": "entire_distinct_latest_document_no_gradient_access",
         "source_rights": "operator_asserted_per_source_not_independently_verified",
         "training_steps": steps,
+        "checkpoint_total_training_steps": initial_training_steps + steps,
+        "resumed_from_trusted_local_checkpoint": resume_from is not None,
+        "resumed_checkpoint_sha256": resume_sha256,
+        "optimizer_state_resumed": False,
         "train_last_loss": last["loss"],
         "heldout_next_byte_ce_before": before["next_byte_ce_nats"],
         "heldout_next_byte_ce_after": after["next_byte_ce_nats"],
@@ -177,13 +211,17 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--batch", type=int, default=2)
     parser.add_argument("--hidden", type=int, default=32)
     parser.add_argument("--seed", type=int, default=1234)
+    parser.add_argument("--resume-from", type=Path,
+                        help="Existing trusted local numerical weights (creates a new output)")
+    parser.add_argument("--confirm-trusted-resume", action="store_true")
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     args = parser.parse_args(argv)
     try:
         result = train_approved_knowledge(
             args.db, args.output, confirm_rights=args.confirm_corpus_rights,
             steps=args.steps, sequence=args.sequence, batch=args.batch,
-            hidden=args.hidden, seed=args.seed, device=args.device)
+            hidden=args.hidden, seed=args.seed, device=args.device,
+            resume_from=args.resume_from, trust_resume=args.confirm_trusted_resume)
     except (ValueError, PermissionError, RuntimeError, OSError) as exc:
         parser.error(str(exc))
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
