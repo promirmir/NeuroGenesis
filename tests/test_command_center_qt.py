@@ -16,7 +16,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 if importlib.util.find_spec("PySide6") is None:
     raise unittest.SkipTest("optional Qt is not installed; dedicated Qt CI installs it")
 
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QScrollArea
 from neurogenesis.command_center import CommandCenter, PANELS
 from neurogenesis.command_service import CommandService
 from neurogenesis.web_sense import WebObservation
@@ -72,6 +72,7 @@ class QtCommandCenterSmokeTests(unittest.TestCase):
         self.assertFalse(self.service.snapshot().inference_running)
         self.assertFalse(self.service.network_enabled)
         self.assertIn("predykcję", self.window.inference_start.text().lower())
+        self.assertIsNotNone(self.window.pages.widget(4).findChild(QScrollArea))
 
     def test_consent_updates_real_service_and_stops_on_close(self):
         self.window.navigate(6)
