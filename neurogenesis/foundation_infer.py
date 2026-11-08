@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import sys
 from pathlib import Path
 import threading
 import time
@@ -108,17 +109,29 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Offline, ungrounded neural next-byte experiment; NOT Chat")
     parser.add_argument("--checkpoint", required=True, type=Path)
-    parser.add_argument("--prompt", required=True)
+    prompt_source = parser.add_mutually_exclusive_group(required=True)
+    prompt_source.add_argument("--prompt")
+    prompt_source.add_argument("--prompt-stdin", action="store_true",
+                               help="read bounded local prompt from stdin (no process-list exposure)")
     parser.add_argument("--confirm-local-checkpoint", action="store_true")
     parser.add_argument("--bytes", type=int, default=32)
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     args = parser.parse_args(argv)
     try:
+        if args.prompt_stdin:
+            # The desktop pipes private prompts, never adding them to command
+            # lines or persisting them to an unencrypted temporary file.
+            raw = sys.stdin.buffer.read(2049)
+            if len(raw) > 2048:
+                raise ValueError("stdin prompt exceeds 2048 UTF-8 bytes")
+            prompt = raw.decode("utf-8", errors="strict")
+        else:
+            prompt = args.prompt
         report = generate_candidate(
-            args.checkpoint, args.prompt,
+            args.checkpoint, prompt,
             trust_checkpoint=args.confirm_local_checkpoint,
             max_new_bytes=args.bytes, device=args.device)
-    except (ValueError, PermissionError, RuntimeError, OSError) as exc:
+    except (ValueError, PermissionError, RuntimeError, OSError, UnicodeError) as exc:
         parser.error(str(exc))
     print(json.dumps(report, ensure_ascii=False, sort_keys=True))
     return 0
