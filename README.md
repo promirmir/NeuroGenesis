@@ -1,12 +1,31 @@
-> **Rozwój w gałęzi (jeszcze nie wydanie EXE):** `Holographic Neural Core` — obracający się przestrzenny mózg wizualizujący wyłącznie rzeczywiste neurony/synapsy LIF, świetlne zdarzenia po nowych zapisanych impulsach, przełączanie 3D/2D oraz większe limity nowych sieci (512 neuronów, 4096 synaps, 1024 wzorce). Obrót kamery ma charakter wizualny, nie oznacza aktywności AI. Starsze pamięci nie są migrowane. [Zakres i testy](docs/HOLOGRAPHIC_CORE.md). **Aktualny plik EXE poniżej nadal jest wersją 0.8.0 bez tego hologramu.**
+## NeuroGenesis 0.9.0 — awatar i działające laboratorium Foundation
 
-## Dostępne wydanie Windows z faktycznym ekranem MISSION CONTROL
+**W kodzie programu:** [EMBODIED FOUNDATION](docs/EMBODIED_FOUNDATION.md).
+Domyślne Windows `NeuroGenesis.exe` zawiera teraz trzy przełączane widoki:
+obracający się hologram LIF, dokładną mapę synaps 2D oraz cybernetyczną
+postać (AWATAR). Jej efekty związane z aktywnością zależą tylko od
+faktycznych kroków i impulsów zapisywanych w SQLite; ruch kamery ma
+charakter wizualny.
+
+Dodatkowa zakładka **Foundation Lab** potrafi wywołać rzeczywistą predykcję
+istniejącego modelu GRU z zaufanego lokalnego checkpointu. Użytkownik
+wybiera osobne środowisko Python z PyTorch — mały plik EXE go nie zawiera.
+Wynik to niezweryfikowana kontynuacja bajtowa, nie czat AI, a checkpoint
+musi być uprzednio wytrenowany. Nie ma automatycznych pobrań, treningu,
+samozmiany ani nadpisywania pamięci. [Wymagania i instrukcja](docs/EMBODIED_FOUNDATION.md).
+
+**Status udostępniania:** kod 0.9.0 trafia przez testy CI. Oficjalne EXE
+0.9.0 wskazuje dopiero nowe zweryfikowane wydanie pod
+[releases/latest](https://github.com/promirmir/NeuroGenesis/releases/latest),
+nie należy mylić starszego EXE 0.8.0 z nowymi funkcjami.
+
+## Poprzednie zweryfikowane wydanie Windows 0.8.0 (archiwalne)
 
 **NeuroGenesis 0.8.0 — rzeczywisty, nowy ekran startowy w samodzielnym EXE.** [Pobierz zweryfikowane wydanie](https://github.com/promirmir/NeuroGenesis/releases/tag/v0.8.0-main.8e27f420). SHA-256 pliku EXE: `5e48e1c7ecde3b7a066a39c2b71c8a70764351888ff30dc23ba75b53c6fcb44e`. Windows GUI otwiera teraz `CENTRUM` z prawdziwym grafem LIF i metrykami zamiast starej pustej rozmowy. Źródło i testy: PR #50; pełna macierz Windows/Python/Torch/Qt/ochrona prywatności zielona. Technologia **publicznego EXE: Tkinter**; rozbudowane Qt pozostaje opcjonalnym programem uruchamianym ze źródeł i wymaga osobnej licencyjnej bramki wydania. Brak AGI i samodzielnego semantycznego modelu języka.
 
 # NeuroGenesis — Mission Control
 
-**research prototype v0.8.0.**  
+**research prototype v0.9.0.**  
 **Publiczne autorstwo: Miron przy pomocy AI.**
 
 NeuroGenesis to lokalny projekt badawczy AI: rzeczywista mała sieć neuronowa LIF ze strukturalną plastycznością, prywatna trwała baza SQLite, kontrolowane zdobywanie informacji ze źródeł HTTPS, ekstrakcyjne cytowanie oraz odrębny eksperymentalny model Foundation Brain trenowany w PyTorch. **System nie jest AGI, świadomością, modelem ludzkiego mózgu ani niezależnie zweryfikowanym systemem rozumienia języka naturalnego.**
