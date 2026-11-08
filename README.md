@@ -1,3 +1,11 @@
+## NeuroGenesis 0.12.2 — autonomiczne cele reagują na wyniki badań
+
+Agent celów nie czeka już wyłącznie na zmianę prywatnych plików TXT. Po legalnym i świadomie zatwierdzonym pobraniu źródła HTTPS, jego faktyczne fragmenty i wersja SHA-256 trafiają do tej samej pętli cel → źródło → analiza → raport do oceny. Cel w stanie *waiting* wznawia pracę po pojawieniu się pasujących informacji. Niepasujące strony nie powodują udawanego postępu, a niezmieniona wersja źródła nie uruchamia ciągłego ponawiania pracy.
+
+Operacja korzysta wyłącznie z prywatnego indeksu SQLite, nie wykonuje samodzielnie żadnych dodatkowych żądań sieciowych. W panelu wyświetlane są rzeczywiste odnośniki i SHA-256, a wyniki modelu nadal wymagają oceny. To pamięć i autonomiczna analiza źródeł, a nie dostrajanie wag Qwen.
+
+---
+
 ## 0.12.1 — Samodzielne badania + wykorzystanie źródeł przez model
 
 Wersja 0.12.1 jest **rozszerzeniem głównego, autonomicznego interfejsu 0.12**, nie drugim, konkurencyjnym pulpitem. Pierwszy ekran pozostaje jeden: **NeuroGenesis — rozmowa, trwałe cele, postęp autonomii i rzeczywisty connectome**.
@@ -85,7 +93,7 @@ nie należy mylić starszego EXE 0.8.0 z nowymi funkcjami.
 
 # NeuroGenesis — Mission Control
 
-**research prototype v0.12.1.**  
+**research prototype v0.12.2.**  
 **Publiczne autorstwo: Miron przy pomocy AI.**
 
 NeuroGenesis to lokalny projekt badawczy AI: rzeczywista mała sieć neuronowa LIF ze strukturalną plastycznością, prywatna trwała baza SQLite, kontrolowane zdobywanie informacji ze źródeł HTTPS, ekstrakcyjne cytowanie oraz odrębny eksperymentalny model Foundation Brain trenowany w PyTorch. **System nie jest AGI, świadomością, modelem ludzkiego mózgu ani niezależnie zweryfikowanym systemem rozumienia języka naturalnego.**
