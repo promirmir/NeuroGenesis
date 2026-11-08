@@ -3,10 +3,35 @@ from __future__ import annotations
 
 import queue
 import threading
+import time
 import tkinter as tk
 from tkinter import messagebox, ttk
 
 from .specialist_study import SpecialistStudy
+
+
+def research_autopilot_allowed(*, enabled: bool, consent: bool,
+                               topic: str, active: bool, cycles: int,
+                               last_finished: float | None, now: float,
+                               limit: int = 3,
+                               cooldown: float = 1800.0) -> bool:
+    """Bounded opt-in HTTPS research, no secret crawling or endless sessions."""
+    if not (type(enabled) is bool and type(consent) is bool
+            and type(active) is bool and type(cycles) is int
+            and type(now) in (float, int) and type(limit) is int
+            and type(cooldown) in (int, float)):
+        raise ValueError("Nieprawidłowe parametry autonomicznego badania.")
+    if not enabled or not consent or active:
+        return False
+    if not isinstance(topic, str) or not 3 <= len(topic.strip()) <= 120:
+        return False
+    if not 0 <= cycles < limit <= 3 or not 600 <= cooldown <= 86400:
+        return False
+    if last_finished is not None and (
+            type(last_finished) not in (int, float) or
+            now - last_finished < cooldown):
+        return False
+    return True
 
 
 def install_study_panel(parent, memory, consent_var):
@@ -35,6 +60,9 @@ def install_study_panel(parent, memory, consent_var):
     buttons.pack(fill="x", padx=18, pady=8)
     events = queue.SimpleQueue()
     current = {"study": None, "thread": None}
+    autopilot = tk.BooleanVar(value=False)
+    progress = tk.StringVar(value="AUTO-BADANIE WYŁĄCZONE (maks. 3 sesje)")
+    autopilot_runs = {"count": 0, "last_finished": None}
 
     def add_log(line):
         log.configure(state="normal")
@@ -87,6 +115,12 @@ def install_study_panel(parent, memory, consent_var):
     start_button = ttk.Button(buttons, text="Rozpocznij badanie", command=start)
     start_button.pack(side="left")
     ttk.Button(buttons, text="Stop", command=stop).pack(side="left", padx=8)
+    ttk.Checkbutton(
+        tab, variable=autopilot,
+        text="AUTONOMICZNIE KONTYNUUJ CEL / maks. 3 sesje, przerwa ≥30 min"
+    ).pack(anchor="w", padx=18, pady=(4, 2))
+    ttk.Label(tab, textvariable=progress, wraplength=760).pack(
+        fill="x", padx=18, pady=(0, 7))
 
     def poll():
         if not consent_var.get() and current["study"] is not None:
@@ -105,6 +139,8 @@ def install_study_panel(parent, memory, consent_var):
                     finally:
                         acknowledgement.set()
                 elif kind == "done":
+                    if autopilot.get() and current["study"] is not None:
+                        autopilot_runs["last_finished"] = time.monotonic()
                     result = current["study"].progress()
                     state.set(f"Zakończono: {result.attempted} prób, "
                               f"{result.accepted} zapisanych, {result.errors} błędów; "
@@ -129,6 +165,36 @@ def install_study_panel(parent, memory, consent_var):
             log.configure(state="normal")
             log.delete("1.0", "200.0")
             log.configure(state="disabled")
-        tab.after(250, poll)
-    tab.after(250, poll)
+        if not consent_var.get() and autopilot.get():
+            autopilot.set(False)
+            progress.set("AUTO-BADANIE ZATRZYMANE / brak zgody HTTPS")
+        if research_autopilot_allowed(
+                enabled=autopilot.get(), consent=bool(consent_var.get()),
+                topic=topic.get(),
+                active=current["thread"] is not None and current["thread"].is_alive(),
+                cycles=autopilot_runs["count"],
+                last_finished=autopilot_runs["last_finished"],
+                now=time.monotonic()):
+            autopilot_runs["count"] += 1
+            progress.set(
+                f"AUTO / sesja {autopilot_runs['count']}/3 · "
+                f"temat: {topic.get()[:65]}")
+            start()
+        if tab.winfo_exists():
+            tab.after(1250, poll)
+
+    def on_destroy(event):
+        if event.widget == tab:
+            autopilot.set(False)
+            stop()
+
+    tab.ng_study_topic = topic
+    tab.ng_study_pages = pages
+    tab.ng_study_state = state
+    tab.ng_study_autopilot = autopilot
+    tab.ng_study_progress = progress
+    tab.ng_study_start = start
+    tab.ng_study_stop = stop
+    tab.bind("<Destroy>", on_destroy, add="+")
+    tab.after(1250, poll)
     return tab

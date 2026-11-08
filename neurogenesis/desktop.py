@@ -419,7 +419,10 @@ def launch(db_path: Path) -> int:
     training_tab = install_bundled_training(tabs, knowledge)
     model_chat_tab = install_autonomous_home(
         tabs, memory, knowledge, supervisor, goals,
-        brain_enabled=autonomy_enabled)
+        brain_enabled=autonomy_enabled,
+        # Research stays explicitly controlled by a separate HTTPS consent.
+        open_research=lambda: (
+            tabs.select(advanced_frame), advanced_tabs.select(study_tab)))
     targets = {
         "foundation": foundation_tab,
         "training": training_tab,
@@ -443,7 +446,7 @@ def launch(db_path: Path) -> int:
     )
     # Dedicated research-only specialisation tab grouped under Advanced.
     from .study_panel import install_study_panel
-    install_study_panel(advanced_tabs, memory, web_enabled)
+    study_tab = install_study_panel(advanced_tabs, memory, web_enabled)
     ttk.Checkbutton(web_tab, text="Włącz odczyt HTTPS (domyślnie WYŁĄCZONY)",
                     variable=web_enabled).pack(anchor="w", padx=24, pady=3)
     ttk.Checkbutton(web_tab, text="Sprawdzaj zatwierdzony adres co 5 minut (opcjonalnie)",

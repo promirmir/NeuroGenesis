@@ -1,3 +1,16 @@
+## 0.12.1 — Samodzielne badania + wykorzystanie źródeł przez model
+
+Wersja 0.12.1 jest **rozszerzeniem głównego, autonomicznego interfejsu 0.12**, nie drugim, konkurencyjnym pulpitem. Pierwszy ekran pozostaje jeden: **NeuroGenesis — rozmowa, trwałe cele, postęp autonomii i rzeczywisty connectome**.
+
+- **Przycisk BADAJ ŹRÓDŁA** na ekranie głównym otwiera bezpośrednio specjalizację, bez szukania jej w hierarchii starych kart.
+- **Autonomia celu badawczego:** podajesz temat, dobrowolnie aktywujesz zgodę na HTTPS i tryb kontynuacji. System może wykonać maksymalnie trzy ograniczone sesje badawcze w trakcie jednego uruchomienia, z przerwą co najmniej 30 minut; respektuje dotychczasowe robots.txt, limit domen i tempo odczytu. Cofnięcie zgody zatrzymuje badanie.
+- **Wspólna inteligencja:** wcześniej zatwierdzone i rzeczywiście zapisane fragmenty stron WWW trafiają przez mechanizm RAG do tego samego lokalnego Qwen3-1.7B co własne TXT. Materiały pozostają niezaufanymi danymi, są oznaczone URL i sumą SHA-256, a odpowiedź nie jest automatycznie weryfikowana jako prawdziwa.
+- **Bezpieczne zamykanie:** anulowanie ładowania dużych wag modelu nie zostawia uruchomionego w tle procesu llama.cpp.
+
+Nowa funkcja nie zmienia istniejących wag LLM przez trening gradientowy. Trwały plan celów w modelu 0.12, historia i prywatna SQLite pozostają nienaruszone. Dopiero pełne testy Windows z prawdziwą odpowiedzią wygenerowaną z jednego EXE uprawniają do wydania.
+
+---
+
 ## NeuroGenesis 0.12.0 — autonomiczny ekran startowy i aktywny agent celów
 
 **Rozwijane w PR (weryfikacja CI przed wydaniem):** zamiast domyślnie otwierać statystyczny Mission Control, nowy Windows EXE od razu pokazuje **NEUROGENESIS**: lokalną rozmowę Qwen3-1.7B, autonomiczne cele z trwałą kolejką, podgląd rzeczywistej sieci LIF i bieżące stany systemu. Model sam ładuje wbudowane wagi; pytanie napisane podczas uruchamiania zostaje w kolejce i jest automatycznie obsługiwane.
@@ -72,7 +85,7 @@ nie należy mylić starszego EXE 0.8.0 z nowymi funkcjami.
 
 # NeuroGenesis — Mission Control
 
-**research prototype v0.12.0.**  
+**research prototype v0.12.1.**  
 **Publiczne autorstwo: Miron przy pomocy AI.**
 
 NeuroGenesis to lokalny projekt badawczy AI: rzeczywista mała sieć neuronowa LIF ze strukturalną plastycznością, prywatna trwała baza SQLite, kontrolowane zdobywanie informacji ze źródeł HTTPS, ekstrakcyjne cytowanie oraz odrębny eksperymentalny model Foundation Brain trenowany w PyTorch. **System nie jest AGI, świadomością, modelem ludzkiego mózgu ani niezależnie zweryfikowanym systemem rozumienia języka naturalnego.**
