@@ -1,3 +1,15 @@
+## Latest release confirmed — 2026-11-08
+
+- Source SHA-bound verified Windows **Tk** EXE release `v0.6.0-main.4a81cc76` targets `4a81cc76a3191ee4031e8bfde9430626a50914ad`; 13,044,179 bytes; SHA-256 `ad30b2f245a77055feca9557f426b77d5c6298d8e0a0e3a31cf727270e5a293d`. Windows tests and publish workflow succeeded. Different optional Qt exe has NOT been released legally.
+- Feature work PR #36–#38 merged; docs PR follows and should supersede historical "candidate" notes. Do not claim neural semantic generalization or factual certainty; the six synthetic QA questions contain a false-citation error.
+
+## Latest source-provenance/dialogue/QA handoff — 2026-11-08
+
+- Main source SHA `4a81cc76a3191ee4031e8bfde9430626a50914ad`: PR #36 (two-host verbatim citations and cautious possible-discrepancy flags), #37 (volatile Qt same-URL followup with mandatory novel focus), #38 (rights-gated local read-only QA source attribution/abstention benchmark) **all merged** after required Python 3.11–3.13, privacy, actual Torch CPU, Qt Windows/Linux and Windows frozen Tk EXE CI on feature heads.
+- Latest tiny **fictional** QA result: 3/3 supported expected literal citations, 2/3 unsupported correctly abstained, 1/3 unsupported **falsely cited**, total 5/6=83.33% exact fixture score. CI SQLite-only p95 retrieval 0.33562ms. **Do not claim factual accuracy, semantic reasoning, calibrated confidence or independent QA corpus evidence.** No corpus questions persisted or sent to the network.
+- Existing brain and old SQLite untouched. No Qt downloadable package pending license notices; Tk EXE remains user-ready. Post-merge Windows release check mandatory before citing exact newest tag. See `docs/PROJECT_STATE.md`, `docs/QA_EVALUATION.md`, `docs/KNOWLEDGE_PIPELINE.md`.
+- Next: improve false-positive abstention conservatively and prove against **new, unused rights-cleared** QA samples; benchmark contextual neural grounding/retention versus baselines, then physical CUDA and Qt legal packaging. No endless unrelated features and no automatic model promotion.
+
 ## Active measured grounded-QA acceptance gate (November 8, 2026)
 
 - Baseline main `c94dce00761d938e12215b19c20dbfd9efe426a9`: PR #37 source-anchored session-only followups merged after required CPU/Python/Qt/Windows/privacy CI green.

@@ -49,3 +49,7 @@ The Python 3.11–3.13 and Windows frozen EXE workflows run these tests without 
 ## Next required model-quality stage
 
 Use a genuinely independent rights-cleared corpus and domain-specific Q/A sets. Report quality against a simple lexical baseline and meaningful neural model alternative under comparable budgets, check old-task regression and factual correctness, and only then consider source-grounded neural chat promotion. The current tiny synthetic fixture is an engineering smoke test, not generalization evidence.
+
+## Verified synthetic regression milestone (PR #38 merged)
+
+PR #38 merged to main `4a81cc76a3191ee4031e8bfde9430626a50914ad` after green Python 3.11–3.13, actual CPU PyTorch, Qt Windows/Ubuntu, privacy and Windows frozen Tk EXE checks at the final PR head. Fictional CI test produced **3/3 literal expected quoted citations**, **2/3 proper unsupported abstentions**, **1/3 unsupported false citations**, total strict 5/6=83.33%, lexical SQLite query p95 approximately 0.33562 ms. These are synthetic smoke observations, not real-world factual truth, answer generation competence or a verified unseen corpus. The next development should aim to reduce this failure on a separate, fresh audit set without overfitting the six pre-seen test questions.

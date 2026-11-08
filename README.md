@@ -1,3 +1,13 @@
+## Najnowsze zweryfikowane EXE Windows
+
+[**Pobierz NeuroGenesis v0.6.0-main.4a81cc76**](https://github.com/promirmir/NeuroGenesis/releases/tag/v0.6.0-main.4a81cc76) — aplikacja Tkinter z potwierdzonego commita `4a81cc76`, SHA-256 `ad30b2f245a77055feca9557f426b77d5c6298d8e0a0e3a31cf727270e5a293d`. Pozostałe, eksperymentalne funkcje Foundation Brain i Qt Command Center wymagają osobnych zależności i testów przed wydaniem nowego interfejsu Windows. **Nie jest to AGI ani gotowa semantyczna AI.**
+
+## Zweryfikowany postęp: źródła, kontekst i pomiar odpowiedzi
+
+PR **#36–#38 zostały scalone**. System może porównać krótkie dosłowne cytaty z dwóch różnych hostów, wskazać **możliwe** rozbieżności do ręcznego sprawdzenia oraz zachować temat poprzedniego źródłowego pytania **tylko przez bieżącą sesję opcjonalnego Qt**. Lokalny tester mierzy trafność dosłownych cytatów, właściwy adres źródła, odmowy odpowiedzi i czas wyszukiwania bez zmiany SQLite.
+
+Pierwszy mały **syntetyczny** test dał 3/3 poprawne literalne cytaty i tylko 2/3 prawidłowe odmowy; jedno pytanie bez odpowiedzi otrzymało fałszywą wskazówkę źródłową. To mierzalny problem przed wydaniem v1, nie dowód rozumienia języka. [Raport i zasady](docs/QA_EVALUATION.md).
+
 ## Testowalna jakość odpowiedzi — PR kandydat
 
 Nowy lokalny tester może porównać odpowiedzi z bazy wiedzy ze zbiorem pytań i ręcznie zatwierdzonych fragmentów źródeł. Mierzy poprawność **dosłownych cytatów i adresów URL**, odmawianie odpowiedzi na niepoparte pytania oraz czas wyszukiwania. Uruchamia się bez internetu, bez trenowania wag i bez modyfikowania prywatnej bazy. Wynik nie oznacza jeszcze prawdziwości cytatów ani rozumienia języka. Realne zbiory testowe wymagają praw do danych i oddzielnej walidacji. [Narzędzie i metodologia](docs/QA_EVALUATION.md).
