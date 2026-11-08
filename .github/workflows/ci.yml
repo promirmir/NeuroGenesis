@@ -38,6 +38,10 @@ jobs:
         run: python -m neurogenesis predict --steps 200
       - name: Run continual learning A-B-A benchmark
         run: python -m neurogenesis benchmark --seeds 10 --steps-per-phase 128 --probe-steps 48
+      - name: Run measured adaptive ACF versus fixed/persistence controls
+        run: |
+          python -m neurogenesis.acf_experiment --seed 7 --steps-per-phase 96 > "$RUNNER_TEMP/acf-phase1.json"
+          python -c "import json,os; r=json.load(open(os.environ['RUNNER_TEMP']+'/acf-phase1.json')); assert len(r['stages']) == 3 and r['structural_growth_observed']; print('ACF actual return-phase improvement vs fixed:', r['adaptive_gain_vs_fixed_return_mse'])"
       - name: Check local episodic memory persistence
         run: |
           python -m neurogenesis remember "synthetic observation" --db "$RUNNER_TEMP/experiences.sqlite3"
