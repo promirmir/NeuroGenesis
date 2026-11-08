@@ -24,6 +24,7 @@ import urllib.error
 import urllib.request
 
 from .local_knowledge import LocalKnowledge
+from .memory import ExperienceMemory
 
 MODEL_FILE = "Qwen3-1.7B-Q4_K_M.gguf"
 MODEL_SHA256 = "ba491cf470c3cadc624e4c8d6c9a27c998809e8ba8eb938d1689ae87e024b6b7"
@@ -166,11 +167,13 @@ class BundledModelSession:
 
     def __init__(self, *, assets_root: str | Path | None = None,
                  knowledge: LocalKnowledge | None = None,
+                 web_memory: ExperienceMemory | None = None,
                  max_tokens: int = 224):
         if type(max_tokens) is not int or not 16 <= max_tokens <= 384:
             raise ValueError("Limit generacji 16–384 tokenów.")
         self.assets_root = assets_root
         self.knowledge = knowledge
+        self.web_memory = web_memory
         self.max_tokens = max_tokens
         self._proc: subprocess.Popen | None = None
         self._port: int | None = None
@@ -239,6 +242,24 @@ class BundledModelSession:
             raise RuntimeError("Wbudowany model jeszcze nie działa. Uruchom go ponownie.")
         results = (self.knowledge.retrieve(verified[-1]["content"])
                    if self.knowledge is not None else [])
+        # The research module already stores cited extracts in the existing
+        # experiences.sqlite3 (and enforces source provenance). Feed those
+        # independently validated-as-retrieved, UNTRUSTED snippets into the
+        # same real LLM, not an unrelated legacy-only conversation panel.
+        # This is RAG, not gradient training and not proof of source truth.
+        if self.web_memory is not None:
+            web_result = self.web_memory.answer_from_knowledge(
+                verified[-1]["content"])
+            if web_result is not None and web_result.get("sources"):
+                first = web_result["sources"][0]
+                text = str(web_result.get("answer", ""))[:1050]
+                if text and len(results) < 4:
+                    results.append({
+                        "text": "PUBLICZNE ŹRÓDŁO (NIEZWERYFIKOWANE):\n" + text,
+                        "file": str(first["url"]),
+                        "sha256": str(first["sha256"]),
+                        "origin": "approved_https_research",
+                    })
         payload = {
             "model": "NeuroGenesis-Qwen3-1.7B",
             "messages": contextual_messages(verified, results),
