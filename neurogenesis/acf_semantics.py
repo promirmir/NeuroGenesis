@@ -47,8 +47,18 @@ def parse_semantic_features(text: str) -> tuple[float, ...]:
     """Reject any nonconforming inference; no permissive regex extraction."""
     if type(text) is not str or not 3 <= len(text) <= 2000:
         raise ValueError("Invalid semantic model response length.")
+    def unique_pairs(pairs):
+        out = {}
+        for key, value in pairs:
+            if key in out:
+                raise ValueError("Duplicate semantic axis key.")
+            out[key] = value
+        return out
     try:
-        decoded = json.loads(text)
+        decoded = json.loads(
+            text, object_pairs_hook=unique_pairs,
+            parse_constant=lambda _x: (_ for _ in ()).throw(
+                ValueError("Non-finite semantic classification.")))
     except (json.JSONDecodeError, UnicodeError) as exc:
         raise ValueError("Semantic LLM failed to produce strict JSON.") from exc
     if type(decoded) is not dict or set(decoded) != set(AXES):
