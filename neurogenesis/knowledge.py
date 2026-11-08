@@ -262,6 +262,10 @@ def answer_question(con: sqlite3.Connection, question: str, *,
         "answer": answer,
         "source": public_sources[0],
         "sources": public_sources,
+        # Exact excerpt-to-URL attribution for independent QA evaluation.
+        # Text was already quoted in 'answer'; never invent citations.
+        "quoted_evidence": [{"url": src["url"], "text": src["excerpt"]}
+                            for src in selected],
         "matched_query_terms": overlap,
         "total_query_terms": len(terms),
         "evidence_review": {

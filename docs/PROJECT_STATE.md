@@ -1,3 +1,10 @@
+## 2026-11-08 — offline grounded QA quality measurement (PR candidate)
+
+- `main` baseline `c94dce00761d938e12215b19c20dbfd9efe426a9`, PR #37 merged after Python 3.11–3.13, actual Torch CPU, Qt Windows/Ubuntu, frozen Tk and Qt technical EXE checks green. It adds strictly **session-only lexical context** to optional Qt, no neural semantic understanding claim.
+- Branch `feat/offline-grounded-qa-benchmark-20261108` implements an opt-in `neurogenesis.qa_eval` CLI with a bounded local **held-out** question+literal citation JSONL, operator-declared data rights and independence. It evaluates actual newest-revision SQLite quoted text to exact expected URLs and literal spans; separate supported recall, source attribution, false citation/abstention, and p50/p95 retrieval latency. SQLite opened **read-only**, no persisted questions, brain updates, network or raw private audit data in reports.
+- Mandatory synthetic fixture intentionally includes a lexically overlapping unsupported question to expose rather than conceal false answer risk. This is evidence matching only, not semantic/factual QA or neural inference. Tests additionally cover exact source excerpts, consent, invalid data, no SQLite mutation and privacy.
+- Candidate pending Python 3.11–3.13, real Torch CPU, Windows Tk EXE, privacy and Qt checks. See [QA_EVALUATION.md](QA_EVALUATION.md).
+
 ## 2026-11-08 — conservative source-grounded short follow-ups (PR candidate)
 
 - Current `main` at feature start `0bcfb6a158c57465b0b39dda26e4ed3ca20e22bd`, PR #36 **merged** with Python 3.11–3.13, real PyTorch CPU, privacy, Qt Windows/Ubuntu and frozen Tk Windows EXE checks green. Its two-host source comparison warns only about **possible** text/numeric discrepancies; factual accuracy and publisher independence remain unverified.

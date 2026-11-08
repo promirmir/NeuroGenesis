@@ -1,3 +1,7 @@
+## Testowalna jakość odpowiedzi — PR kandydat
+
+Nowy lokalny tester może porównać odpowiedzi z bazy wiedzy ze zbiorem pytań i ręcznie zatwierdzonych fragmentów źródeł. Mierzy poprawność **dosłownych cytatów i adresów URL**, odmawianie odpowiedzi na niepoparte pytania oraz czas wyszukiwania. Uruchamia się bez internetu, bez trenowania wag i bez modyfikowania prywatnej bazy. Wynik nie oznacza jeszcze prawdziwości cytatów ani rozumienia języka. Realne zbiory testowe wymagają praw do danych i oddzielnej walidacji. [Narzędzie i metodologia](docs/QA_EVALUATION.md).
+
 ## Krótkie pytania uzupełniające — PR kandydat
 
 Opcjonalne Command Center zaczyna obsługiwać **kontekst jednej sesji**: po pytaniu ze źródłową odpowiedzią można zadać krótkie pytanie zaczynające się od „A…?” pod warunkiem, że wskazany nowy szczegół jest obecny w zachowanym fragmencie poprzedniego źródła. Brak potwierdzenia oznacza brak odpowiedzi — bez zgadywania i zmyślonych cytatów. Przycisk „Wyczyść kontekst” kasuje wyłącznie temat z pamięci działającej aplikacji, nie SQLite. To wyszukiwanie leksykalne, **nie rozumowanie modelu**. Funkcja oczekuje na pełny CI. [Szczegóły](docs/KNOWLEDGE_PIPELINE.md).
