@@ -103,8 +103,7 @@ class Bm25BenchmarkTests(unittest.TestCase):
             compare_bm25(self.root / "absent.sqlite3", self.audit,
                          confirm_rights=True, confirm_untouched=True)
         self.assertFalse((self.root / "absent.sqlite3").exists())
-        with self.assertRaises(ValueError):
-            bm25_excerpt([], " ")
+        self.assertIsNone(bm25_excerpt([], " "))
         self.assertIsNone(bm25_excerpt([], "Co to jest SolarisX?"))
 
 
