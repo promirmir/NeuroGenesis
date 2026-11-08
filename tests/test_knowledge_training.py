@@ -158,6 +158,26 @@ class ApprovedKnowledgeRightsTests(unittest.TestCase):
         self.assertFalse(self.output.exists())
 
     @unittest.skipIf(torch is None, "dedicated CI installs real PyTorch CPU")
+    def test_service_worker_runs_real_torch_off_ui_thread_with_events(self):
+        from neurogenesis.command_service import CommandService
+        for source in self.add_sources():
+            self.memory.set_source_training_rights(source["id"], True)
+        service = CommandService(self.db)
+        with self.assertRaises(PermissionError):
+            service.start_training(self.output, confirmed=False,
+                                   steps=1, sequence=16, hidden=16, device="cpu")
+        service.start_training(self.output, confirmed=True,
+                               steps=1, sequence=16, hidden=16, device="cpu")
+        service._training_thread.join(timeout=60)
+        self.assertFalse(service._training_thread.is_alive(), "real Torch worker stalled")
+        events = service.poll_events(limit=100)
+        self.assertTrue(any(kind == "train_progress" for kind, _ in events))
+        self.assertTrue(any(kind == "train_done" for kind, _ in events))
+        self.assertTrue(self.output.exists())
+        self.assertEqual(service.snapshot().training_step, 1)
+        self.assertFalse(service.snapshot().training_running)
+
+    @unittest.skipIf(torch is None, "dedicated CI installs real PyTorch CPU")
     def test_wrong_cuda_request_cannot_create_checkpoint(self):
         if torch.cuda.is_available():
             self.skipTest("GPU runner has real CUDA")
