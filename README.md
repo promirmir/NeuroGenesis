@@ -1,3 +1,7 @@
+## Aktualny stan Mission Control — kod scalony i zweryfikowany
+
+Nowy profesjonalny interfejs Qt jest **scalony w `main`** (PR #48, commit `caa54479`). Jest to prawdziwie działający ekran ze stanem LIF, synapsami, rzeczywistymi impulsami i historią zdarzeń. Testy Qt Windows/Ubuntu oraz Windows EXE przeszły, a wygląd sprawdzono na faktycznych zrzutach z uruchomionej aplikacji. W katalogu repozytorium uruchom `Launch-NeuroGenesis-Mission-Control.cmd` (wymaga Python 3.12; pierwsze pobranie PySide6 wymaga zgody). **Publiczny, samodzielny plik `NeuroGenesis.exe` nadal uruchamia Tkinter**, a Qt DLL nie są w nim zawarte. Uruchamianie Qt z kodu źródłowego nie oznacza gotowej instalacji bez Pythona. Szczegóły: [Mission Control](docs/MISSION_CONTROL.md).
+
 ## Command Center / Mission Control — aktywny rozwój interfejsu
 
 Zaimplementowano w opcjonalnym Qt nowe profesjonalne centrum wizualizacji: duża prawdziwa sieć LIF na ekranie głównym, mierzone impulsy, kroki mózgu, status pamięci, Internetu i treningu. Nie jest to makieta ani symulacja aktywności. Dla Windows dodano `Launch-NeuroGenesis-Mission-Control.cmd` w pełnym katalogu repozytorium; wymaga Python 3.12 i **pytania o zgodę** przed pierwszym pobraniem PySide6. Publiczny jednoplikowy `NeuroGenesis.exe` nadal pozostaje Tk, do czasu prawnej i technicznej walidacji dystrybucji bibliotek Qt. [Pełny opis i kryteria wydania](docs/MISSION_CONTROL.md). Nie deklarujemy AGI, nieweryfikowanego GPU ani rozumienia neuronowego.
