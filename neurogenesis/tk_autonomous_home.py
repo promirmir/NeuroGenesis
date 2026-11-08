@@ -242,7 +242,7 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
 
     # Always-visible real neural monitor: separate from the scrolling
     # autonomous goals, so the user can inspect both on a 768p laptop.
-    brain_footer = tk.Frame(right_container, bg=PANEL, height=220,
+    brain_footer = tk.Frame(right_container, bg=PANEL, height=250,
                             highlightbackground=BORDER, highlightthickness=1)
     brain_footer.pack(side="bottom", fill="x", pady=(6, 0))
     brain_footer.pack_propagate(False)
