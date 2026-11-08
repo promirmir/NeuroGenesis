@@ -33,7 +33,8 @@ def _caption(parent, text, *, fg=CYAN):
 def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
                             knowledge: LocalKnowledge,
                             supervisor: AutonomicSupervisor, goals: GoalStore,
-                            *, brain_enabled: tk.BooleanVar | None = None) -> ttk.Frame:
+                            *, brain_enabled: tk.BooleanVar | None = None,
+                            auto_start: bool = True) -> ttk.Frame:
     """Install as first and default page, without adding fake demo metrics."""
     tab = ttk.Frame(parent)
     parent.add(tab, text="  NEUROGENESIS  ")
@@ -180,10 +181,11 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
         history = turns[-12:] + [{"role": "user", "content": message}]
         if len(history) > 13:
             history = history[-13:]
+        record_sensory = bool(sensory_inputs.get())
         def run():
             reply = model.chat(history)
             sensory_error = None
-            if sensory_inputs.get():
+            if record_sensory:
                 try:
                     # Only hashed sensory features enter existing LIF SQLite.
                     # This does NOT store raw conversation text.
@@ -432,7 +434,7 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
                         background("lif-cycle", supervisor.cycle, brain=True)
                 except (OSError, ValueError) as exc:
                     state_agent.set("LIF / zatrzymany: " + str(exc)[:100])
-        if running["ready"] and auto_goals.get():
+        if running["ready"] and auto_goals.get() and running["pending_message"] is None:
             job = running["job"]
             if not isinstance(job, threading.Thread) or not job.is_alive():
                 try:
@@ -498,6 +500,8 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
                             "w panelu celów. Żadne działania zewnętrzne nie zostały wykonane.")
                     else:
                         state_agent.set("AGENT / błąd celu; szczegóły w panelu")
+                    if running["pending_message"] is not None:
+                        flush_message()
                 elif task == "lif-cycle":
                     if kind == "ok":
                         state_agent.set(
@@ -518,7 +522,8 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
 
     tab.bind("<Destroy>", on_destroy, add="+")
     tab.after(170, refresh_status)
-    tab.after(400, initialize_model)
+    if auto_start:
+        tab.after(400, initialize_model)
     tab.after(500, poll)
     tab.after(1700, autonomy_tick)
     return tab
