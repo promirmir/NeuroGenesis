@@ -94,6 +94,28 @@ class QtCommandCenterSmokeTests(unittest.TestCase):
         self.window.refresh_connectome()
         self.assertIn("BRAK NOWEJ AKTYWNOŚCI", self.window.neural_event_status.text())
 
+    def test_training_graph_only_changes_on_actual_progress_events(self):
+        import json
+        from neurogenesis.connectome_view import TrainingLossPlot
+        self.window.navigate(4)
+        plot = self.window.training_loss_plot
+        self.assertIsInstance(plot, TrainingLossPlot)
+        self.assertEqual(plot.points, ())
+        self.service._events.put(("train_progress", json.dumps({
+            "step": 1, "total": 5, "loss": 5.721})))
+        self.window.poll_study_events()
+        self.assertEqual(plot.points, ((1, 5.721),))
+        self.window.refresh()
+        self.assertEqual(plot.points, ((1, 5.721),))
+        self.service._events.put(("train_progress", json.dumps({
+            "step": 2, "total": 5, "loss": 5.681})))
+        self.window.poll_study_events()
+        self.assertEqual(plot.points, ((1, 5.721), (2, 5.681)))
+        plot.add_real_loss(1, 5.44)
+        self.assertEqual(plot.points, ((1, 5.44),))
+        with self.assertRaises(ValueError):
+            plot.add_real_loss(3, float("nan"))
+
     def test_inference_lab_requires_explicit_trusted_file_and_is_offline(self):
         self.window.navigate(4)
         self.assertFalse(self.window.trust_checkpoint.isChecked())
