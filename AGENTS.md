@@ -23,6 +23,11 @@ Read [docs/DELIVERY_AUDIT.md](docs/DELIVERY_AUDIT.md) after [docs/VISION.md](doc
 - PR #28 merged to main `2bd5af5a1db70dee8566f848a41d5024e8fa8bba` with real Qt offscreen Windows/Linux CI, Python 3.11–3.13, PyTorch CPU, Windows Tk EXE and privacy green. Optional GUI source exists; not automatically included in published EXE.
 - Branch `ci/qt-windows-frozen-smoke-20261108` introduces separate `command_center_launcher.py` and frozen Qt `--self-test` plus technical onedir PyInstaller CI. Do not claim Qt package released; audit LGPLv3 obligations and redistribution notices first. Preserve original Tk EXE and SQLite and never publish private data. See `docs/COMMAND_CENTER.md`.
 
+## Active rights-gated Foundation training integration — PR candidate
+
+- PR #29 merged `9388e19356c2d7f49ffdd1a72d0996d3d89986b0`, technical Qt Windows onedir EXE smoke passed (tested exe SHA256 `2d563058b985f169ae04b39f8674f1f5d2a5fc85af0dbfc6d32b86c3501ac3b8`, bundle 111.95 MiB). **No Qt downloadable release** without LGPL/notices review. Legacy Tk app remains verified.
+- Candidate branch `feat/approved-web-foundation-train-20261108` links only **operator-approved source versions** to actual local Torch weight training, with document-level holdout, measured cross-entropy against Markov, cancellation, no auto-install and explicit rights confirmation. Training UI displays real losses, not intelligence scores. Read `docs/KNOWLEDGE_TRAIN.md` and run dedicated real CPU, Windows Qt/Tk, privacy tests before merge. Neural semantic conversation and independent factual validation remain open.
+
 ## Highest-priority permanent contract
 
 Read [docs/VISION.md](docs/VISION.md) before planning new changes. The user explicitly wants a powerful and novel self-learning, GPU-scalable, human-neurobiology-inspired cognitive engine, permissioned live Internet knowledge perception, meaningful Windows conversation, rich realtime visual observability, long-lived memory and continuity across chats. A 24-neuron/8-channel toy or a list of handwritten replies is not the target; retain those as research baselines only. No unverified promise of human brain emulation, consciousness or global breakthrough is allowed.
