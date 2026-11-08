@@ -190,12 +190,12 @@ class LocalTrainingTests(unittest.TestCase):
         answer = json.dumps({
             "status": "local_conversational_model",
             "offline_inference": True, "reply": "Lokalna odpowiedź",
-        }) + "\\n"
+        }) + "\n"
         class FakeProc:
             def __init__(self, *args, **kwargs):
                 self.stdin = io.StringIO()
                 self.stdout = io.StringIO(
-                    '{"status":"local_model_ready","offline":true}\\n'
+                    '{"status":"local_model_ready","offline":true}\n'
                     + answer + answer)
                 self.stderr = io.StringIO()
                 self.killed = False
@@ -216,7 +216,7 @@ class LocalTrainingTests(unittest.TestCase):
             ])
         self.assertEqual(popen.call_count, 1)
         self.assertEqual(first["reply"], second["reply"])
-        self.assertEqual(worker.proc.stdin.getvalue().count("\\n"), 2)
+        self.assertEqual(worker.proc.stdin.getvalue().count("\n"), 2)
         worker.cancel()
         self.assertTrue(worker.cancelled.is_set())
 
@@ -224,17 +224,17 @@ class LocalTrainingTests(unittest.TestCase):
         from neurogenesis import local_dialogue
         stream = (
             json.dumps({"messages": [{"role": "user", "content": "Pierwsze pytanie"}]})
-            + "\\n" +
+            + "\n" +
             json.dumps({"messages": [{"role": "user", "content": "Drugie pytanie"}]})
-            + "\\n"
+            + "\n"
         ).encode("utf-8")
         fake_stdin = types.SimpleNamespace(buffer=io.BytesIO(stream))
-        with mock.patch.object(local_dialogue.sys, "stdin", fake_stdin), \\
+        with mock.patch.object(local_dialogue.sys, "stdin", fake_stdin), \
              mock.patch.object(local_dialogue, "load_local_runtime",
-                               return_value="cached-tokenizer-and-weights") as loader, \\
+                               return_value="cached-tokenizer-and-weights") as loader, \
              mock.patch.object(local_dialogue, "respond_loaded",
                                return_value={"status": "local_conversational_model",
-                                             "reply": "Tak", "offline_inference": True}) as inference, \\
+                                             "reply": "Tak", "offline_inference": True}) as inference, \
              mock.patch("builtins.print") as printer:
             self.assertEqual(local_dialogue.serve_local_stdio(
                 self.model, device="cpu"), 0)
