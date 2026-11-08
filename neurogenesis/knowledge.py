@@ -213,7 +213,11 @@ def answer_question(con: sqlite3.Connection, question: str, *,
                 >= minimum_focus]
     if polar:
         requested = set(terms)
-        rows = [row for row in rows if requested.issubset(set(_terms(row[0])))]
+        negation = re.compile(r"\b(?:nie|not|never)\b", re.IGNORECASE)
+        query_negated = bool(negation.search(question))
+        rows = [row for row in rows
+                if (requested.issubset(set(_terms(row[0])))
+                    and bool(negation.search(row[0])) == query_negated)]
     if not rows:
         return None
     best = rows[0]
