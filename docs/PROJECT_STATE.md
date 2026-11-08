@@ -1,3 +1,10 @@
+## 2026-11-08 — Actual Qt Command Center candidate (PR pending)
+
+- PR #27 merged to main `a284aae07934fee42db55897a8cde4eb3312713e` after successful Python 3.11–3.13 and Windows standalone EXE/priva­cy checks. This implements local sourced **lexical** responses but not neural weight learning. Final release publication must be independently checked.
+- New branch `feat/command-center-qt-service-20261108`: real optional PySide6 application + Qt-independent `CommandService` consuming the same SQLite, cited chat, bounded specialist research, real brain traces, versioned source browser, system state and explicit network permission. Default Tk EXE/SQLite retained.
+- Dedicated `qt-command-center.yml` tests actual Qt widgets offscreen on Windows and Ubuntu; service tests prove persistence, revision access and no-network/revocation. Qt Python dependency opt-in only; no release claim until CI and packaging/licensing proof. No GPU, Foundation model training, factual verification or independent live-web success measured.
+- Continue in `docs/COMMAND_CENTER.md`; do not confuse this functional source preview with a verified Windows Qt EXE.
+
 ## 2026-11-08 — PR #27: private source evidence → Windows dialogue (candidate)
 
 - PR #23 was merged into main commit `66f3d61fa1696aaeeb3c33c0d035100a9aaacba1` after Python 3.11–3.13, real PyTorch CPU, Windows standalone EXE and privacy checks passed. Historical notes below that called PR #23 open were written earlier.

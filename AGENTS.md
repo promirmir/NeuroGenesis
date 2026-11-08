@@ -12,6 +12,12 @@ Read [docs/DELIVERY_AUDIT.md](docs/DELIVERY_AUDIT.md) after [docs/VISION.md](doc
 - PR #27 is the **candidate** first internet evidence→private SQLite passage index→quoted citation in normal Tk conversation, with restart persistence, duplicate/revision/deletion behavior and abstention on missing evidence. Important privacy change: extracted public page passages (up to 6000 chars) are saved locally, not just fingerprints. Not neural weight training or independent source validation. See `docs/KNOWLEDGE_PIPELINE.md`, and do not claim a release until final CI/EXE and publication pass.
 - `docs/COMMAND_CENTER.md` defines the staged optional PySide6 frontend; **no professional Qt UI is implemented yet**. Keep existing production Tk EXE stable and local memory private.
 
+## Current PR candidate — optional Command Center Qt shell
+
+- PR #27 merged on main `a284aae07934fee42db55897a8cde4eb3312713e`. Real source passage retrieval is integrated with existing Windows chat; evidence retrieval is **not Foundation model weight training**.
+- Branch `feat/command-center-qt-service-20261108` adds an optional real PySide6 Command Center with actual memory/chat/research/brain views and a dependency-free service adapter; the default Tk EXE remains unchanged. Read `docs/COMMAND_CENTER.md`. Dedicated real Qt CI on Windows/Linux, Python 3.11–3.13, Windows EXE regression, privacy and packaging/legal checks are mandatory before calling this a release.
+- Future actual Foundation Brain inference and GPU gains remain open; training panel is truthful about not being connected. No claim of humanlike cognition.
+
 ## Highest-priority permanent contract
 
 Read [docs/VISION.md](docs/VISION.md) before planning new changes. The user explicitly wants a powerful and novel self-learning, GPU-scalable, human-neurobiology-inspired cognitive engine, permissioned live Internet knowledge perception, meaningful Windows conversation, rich realtime visual observability, long-lived memory and continuity across chats. A 24-neuron/8-channel toy or a list of handwritten replies is not the target; retain those as research baselines only. No unverified promise of human brain emulation, consciousness or global breakthrough is allowed.

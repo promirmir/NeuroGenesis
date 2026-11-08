@@ -193,3 +193,14 @@ def recent_sources(con: sqlite3.Connection, limit: int = 20) -> list[dict[str, A
     return [{"id": key, "url": url, "sha256": digest, "retrieved_utc": stamp,
              "rights_status": rights, "version": ver}
             for key, url, digest, stamp, rights, ver in rows]
+
+
+def source_passages(con: sqlite3.Connection, source_id: int) -> list[dict[str, Any]]:
+    """Read one source revision's bounded inert excerpts, never fetch network."""
+    if type(source_id) is not int or source_id < 1:
+        raise ValueError("invalid source identifier")
+    rows = con.execute(
+        "SELECT p.ordinal,p.body FROM knowledge_passages p "
+        "JOIN knowledge_sources s ON s.id=p.source_id "
+        "WHERE s.id=? ORDER BY p.ordinal LIMIT ?", (source_id, MAX_CHUNKS_PER_SOURCE)).fetchall()
+    return [{"ordinal": ordinal, "text": body} for ordinal, body in rows]

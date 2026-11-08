@@ -1,0 +1,65 @@
+name: Optional Qt Command Center proof
+
+on:
+  pull_request:
+    paths:
+      - 'neurogenesis/command_center.py'
+      - 'neurogenesis/command_service.py'
+      - 'neurogenesis/knowledge.py'
+      - 'neurogenesis/memory.py'
+      - 'tests/test_command_center_qt.py'
+      - 'tests/test_command_service.py'
+      - 'pyproject.toml'
+      - '.github/workflows/qt-command-center.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'neurogenesis/command_center.py'
+      - 'neurogenesis/command_service.py'
+      - 'neurogenesis/knowledge.py'
+      - 'neurogenesis/memory.py'
+      - 'tests/test_command_center_qt.py'
+      - 'tests/test_command_service.py'
+      - 'pyproject.toml'
+      - '.github/workflows/qt-command-center.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qt-smoke:
+    name: Qt offscreen (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest]
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Privacy and source syntax
+        run: |
+          python -m scripts.privacy_audit --git
+          python -m compileall -q neurogenesis tests
+      - name: Install required system EGL/OpenGL runtime for Linux Qt offscreen
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libopengl0
+      - name: Install actual optional Qt widget runtime
+        run: python -m pip install "PySide6-Essentials>=6.8,<7"
+      - name: Verify Qt runtime is real
+        run: python -c "from PySide6 import QtCore, QtWidgets; print('PySide6', QtCore.__version__, 'Qt', QtCore.qVersion()); assert QtWidgets.QApplication"
+      - name: Test GUI widgets on real Qt without contacting the network
+        run: python -m unittest tests.test_command_center_qt -v
+      - name: Test headless service and old SQLite compatibility
+        run: python -m unittest tests.test_command_service tests.test_knowledge tests.test_desktop -v

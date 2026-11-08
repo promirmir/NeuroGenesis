@@ -324,6 +324,12 @@ class ExperienceMemory:
         with closing(self._connect()) as con:
             return recent_sources(con, limit)
 
+    def knowledge_passages(self, source_id: int) -> list[dict[str, Any]]:
+        """Return bounded private plaintext excerpts for a saved source version."""
+        from .knowledge import source_passages
+        with closing(self._connect()) as con:
+            return source_passages(con, source_id)
+
     def teach(self, question: str, answer: str) -> dict[str, Any]:
         """Explicit user-approved Q/A training, atomically with brain stimulus.
 
