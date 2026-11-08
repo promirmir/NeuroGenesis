@@ -28,6 +28,7 @@ def export_dialogue_record(record: Any) -> str:
     if type(record) is not dict or type(record.get("messages")) is not list:
         raise ValueError("Dataset example lacks conversational messages.")
     out = []
+    pending = None
     messages = record["messages"]
     for entry in messages:
         if type(entry) is not dict:
@@ -38,12 +39,13 @@ def export_dialogue_record(record: Any) -> str:
         content = " ".join(content.split())
         if not 3 <= len(content) <= 6000:
             continue
-        marker = "USER:" if role == "user" else "ASSISTANT:"
-        out.append(marker + " " + content)
-    if len(out) < 2 or not out[0].startswith("USER:"):
+        if role == "user":
+            pending = content
+        elif pending is not None:
+            out.extend(("USER: " + pending, "ASSISTANT: " + content))
+            pending = None
+    if len(out) < 2:
         raise ValueError("No valid user/assistant exchange in dataset record.")
-    if not any(s.startswith("ASSISTANT:") for s in out):
-        raise ValueError("No valid assistant response in dataset record.")
     return "\n".join(out) + "\n\n"
 
 
