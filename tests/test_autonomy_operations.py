@@ -49,5 +49,58 @@ class AutonomyPolicyTests(unittest.TestCase):
                     self.eligible(**override)
 
 
+class WebResearchDialogueTests(unittest.TestCase):
+    """Mock only the HTTP runtime; real model generation has a separate
+    mandatory 1.1GB Windows FULL release gate.
+    """
+
+    def test_approved_web_sources_reach_real_model_prompt_with_provenance(self):
+        from unittest.mock import patch
+        from neurogenesis.bundled_llm import BundledModelSession
+
+        class FakeProcess:
+            def poll(self):
+                return None
+
+        class FakeKnowledge:
+            def retrieve(self, query):
+                return [{"text": "Lokalne dane obserwacyjne.",
+                         "file": "notatka.txt", "sha256": "a" * 64}]
+
+        class FakeWebMemory:
+            def answer_from_knowledge(self, question):
+                self.query = question
+                return {
+                    "answer": "Zapisany cytat z zatwierdzonego HTTPS. Źródło: https://example.org/raport",
+                    "sources": [{"url": "https://example.org/raport",
+                                 "sha256": "b" * 64}],
+                }
+
+        fake_web = FakeWebMemory()
+        session = BundledModelSession(knowledge=FakeKnowledge(),
+                                       web_memory=fake_web)
+        session._proc = FakeProcess()
+        session._port = 12345
+        seen = {}
+
+        def fake_http(port, key, endpoint, *, payload=None, timeout=0):
+            seen.update({"endpoint": endpoint, "payload": payload})
+            return {"choices": [{"message": {"content": "Wniosek z danych."}}]}
+
+        with patch("neurogenesis.bundled_llm._http_request",
+                   side_effect=fake_http):
+            result = session.chat([
+                {"role": "user", "content": "Co zapisano w raporcie?"}
+            ])
+        self.assertEqual(result["status"], "offline_real_gguf_inference")
+        self.assertEqual(fake_web.query, "Co zapisano w raporcie?")
+        self.assertEqual(len(result["sources"]), 2)
+        self.assertEqual(seen["endpoint"], "/v1/chat/completions")
+        prompt = str(seen["payload"]["messages"][-1]["content"])
+        self.assertIn("notatka.txt", prompt)
+        self.assertIn("example.org/raport", prompt)
+        self.assertFalse(result["cloud_api_used"])
+
+
 if __name__ == "__main__":
     unittest.main()
