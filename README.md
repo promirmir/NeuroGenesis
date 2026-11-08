@@ -1,3 +1,7 @@
+## Aktualne zweryfikowane wydanie z graficznym mózgiem (8 listopada 2026)
+
+**NeuroGenesis v0.7.0-main.7cb03e3a** zawiera w oficjalnym EXE Windows nową interaktywną 2D mapę rzeczywistej sieci LIF z neuronami, synapsami, wagami oraz ostatnimi impulsami, zamiast słupków. [Pobierz](https://github.com/promirmir/NeuroGenesis/releases/tag/v0.7.0-main.7cb03e3a) · SHA-256 `089f2c5f14f1a792ea22c1874c59ab4bfd71bbb1b97175a0067c883e036705e3`. Wydanie i testy Windows/Qt/Python zweryfikowane. Przy braku nowych kroków aktywność nie jest animowana. Bardziej zaawansowany graficzny Qt Command Center jest dostępny w kodzie, lecz nadal nie jest publicznie dystrybuowany z powodu niesfinalizowanej zgodności licencyjnej. To nie jest obraz całego modelu Foundation ani ludzkiego mózgu.
+
 # NeuroGenesis
 
 **Lokalny system badawczy inspirowany neurobiologią — v0.7.0**  
