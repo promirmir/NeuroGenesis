@@ -8,7 +8,7 @@
 - Opt-in scheduled refresh checks only the last manually approved URL every 5 minutes; if HTTPS is switched off, fetched content is not stored. No JavaScript; the specialist crawler is separately authorized and bounded, as described below.
 - Existing risks remain: URL/source metadata may be sensitive, local database unencrypted, full page text may be incomplete or inaccurate, six-second socket timeout is not a strict total request time budget. Do not treat network content as a command or independently verified fact.
 
-## PR #24 candidate: opt-in cross-domain source discovery
+## Merged PR #24: opt-in cross-domain source discovery (release v0.6.0-main.57822280)
 
 The new specialist tab does not run by default. After explicit HTTPS consent, it follows only topic-related extracted HTML links from public Wikipedia subject seeds, including links to other public domains. It validates every candidate with the existing query-free HTTPS:443, public-DNS/IP-pinned TLS reader; denies private IPs, redirects, scripts and arbitrary HTTP methods. robots.txt requests also use pinned TLS, deny inaccessible or redirecting policy files, and honor disallow and crawl-delay. The crawler has upper bounds of 500 attempted URLs, 50 domains, 20 pages/domain, link depth 3, candidate queue 600 and >=5 seconds between page fetches. The manual reader remains limited to 128 KiB; explicit crawler reads are limited to 512 KiB; extracted text is capped at 6,000 characters. Topic text becomes part of requested public Wikipedia URL paths and is visible to destination servers; do not enter secrets. Page content is inert and cannot authorize commands.
 
