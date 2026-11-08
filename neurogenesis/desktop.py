@@ -167,6 +167,18 @@ def self_test() -> int:
                 or ExperienceMemory(restored).status()["knowledge"]["documents"] != 1
                 or ExperienceMemory(db).status()["knowledge"]["documents"] != 1):
             return 18
+        # Real frozen executable must include the live visualizer's true
+        # neural data contract. No GUI, imaginary spikes or network in CI.
+        from .neural_graph import snapshot_brain, positions
+        from .tk_neural_view import render_tk_graph
+        brain = ExperienceMemory(db).brain()
+        frame = snapshot_brain(brain)
+        if (frame.step != brain.steps or frame.neurons != len(brain.voltages)
+                or frame.synapses != len(brain.synapses)
+                or frame.last_spikes != sum(brain.spikes)
+                or set(positions(frame, 960, 460)) != {n.index for n in frame.nodes}
+                or not callable(render_tk_graph)):
+            return 19
     return 0
 
 
