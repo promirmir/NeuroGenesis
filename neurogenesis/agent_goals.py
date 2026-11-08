@@ -156,6 +156,23 @@ class GoalStore:
                         # 512 chars is the source-index query limit; the goal
                         # itself remains complete in the language model prompt.
                         record = web_memory.answer_from_knowledge(goal[:512])
+                        if record is None:
+                            # Public fact-answer extraction is intentionally
+                            # conservative (>=40% EXACT word overlap). Polish
+                            # inflections and broad user goals can miss
+                            # genuinely related passages. Goal research only
+                            # needs CANDIDATE evidence, not a proven answer:
+                            # retry with short, substantial adjacent terms.
+                            # This never changes the stringent truth-answer
+                            # gate and never auto-approves a claim.
+                            from .knowledge import _terms
+                            terms = _terms(goal[:512])[:12]
+                            for index in range(min(len(terms) - 1, 10)):
+                                candidate = web_memory.answer_from_knowledge(
+                                    " ".join(terms[index:index + 2]))
+                                if candidate is not None:
+                                    record = candidate
+                                    break
                         if record is not None and record.get("sources"):
                             cite = record["sources"][0]
                             excerpt = str(record.get("answer", ""))[:600]
