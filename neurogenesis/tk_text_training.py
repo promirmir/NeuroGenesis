@@ -334,26 +334,36 @@ def install_text_training(parent) -> ttk.Frame:
 
     def monitor():
         nonlocal last_hash
-        if continuous.get() and rights.get() and trusted.get() and model.get() and source.get():
-            f = Path(source.get())
-            if f.is_file() and not f.is_symlink() and 1024 <= f.stat().st_size <= MAX_LOCAL_TXT:
-                # hash is computed only on approved local TXT; never sent online
-                digest = hashlib.sha256(f.read_bytes()).hexdigest()
-                if last_hash is None:
-                    last_hash = digest
-                elif digest != last_hash:
-                    current = running["thread"]
-                    if not isinstance(current, threading.Thread) or not current.is_alive():
-                        dest = str(Path.home() / ("NeuroGenesis-LoRA-auto-" + digest[:12]))
-                        if not Path(dest).exists():
-                            status.set("AUTO-KANDYDAT / zmieniony zatwierdzony TXT")
-                            submit("lora", override_target=dest)
+        try:
+            if continuous.get() and rights.get() and trusted.get() and model.get() and source.get():
+                f = Path(source.get())
+                if f.is_file() and not f.is_symlink() and 1024 <= f.stat().st_size <= MAX_LOCAL_TXT:
+                    # hash is computed only on approved local TXT; never sent online
+                    digest = hashlib.sha256(f.read_bytes()).hexdigest()
+                    if last_hash is None:
                         last_hash = digest
-        else:
-            last_hash = None
+                    elif digest != last_hash:
+                        current = running["thread"]
+                        if not isinstance(current, threading.Thread) or not current.is_alive():
+                            dest = str(Path.home() / ("NeuroGenesis-LoRA-auto-" + digest[:12]))
+                            if not Path(dest).exists():
+                                status.set("AUTO-KANDYDAT / zmieniony zatwierdzony TXT")
+                                submit("lora", override_target=dest)
+                            last_hash = digest
+            else:
+                last_hash = None
+        except OSError as exc:
+            # The file can disappear halfway through a poll. Don't crash Tk.
+            status.set("AUTO-KANDYDAT / nie można odczytać TXT: " + str(exc))
         if tab.winfo_exists():
             tab.after(60_000, monitor)
 
+    def on_destroy(event):
+        if event.widget == tab:
+            continuous.set(False)
+            cancel()  # kill any child subprocess; never leave orphan training
+
+    tab.bind("<Destroy>", on_destroy, add="+")
     tab.after(200, poll)
     tab.after(60_000, monitor)
     return tab
