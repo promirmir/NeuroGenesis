@@ -156,7 +156,7 @@ def self_test() -> int:
 def launch(db_path: Path) -> int:
     """Create a native local-first window; web access is off until enabled."""
     import tkinter as tk
-    from tkinter import messagebox, ttk
+    from tkinter import filedialog, messagebox, ttk
 
     try:
         memory = ExperienceMemory(db_path)
@@ -200,6 +200,29 @@ def launch(db_path: Path) -> int:
     tabs.add(chat_tab, text="Rozmowa")
     tabs.add(brain_tab, text="Mózg")
     tabs.add(web_tab, text="Internet")
+    backup_tab = ttk.Frame(tabs)
+    tabs.add(backup_tab, text="Kopia pamięci")
+
+    tk.Label(backup_tab, text="Ochrona zapisanej wiedzy i pamięci",
+             bg="#111827", fg="#f8fafc",
+             font=("Segoe UI", 17, "bold")).pack(anchor="w", padx=24, pady=(24, 9))
+    tk.Label(backup_tab, text=(
+        "Kopie obejmują pełny stan SQLite: neuronowy, doświadczenia, "
+        "nauczone odpowiedzi, źródła i zgody. Plik nie jest szyfrowany; "
+        "przechowuj go prywatnie. Żadne dane nie są wysyłane do sieci."),
+        bg="#111827", fg="#b8cbe0", anchor="w", justify="left",
+        wraplength=760).pack(fill="x", padx=24, pady=(0, 14))
+    backup_controls = tk.Frame(backup_tab, bg="#111827")
+    backup_controls.pack(fill="x", padx=24)
+    backup_state = tk.StringVar(value="Kopia nie była jeszcze wykonywana w tej sesji.")
+    tk.Label(backup_tab, textvariable=backup_state, bg="#111827", fg="#93e5c9",
+             anchor="nw", justify="left", wraplength=780,
+             font=("Consolas", 10)).pack(fill="x", padx=24, pady=(14, 10))
+    tk.Label(backup_tab, text=(
+        "Przywrócenie zapisuje NOWĄ bazę i nigdy nie usuwa ani "
+        "nie nadpisuje aktualnej. Instrukcja: docs/MEMORY_RECOVERY.md."),
+        bg="#111827", fg="#93a4bc", anchor="w", justify="left",
+        wraplength=760).pack(fill="x", padx=24)
 
     tk.Label(chat_tab, text=("Mózg rejestruje bodźce. Odpowiedzi mogą pochodzić z ręcznej nauki "
                               "lub cytatów zapisanych źródeł. Cytaty nie oznaczają treningu modelu."),
@@ -291,6 +314,82 @@ def launch(db_path: Path) -> int:
         history.insert("end", f"{role}: {text}\n\n")
         history.configure(state="disabled")
         history.see("end")
+
+    backup_queue: queue.SimpleQueue[tuple[str, Any]] = queue.SimpleQueue()
+    backup_pending = {"value": False}
+
+    def start_backup_operation(mode: str) -> None:
+        if backup_pending["value"]:
+            return
+        if mode == "backup":
+            if not messagebox.askyesno(
+                    "Prywatna kopia NeuroGenesis",
+                    "Kopia zawiera prywatną wiedzę i nie jest szyfrowana. "
+                    "Czy utworzyć lokalną kopię bez nadpisywania plików?"):
+                return
+            chosen = filedialog.asksaveasfilename(
+                title="Nowa kopia pamięci (wymaga wolnej nazwy)",
+                initialdir=str(db_path.parent),
+                initialfile="NeuroGenesis-backup.sqlite3",
+                defaultextension=".sqlite3",
+                filetypes=[("SQLite NeuroGenesis", "*.sqlite3")])
+        else:
+            chosen = filedialog.askopenfilename(
+                title="Wybierz kopię do sprawdzenia",
+                initialdir=str(db_path.parent),
+                filetypes=[("SQLite NeuroGenesis", "*.sqlite3")])
+        if not chosen:
+            return
+        backup_pending["value"] = True
+        save_backup_btn.configure(state="disabled")
+        verify_backup_btn.configure(state="disabled")
+        backup_state.set("Kopia lub kontrola integralności w toku — nie zamykaj programu.")
+
+        def worker() -> None:
+            try:
+                from .recovery import backup_private_database, inspect_private_database
+                report = (backup_private_database(db_path, chosen)
+                          if mode == "backup"
+                          else inspect_private_database(chosen))
+                backup_queue.put(("ok", (mode, report)))
+            except Exception as exc:
+                backup_queue.put(("error", type(exc).__name__))
+
+        threading.Thread(target=worker, name="NeuroGenesis-local-memory-backup",
+                         daemon=True).start()
+
+    save_backup_btn = ttk.Button(
+        backup_controls, text="Utwórz zweryfikowaną kopię",
+        command=lambda: start_backup_operation("backup"))
+    save_backup_btn.pack(side="left")
+    verify_backup_btn = ttk.Button(
+        backup_controls, text="Sprawdź wybraną kopię",
+        command=lambda: start_backup_operation("verify"))
+    verify_backup_btn.pack(side="left", padx=(12, 0))
+
+    def poll_backup_queue() -> None:
+        try:
+            while True:
+                status, payload = backup_queue.get_nowait()
+                backup_pending["value"] = False
+                save_backup_btn.configure(state="normal")
+                verify_backup_btn.configure(state="normal")
+                if status == "ok":
+                    mode, report = payload
+                    backup_state.set(
+                        ("Kopia zapisana i sprawdzona" if mode == "backup"
+                         else "Kontrola integralności zaliczona")
+                        + f" · {report['observations']} doświadczeń"
+                        + f" · {report['source_versions']} wersji źródeł"
+                        + "\nSHA-256: " + report["sha256"])
+                else:
+                    backup_state.set("Nie ukończono operacji — bez zmiany oryginalnych danych. "
+                                     "Powód: " + payload)
+        except queue.Empty:
+            pass
+        root.after(250, poll_backup_queue)
+
+    root.after(250, poll_backup_queue)
 
     def refresh() -> None:
         try:
@@ -506,6 +605,11 @@ def launch(db_path: Path) -> int:
     refresh()
 
     def on_close() -> None:
+        if backup_pending["value"]:
+            messagebox.showwarning(
+                "Kopia pamięci w toku",
+                "Sprawdź zakończenie lokalnego kopiowania przed zamknięciem aplikacji.")
+            return
         root.destroy()
 
     root.protocol("WM_DELETE_WINDOW", on_close)
