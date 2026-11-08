@@ -146,6 +146,52 @@ def install_autonomy_hub(
         button="ODCZYT ŹRÓDEŁ HTTPS", command=lambda: navigate("web"))
     monitor_card.grid(row=1, column=1, sticky="nsew", padx=(6, 0))
 
+    _label(body, "RZECZYWISTY PRZEPŁYW PRACY / DANE I SYGNAŁY",
+           11, CYAN, True).pack(anchor="w", pady=(2, 6))
+    signal = tk.Canvas(body, bg="#061824", height=115, highlightthickness=1,
+                       highlightbackground=LINE, bd=0)
+    signal.pack(fill="x", pady=(0, 14))
+    signal.bind("<Configure>", lambda _event: draw_pipeline())
+
+    def draw_pipeline():
+        """A static graph of measured component state, not animated fake pulses.
+
+        The pipeline reflects recorded SQLite documents/brain steps and the
+        real model worker. A label indicates whether each has any activity.
+        """
+        width = max(540, signal.winfo_width())
+        signal.delete("all")
+        values = [
+            ("PERCEPCJA", "Zgoda HTTPS", bool(allowed_web())),
+            ("WIEDZA", str(previous.get("chunks", 0)) + " fragm.",
+             previous.get("chunks", 0) > 0),
+            ("MODEL", "Gotowość", bool(previous.get("model_ready"))),
+            ("LIF", str(previous.get("steps", 0)) + " kroków",
+             previous.get("steps", 0) > 0),
+        ]
+        spacing = (width - 90) / 3
+        coords = [45 + spacing * i for i in range(4)]
+        cy = 50
+        for i in range(3):
+            signal.create_line(coords[i] + 18, cy, coords[i + 1] - 18, cy,
+                               fill="#1a5265", width=3)
+        for i, (label, detail, active) in enumerate(values):
+            x = coords[i]
+            outline = CYAN if active else "#507689"
+            fill = "#137276" if active else "#123040"
+            signal.create_oval(x - 15, cy - 15, x + 15, cy + 15,
+                               outline=outline, fill=fill, width=2)
+            signal.create_oval(x - 4, cy - 4, x + 4, cy + 4,
+                               fill="#dbffff" if active else "#507689", outline="")
+            signal.create_text(x, 17, text=label, fill=WHITE,
+                               font=("Consolas", 9, "bold"))
+            signal.create_text(x, 87, text=detail[:28], fill=DIM,
+                               font=("Consolas", 8))
+        signal.create_text(
+            width - 15, 106, anchor="e",
+            text="ŚWIATŁO = STAN POTWIERDZONY / LINIE = SCHEMAT PRZEPŁYWU",
+            fill="#7599a9", font=("Consolas", 7))
+
     _label(body, "AUTOMATYCZNE ZADANIA", 12, CYAN, True).pack(
         anchor="w", pady=(8, 6))
     toggles = tk.Frame(body, bg=BG2, padx=14, pady=11,
@@ -244,6 +290,7 @@ def install_autonomy_hub(
                 "chunks": sources["passages"], "cycles": autonomy["cycles"],
                 "approved": autonomy["promotions"],
                 "model": model_text,
+                "model_ready": ready,
             }
             if not previous:
                 record("Pierwszy odczyt zapisanego stanu: LIF " +
@@ -260,6 +307,7 @@ def install_autonomy_hub(
                     "cycles": "Zakończono próbę samorozwoju LIF",
                     "approved": "Zatwierdzono zmianę po walidacji",
                     "model": "Zmiana stanu lokalnego modelu",
+                    "model_ready": "Gotowość silnika językowego",
                 }
                 for key, value in snapshot.items():
                     if value != previous.get(key):
@@ -267,6 +315,7 @@ def install_autonomy_hub(
                                " -> " + str(value)[:70])
             previous.clear()
             previous.update(snapshot)
+            draw_pipeline()
             global_status.set(
                 f"MODEL: {'GOTOWY' if ready else 'NIEGOTOWY'}   |   "
                 f"LOKALNE PLIKI: {sources['files']}   |   "
