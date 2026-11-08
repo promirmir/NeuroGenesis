@@ -1,3 +1,11 @@
+## 2026-11-08 — verified merged v0.7.0 memory-safety milestone
+
+- PR #44 merged to `main` as `ebd08ee4335cc1f76c0bf539a52b62a9ea947a86`. The implementation is **not just a candidate**: `neurogenesis.recovery` provides local consistent SQLite backup including WAL, schema/brain integrity checks, SHA-256, atomic no-overwrite destination creation and optional restore to a distinct new private path. Default Windows Tk and optional Qt have manual nonblocking backup/verify controls. The real **frozen Windows Tk EXE** integration smoke exercised snapshot → checksum → restore using synthetic private data.
+- Feature PR #44 final head `c8bfa75d87ee51d9d505ad31a62160d8b1e2288b` passed Python 3.11–3.13, privacy, *actual* PyTorch CPU, Qt on Windows/Ubuntu, Windows Tk onefile and Windows Qt onedir frozen EXE tests. First feature CI caught metadata-version mismatch; second caught unclosed Windows WAL test handle; both were corrected and **all final feature checks green**.
+- Version is `0.7.0` (source metadata and API). This is a **stabilized research application**, NOT v1/AGI or a human-brain simulation. Public Tk Windows release should be separately verified via GitHub Actions after main CI; never invent a release SHA-256 or infer that Qt is downloadable. Existing `.pt` checkpoints are not part of SQLite snapshots.
+- The optional Qt bundle remains technical-only, awaiting independent LGPLv3 / PySide6 / third-party notices and source-offer compliance. No physically benchmarked CUDA or independently validated natural semantic QA. Unfinished scientific issues remain open rather than being dishonestly closed.
+- Canonical runbook: [MEMORY_RECOVERY.md](MEMORY_RECOVERY.md). Current user README is cleaned and version-consistent; historical "candidate" sections below are past snapshots.
+
 ## 2026-11-08 — v0.7.0 safe-recovery release candidate (implementation, awaiting CI)
 
 - Verified baseline before changes: `main` `bf77bb08819dfe626587e170b35e159df14bf931`, no open PR, 2026-11-08 main CI (Python 3.11–3.13 / Windows standalone build / release publisher) all green. PRs #41–#43 merged. The last published version before this branch was `v0.6.0-main.bf77bb08`; **new 0.7.0 is not released before validation**.
