@@ -207,6 +207,25 @@ def ui_self_test() -> int:
             mission = MissionDashboard(
                 dashboard, memory, navigate=lambda _where: None,
                 network_enabled=lambda: False)
+            from .tk_autonomy_hub import install_autonomy_hub
+            operation_tab = install_autonomy_hub(
+                tabs, memory, knowledge, AutonomicSupervisor(memory),
+                brain_auto=tk.BooleanVar(master=root, value=False),
+                training_auto=training_tab.ng_auto,
+                training_folder=training_tab.ng_folder,
+                training_consent=training_tab.ng_consent,
+                model_status=model_chat_tab.ng_model_status,
+                navigate=lambda _where: None,
+                run_brain_trial=lambda: None,
+                model_start=model_chat_tab.ng_model_start,
+                model_stop=model_chat_tab.ng_model_stop,
+                choose_training_folder=training_tab.ng_choose_folder,
+                allowed_web=lambda: False,
+            )
+            operation_tab.ng_refresh()
+            if (tabs.tab(operation_tab, "text") != "AUTONOMIA" or
+                    "MÓZG LIF" not in operation_tab.ng_status.get()):
+                return 40
             tabs.select(dashboard)
             root.update_idletasks()
             if mission.refresh() or mission.metrics["steps"].get() != "0":
@@ -814,6 +833,14 @@ def launch(db_path: Path) -> int:
     message.bind("<Control-Return>", lambda _event: (send(), "break")[1])
     ttk.Label(chat_tab, text="Ctrl+Enter — zapytaj • przycisk Naucz: jawny zapis pary pytanie/odpowiedź w prywatnej bazie",
               wraplength=770).pack(anchor="w", padx=12, pady=(0, 8))
+    # Primary workflow first; secondary research panels remain intact.
+    tabs.insert(0, operations_tab)
+    tabs.insert(1, model_chat_tab)
+    tabs.insert(2, training_tab)
+    tabs.tab(model_chat_tab, text="ROZMOWA AI")
+    tabs.tab(training_tab, text="WIEDZA TXT")
+    tabs.tab(mission_tab, text="MÓZG LIVE")
+    tabs.tab(chat_tab, text="Uczenie ręczne")
     tabs.select(operations_tab)
     mission.refresh()
     refresh()
