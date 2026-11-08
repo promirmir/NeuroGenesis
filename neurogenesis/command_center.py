@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
 )
 
 from .command_service import CommandService
+from .qt_neural_view import NeuralFabric
 
 PANELS = (
     ("Przegląd", "Stan systemu"),
@@ -190,6 +191,11 @@ class CommandCenter(QMainWindow):
         self.events_timer = QTimer(self)
         self.events_timer.timeout.connect(self.poll_study_events)
         self.events_timer.start(200)
+        # Poll only while the live neural view is visible; no invented activity
+        # and no scene redraw when the saved LIF step is unchanged.
+        self.neural_timer = QTimer(self)
+        self.neural_timer.timeout.connect(self.refresh_neural_view)
+        self.neural_timer.start(350)
         self.refresh()
 
     def _page(self) -> tuple[QWidget, QVBoxLayout]:
@@ -207,6 +213,8 @@ class CommandCenter(QMainWindow):
             button.setChecked(i == index)
         if index == 5:
             self.refresh_sources()
+        if index == 3:
+            self.refresh_neural_view()
 
     def _build_overview(self) -> None:
         _, layout = self._page()
@@ -422,16 +430,35 @@ class CommandCenter(QMainWindow):
 
     def _build_brain(self) -> None:
         _, layout = self._page()
-        card, inner = block("Monitor aktywności neuronowej",
-                            "Rzeczywiste ślady aktywności z lokalnego Brain. Wykres nie mierzy świadomości.")
-        self.brain_metrics = label("Ładowanie pomiarów...", kind="subtle")
+        card, inner = block(
+            "NEURAL FABRIC  /  LIVE NETWORK",
+            "Prawdziwe zapisane neurony, synapsy, wagi, ślady i impulsy małej sieci LIF. "
+            "Brak obliczeń oznacza brak nowych błysków.")
+        self.brain_metrics = label("Odczytywanie rzeczywistego grafu...", kind="subtle")
         inner.addWidget(self.brain_metrics)
-        self.brain_plot = ActivityPlot()
+        self.brain_plot = NeuralFabric()
         inner.addWidget(self.brain_plot, 1)
         layout.addWidget(card, 1)
-        layout.addWidget(label("Historyczna sieć LIF pozostaje eksperymentalnym punktem odniesienia. "
-                               "Bez podłączonego modelu PyTorch nie pokazujemy strat ani dokładności treningu.",
-                               kind="subtle"))
+        layout.addWidget(label(
+            "Neurony wejściowe: niebieskie; pozostałe: turkusowe; błyski: nowy zapisany impuls. "
+            "Wizualizowane przejście przez synapsę jest umowne czasowo, a brakujące "
+            "węzły/połączenia są jawnie wykazane. Foundation Brain PyTorch działa "
+            "osobno i nie jest tu imitowany. Bez mierników świadomości.",
+            kind="subtle"))
+
+    def refresh_neural_view(self) -> None:
+        if self.pages.currentIndex() != 3:
+            return
+        try:
+            frame = self.service.neural_frame()
+        except (ValueError, OSError, RuntimeError) as exc:
+            self.brain_metrics.setText("BŁĄD ODCZYTU GRAFU: " + type(exc).__name__)
+            return
+        self.brain_plot.set_frame(frame)
+        self.brain_metrics.setText(
+            f"Krok {frame.step}   ·   {frame.neurons} neuronów   ·   "
+            f"{frame.synapses} synaps   ·   ostatnie impulsy {frame.last_spikes}"
+            f"   ·   graf {frame.coverage}")
 
     def _build_training(self) -> None:
         _, page_layout = self._page()
@@ -757,10 +784,8 @@ class CommandCenter(QMainWindow):
             f"domeny: {s.research_domains}")
         self.research_start.setEnabled(not s.research_running)
         self.research_stop.setEnabled(s.research_running)
-        self.brain_metrics.setText(
-            f"Rzeczywisty stan: neurony {s.neurons}, synapsy {s.synapses}, krok {s.brain_steps}")
         if self.pages.currentIndex() == 3:
-            self.brain_plot.set_values(self.service.neural_traces())
+            self.refresh_neural_view()
         status = ("AKTYWNY" if s.training_running else "NIEURUCHOMIONY")
         measured = (f"{s.training_last_loss:.5f}" if s.training_last_loss is not None
                     else "brak pomiaru")
