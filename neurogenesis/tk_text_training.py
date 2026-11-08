@@ -145,6 +145,7 @@ class LocalJob:
 def install_text_training(parent) -> ttk.Frame:
     tab = ttk.Frame(parent)
     parent.add(tab, text="Trening TXT")
+    parent.insert(1, tab)  # visible beside CENTRUM even on narrower laptops
     outer = tk.Canvas(tab, bg="#07111d", bd=0, highlightthickness=0)
     scroll = ttk.Scrollbar(tab, orient="vertical", command=outer.yview)
     outer.configure(yscrollcommand=scroll.set)
