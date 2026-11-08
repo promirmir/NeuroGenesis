@@ -56,6 +56,18 @@ jobs:
         run: |
           $hash = (Get-FileHash .\dist\NeuroGenesis.exe -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash  NeuroGenesis.exe" | Set-Content -Encoding ascii .\dist\NeuroGenesis.exe.sha256
+      - name: Install optional visual QA screenshot tooling
+        run: python -m pip install "pillow>=11,<13"
+      - name: Capture REAL public Tk Mission dashboard from synthetic SQLite
+        continue-on-error: true
+        run: python -m scripts.tk_mission_screenshot --output preview/NeuroGenesis-Mission-Control.png
+      - name: Upload human-review screenshot when interactive desktop is available
+        uses: actions/upload-artifact@v4
+        with:
+          name: NeuroGenesis-Tk-Mission-Visual
+          path: preview/NeuroGenesis-Mission-Control.png
+          if-no-files-found: warn
+          retention-days: 14
       - uses: actions/upload-artifact@v4
         with:
           name: NeuroGenesis-Windows-x64
