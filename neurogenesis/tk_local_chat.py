@@ -101,6 +101,7 @@ class LocalChatWorker:
 def install_local_chat(parent) -> ttk.Frame:
     tab = ttk.Frame(parent)
     parent.add(tab, text="Model Chat")
+    parent.insert(2, tab)  # show actual model dialogue early in notebook
     background = "#07111d"
     tk.Label(tab, text="NEUROGENESIS / AUTENTYCZNY MODEL KONWERSACYJNY OFFLINE",
              bg=background, fg="#77e7e0",
