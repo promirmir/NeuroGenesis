@@ -46,3 +46,10 @@ No automatic publishing of a Qt executable from this candidate until Windows pac
 - Source quality/reliability, contradiction detection, license metadata, source backups/export and robust full-text ranking are incomplete.
 - Research Pause/Resume requires a genuinely checkpointed queue and safe cancellation, so this preview exposes only Start/Stop; no fake pause.
 - Windows Qt package size, high-DPI manual screenshots and redistributable legal notices must be verified before promotion to production.
+
+## Technical Windows frozen-EXE verification candidate — PR #29
+
+- New `command_center_launcher.py` is a **separate** PySide6 entrypoint. `python command_center_launcher.py --self-test` creates a temporary SQLite, ingests a synthetic web observation, reopens the database, performs a source-cited Qt chat and checks source browsing with HTTPS OFF. It does not touch private user memory or send network requests.
+- `.github/workflows/qt-windows-frozen.yml` on Windows installs real PySide6-Essentials and PyInstaller, builds `--onedir --windowed` `NeuroGenesisCommandCenter.exe`, runs the **frozen** self-test, checks dynamically linked Qt6Core/Qt6Widgets DLLs and prints the exact EXE SHA-256 and directory MiB size.
+- This is **only a technical packaging smoke**. No upload or GitHub Release: obligations under Qt LGPLv3 and other bundled libraries, third-party notices, replacement of DLLs, signing/update process and manual DPI/accessibility review are not yet certified. The old independently tested Tk EXE still releases normally.
+- All claims depend on new CI results; a workflow file is not evidence of a passing build.

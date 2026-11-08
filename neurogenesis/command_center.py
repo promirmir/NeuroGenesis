@@ -602,8 +602,40 @@ class CommandCenter(QMainWindow):
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Optional NeuroGenesis Qt Command Center")
     parser.add_argument("--db", type=Path, help="Existing private SQLite; never inside the public repo")
+    parser.add_argument("--self-test", action="store_true", help="Offline Qt+SQLite evidence smoke")
     args = parser.parse_args(argv)
     app = QApplication.instance() or QApplication([])
+    if args.self_test:
+        # Exercise the actual Qt widgets and local evidence backend in the
+        # frozen binary. Never open a real web connection or touch user data.
+        import hashlib
+        import tempfile
+        from datetime import datetime, timezone
+        from .web_sense import WebObservation
+        with tempfile.TemporaryDirectory(prefix="ng-qt-smoke-") as folder:
+            service = CommandService(Path(folder) / "private.sqlite3")
+            sample = "Publiczny tekst o neuronach, uczeniu i aktualnej wiedzy."
+            service.memory.observe_web(WebObservation(
+                url="https://example.org/research", host="example.org", text=sample,
+                content_sha256=hashlib.sha256(sample.encode()).hexdigest(),
+                retrieved_utc=datetime.now(timezone.utc).isoformat(),
+                bytes_read=len(sample.encode())))
+            restored = CommandService(service.memory.path)
+            view = CommandCenter(restored)
+            view.navigate(1)
+            view.chat_input.setPlainText("Co wiadomo o neuronach i uczeniu?")
+            view.send_message()
+            cited = view.chat_history.toPlainText()
+            if "source_evidence" not in cited or "https://example.org/research" not in cited:
+                view.close()
+                return 2
+            view.navigate(5)
+            view.refresh_sources()
+            if view.sources_table.rowCount() != 1 or restored.network_enabled:
+                view.close()
+                return 3
+            view.close()
+        return 0
     try:
         service = CommandService(args.db)
     except (ValueError, OSError, RuntimeError) as exc:
