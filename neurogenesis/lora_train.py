@@ -135,23 +135,25 @@ def finetune_local_dialogue(model_dir: str | Path, input_txt: str | Path,
 
     def encode_pair(pair):
         question, answer = pair
-        prefix = [{"role": "user", "content": question}]
-        with_assistant = prefix + [{"role": "assistant", "content": answer}]
-        prompt = tokenizer.apply_chat_template(
-            prefix, tokenize=True, add_generation_prompt=True,
+        prompt_tokens = tokenizer.apply_chat_template(
+            [{"role": "user", "content": question}],
+            tokenize=True, add_generation_prompt=True,
             enable_thinking=False)
-        whole = tokenizer.apply_chat_template(
-            with_assistant, tokenize=True, add_generation_prompt=False,
-            enable_thinking=False)
-        if not isinstance(prompt, list) or not isinstance(whole, list):
-            raise ValueError("Tokenizer nie obsługuje wymaganego szablonu rozmowy.")
-        if whole[:len(prompt)] != prompt:
-            raise ValueError("Niezgodne prefiksy szablonu użytkownik/asystent.")
-        # Never train on questions; the loss covers assistant completion ONLY.
-        if len(prompt) >= seq - 4:
+        if not isinstance(prompt_tokens, list):
+            raise ValueError("Tokenizer nie obsługuje szablonu rozmowy.")
+        # Qwen3's generated assistant prefix with /no_think differs from
+        # serialization of a completed historical assistant turn. Never
+        # assume that apply_chat_template(full) starts with prompt_tokens:
+        # build the next-response target after the very SAME generation
+        # prefix used at runtime, with only assistant bytes contributing
+        # to the loss. This also avoids a chat-template prefix mismatch.
+        answer_tokens = tokenizer(answer, add_special_tokens=False).input_ids
+        if not isinstance(answer_tokens, list) or tokenizer.eos_token_id is None:
+            raise ValueError("Tokenizer bez tokenów odpowiedzi albo EOS.")
+        if len(prompt_tokens) >= seq - 4:
             return None
-        tokens = whole[:seq]
-        labels = [-100] * len(prompt) + tokens[len(prompt):]
+        tokens = (prompt_tokens + answer_tokens + [tokenizer.eos_token_id])[:seq]
+        labels = [-100] * len(prompt_tokens) + tokens[len(prompt_tokens):]
         if len(labels) != len(tokens) or sum(x != -100 for x in labels) < 2:
             return None
         return (
