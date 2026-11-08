@@ -5,8 +5,14 @@
 - The existing CPU neural/SQLite core and Foundation Brain experimental worker remain local. Internet tab introduces **optional, operator-enabled** read-only HTTPS perception; there is no auto network connection at startup.
 - Only public DNS HTTPS:443 URLs with no query/userinfo. DNS is resolved once, all IPs checked as global and the TLS socket connects to the verified IP while authenticating the hostname. Deny redirects, IP literals, local/private IP, compressed/binary downloads and code execution. Body capped at 128 KiB, extracted text at 6,000 characters.
 - A worker fetches inert text, the UI commits source URL/UTC/SHA-256 and neural hashed features in one SQLite transaction. Duplicate content is ignored. Full raw page content is not stored. Website sees the user's public IP.
-- Opt-in scheduled refresh checks only the last manually approved URL every 5 minutes; if HTTPS is switched off, fetched content is not stored. No broad crawling or JavaScript.
+- Opt-in scheduled refresh checks only the last manually approved URL every 5 minutes; if HTTPS is switched off, fetched content is not stored. No JavaScript; the specialist crawler is separately authorized and bounded, as described below.
 - Existing risks remain: URL/source metadata may be sensitive, local database unencrypted, full page text may be incomplete or inaccurate, six-second socket timeout is not a strict total request time budget. Do not treat network content as a command or independently verified fact.
+
+## PR #24 candidate: opt-in cross-domain source discovery
+
+The new specialist tab does not run by default. After explicit HTTPS consent, it follows only topic-related extracted HTML links from public Wikipedia subject seeds, including links to other public domains. It validates every candidate with the existing query-free HTTPS:443, public-DNS/IP-pinned TLS reader; denies private IPs, redirects, scripts and arbitrary HTTP methods. robots.txt requests also use pinned TLS, deny inaccessible or redirecting policy files, and honor disallow and crawl-delay. The crawler has upper bounds of 500 attempted URLs, 50 domains, 20 pages/domain, link depth 3, candidate queue 600 and >=5 seconds between page fetches. The manual reader remains limited to 128 KiB; explicit crawler reads are limited to 512 KiB; extracted text is capped at 6,000 characters. Topic text becomes part of requested public Wikipedia URL paths and is visible to destination servers; do not enter secrets. Page content is inert and cannot authorize commands.
+
+Limitations: robots.txt is only one layer of access policy; site terms and rate limits still apply. There is no site login, full web search API, query URL support, JS rendering, PDF processing, authenticated access or actual model-weight training. Real-site compatibility has not been proven by offline GitHub Actions. Additional resource and cancellation hardening is required before unlimited crawling. No unbounded scanning is authorized.
 
 ## Historical v0.5.4 offline attack surface
 
