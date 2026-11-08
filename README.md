@@ -3,6 +3,8 @@
 **Lokalny system badawczy inspirowany neurobiologią — v0.7.0**  
 **Autorstwo publiczne: Miron przy pomocy AI**
 
+Research status: **research prototype v0.7.0.** Stabilizacja lokalnego narzędzia badawczego; brak potwierdzonej inteligencji ogólnej.
+
 NeuroGenesis rozwija eksperymentalną, mierzalną architekturę sztucznej inteligencji: plastyczne sieci neuronowe, trwałą prywatną pamięć, kontrolowane zdobywanie wiedzy z publicznych źródeł, niezależne eksperymenty PyTorch oraz transparentne oceny jakości. **To nie jest AGI, cyfrowa świadomość ani zweryfikowana symulacja ludzkiego mózgu.** Wygenerowane przez Foundation Brain bajty nie stanowią jeszcze kompetentnej rozmowy.
 
 ## Windows — aplikacja bez instalowania Pythona
