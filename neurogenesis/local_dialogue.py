@@ -117,14 +117,13 @@ def download_local_model(destination: str | Path, *, confirm: bool = False) -> d
         raise
 
 
-def respond_local(model_dir: str | Path, messages: list[dict[str, str]], *,
-                  device: str = "cpu", max_new_tokens: int = 128,
-                  adapter_dir: str | Path | None = None) -> dict[str, Any]:
-    """Run an actual local language model; no network access in this operation."""
-    validated = validate_messages({"messages": messages})
+def load_local_runtime(model_dir: str | Path, *,
+                       device: str = "cpu",
+                       adapter_dir: str | Path | None = None):
+    """Load trusted local safetensors exactly once for a conversation session."""
     base = validate_model_dir(model_dir)
-    if device not in ("cpu", "cuda") or type(max_new_tokens) is not int or not 1 <= max_new_tokens <= MAX_REPLY_TOKENS:
-        raise ValueError("Wybierz CPU/CUDA i limit 1–256 tokenów.")
+    if device not in ("cpu", "cuda"):
+        raise ValueError("Wybierz CPU albo CUDA.")
     if adapter_dir is not None:
         adapter = Path(adapter_dir)
         if not adapter.is_dir() or not (adapter / "adapter_config.json").is_file() or not list(adapter.glob("*.safetensors")):
@@ -149,7 +148,18 @@ def respond_local(model_dir: str | Path, messages: list[dict[str, str]], *,
             from peft import PeftModel
         except ImportError as exc:
             raise RuntimeError("Do lokalnego adaptera LoRA wymagany jest PEFT.") from exc
-        model = PeftModel.from_pretrained(model, adapter, is_trainable=False, local_files_only=True).eval()
+        model = PeftModel.from_pretrained(
+            model, adapter, is_trainable=False, local_files_only=True).eval()
+    return (torch, tokenizer, model, base, adapter is not None, device)
+
+
+def respond_loaded(runtime, messages: list[dict[str, str]], *,
+                   max_new_tokens: int = 128) -> dict[str, Any]:
+    """Answer from weights already loaded into this local process."""
+    validated = validate_messages({"messages": messages})
+    if type(max_new_tokens) is not int or not 1 <= max_new_tokens <= MAX_REPLY_TOKENS:
+        raise ValueError("Wybierz 1–256 tokenów odpowiedzi.")
+    torch, tokenizer, model, base, has_adapter, device = runtime
     full = [{"role": "system", "content": (
         "Jesteś lokalnym asystentem NeuroGenesis. Nie udawaj źródeł ani wiedzy o zdarzeniach aktualnych. "
         "Gdy nie wiesz, przyznaj to. Nie masz autonomicznych działań poza tą rozmową."
@@ -160,22 +170,58 @@ def respond_local(model_dir: str | Path, messages: list[dict[str, str]], *,
     with torch.inference_mode():
         generated = model.generate(
             inputs, max_new_tokens=max_new_tokens,
-            # Follow official Qwen3 non-thinking mode recommendations; the
-            # vendor warns greedy generation can repetitively degenerate.
+            # Official Qwen3 non-thinking recommendations; greedy can repeat.
             do_sample=True, temperature=0.7, top_p=0.8, top_k=20,
             pad_token_id=tokenizer.eos_token_id)
-    text = tokenizer.decode(generated[0][inputs.shape[1]:],
-                            skip_special_tokens=True).strip()
+    reply = tokenizer.decode(generated[0][inputs.shape[1]:],
+                             skip_special_tokens=True).strip()
     return {
         "status": "local_conversational_model",
-        "reply": text,
+        "reply": reply,
         "model_dir": str(base),
-        "adapter_used": adapter is not None,
+        "adapter_used": has_adapter,
         "offline_inference": True,
-        "trained_by_neurogenesis": False if adapter is None else "local_adapter_only",
+        "trained_by_neurogenesis": False if not has_adapter else "local_adapter_only",
         "fact_checked": False,
         "source_citations": [],
     }
+
+
+def respond_local(model_dir: str | Path, messages: list[dict[str, str]], *,
+                  device: str = "cpu", max_new_tokens: int = 128,
+                  adapter_dir: str | Path | None = None) -> dict[str, Any]:
+    """One-shot backwards-compatible offline inference."""
+    runtime = load_local_runtime(
+        model_dir, device=device, adapter_dir=adapter_dir)
+    return respond_loaded(runtime, messages, max_new_tokens=max_new_tokens)
+
+
+def serve_local_stdio(model_dir: str | Path, *,
+                      device: str = "cpu",
+                      max_new_tokens: int = 128,
+                      adapter_dir: str | Path | None = None) -> int:
+    """Persistent local JSON-lines protocol; weights load ONCE per session.
+
+    A separate explicit Python worker is used so the default frozen EXE
+    stays dependency-light. Protocol messages do not contain URLs or code.
+    """
+    runtime = load_local_runtime(
+        model_dir, device=device, adapter_dir=adapter_dir)
+    print(json.dumps({"status": "local_model_ready", "offline": True}),
+          flush=True)
+    for line in iter(lambda: sys.stdin.buffer.readline(MAX_PROMPT_BYTES + 2), b""):
+        try:
+            if len(line) > MAX_PROMPT_BYTES + 1 or not line.endswith(b"\n"):
+                raise ValueError("Wiadomość przekracza dopuszczalny limit.")
+            payload = json.loads(line.decode("utf-8"))
+            validated = validate_messages(payload)
+            result = respond_loaded(runtime, validated,
+                                    max_new_tokens=max_new_tokens)
+        except (ValueError, PermissionError, RuntimeError, UnicodeError,
+                json.JSONDecodeError) as exc:
+            result = {"status": "local_model_error", "message": str(exc)}
+        print(json.dumps(result, ensure_ascii=False), flush=True)
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -183,6 +229,7 @@ def main(argv: list[str] | None = None) -> int:
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--download-model", action="store_true")
     mode.add_argument("--respond-stdin", action="store_true")
+    mode.add_argument("--serve-stdio", action="store_true")
     parser.add_argument("--model-dir", type=Path, required=True)
     parser.add_argument("--confirm-download-license", action="store_true")
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
@@ -193,6 +240,11 @@ def main(argv: list[str] | None = None) -> int:
         if args.download_model:
             result = download_local_model(
                 args.model_dir, confirm=args.confirm_download_license)
+        elif args.serve_stdio:
+            return serve_local_stdio(
+                args.model_dir, device=args.device,
+                max_new_tokens=args.max_new_tokens,
+                adapter_dir=args.adapter_dir)
         else:
             raw = sys.stdin.buffer.read(MAX_PROMPT_BYTES + 1)
             if len(raw) > MAX_PROMPT_BYTES:
