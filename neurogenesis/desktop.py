@@ -180,12 +180,15 @@ def ui_self_test() -> int:
     from .tk_mission import MissionDashboard
     from .tk_foundation_lab import install_foundation_lab
     from .tk_bundled_training import install_bundled_training
-    from .tk_bundled_chat import install_bundled_chat
+    from .tk_autonomous_home import install_autonomous_home
+    from .agent_goals import GoalStore
     from .local_knowledge import LocalKnowledge
 
     with tempfile.TemporaryDirectory(prefix="ng-public-tk-ui-check-") as folder:
         memory = ExperienceMemory(Path(folder) / "synthetic-private.sqlite3")
         knowledge = LocalKnowledge(Path(folder) / "local-knowledge.sqlite3")
+        goals = GoalStore(Path(folder) / "synthetic-goals.sqlite3")
+        supervisor = AutonomicSupervisor(memory)
         root = tk.Tk()
         root.withdraw()
         try:
@@ -200,9 +203,11 @@ def ui_self_test() -> int:
             if tabs.tab(foundation_tab, "text") != "Foundation Lab":
                 return 37
             training_tab = install_bundled_training(tabs, knowledge)
-            model_chat_tab = install_bundled_chat(tabs, knowledge)
+            model_chat_tab = install_autonomous_home(
+                tabs, memory, knowledge, supervisor, goals)
             if (tabs.tab(training_tab, "text") != "Trening TXT"
-                    or tabs.tab(model_chat_tab, "text") != "Model Chat"):
+                    or tabs.tab(model_chat_tab, "text").strip() != "NEUROGENESIS"
+                    or tabs.index(model_chat_tab) != 0):
                 return 39
             mission = MissionDashboard(
                 dashboard, memory, navigate=lambda _where: None,
@@ -253,7 +258,7 @@ def launch(db_path: Path) -> int:
         return 1
 
     root = tk.Tk()
-    root.title("NeuroGenesis — Mission Control / cyfrowy mózg")
+    root.title("NeuroGenesis — Autonomiczne centrum inteligencji")
     # The user may have a laptop, high-DPI display or constrained remote
     # desktop. Never position a 1450x920 first-launch window off-screen.
     available_width = max(780, root.winfo_screenwidth() - 34)
@@ -271,7 +276,7 @@ def launch(db_path: Path) -> int:
     logo.pack(side="left")
     tk.Label(logo, text="NEUROGENESIS", bg="#07111d", fg="#f4fffb",
              font=("Segoe UI", 22, "bold")).pack(anchor="w")
-    tk.Label(logo, text="MISSION CONTROL  /  LOCAL RESEARCH ENVIRONMENT",
+    tk.Label(logo, text="AUTONOMOUS CORE  /  LOCAL INTELLIGENCE",
              bg="#07111d", fg="#53e9d5",
              font=("Consolas", 9, "bold")).pack(anchor="w")
     tk.Label(header, text="Miron przy pomocy AI    •    PRYWATNA PAMIĘĆ    •    HTTPS TYLKO PO ZGODZIE",
@@ -281,14 +286,18 @@ def launch(db_path: Path) -> int:
     tabs.pack(fill="both", expand=True, padx=18, pady=(0, 15))
     mission_tab = ttk.Frame(tabs)
     tabs.add(mission_tab, text="  CENTRUM  ")
-    chat_tab = ttk.Frame(tabs)
-    brain_tab = ttk.Frame(tabs)
+    advanced_frame = ttk.Frame(tabs)
+    advanced_tabs = ttk.Notebook(advanced_frame)
+    advanced_tabs.pack(fill="both", expand=True)
+    chat_tab = ttk.Frame(advanced_tabs)
+    brain_tab = ttk.Frame(advanced_tabs)
     web_tab = ttk.Frame(tabs)
-    tabs.add(chat_tab, text="Rozmowa")
-    tabs.add(brain_tab, text="Mózg")
+    advanced_tabs.add(chat_tab, text="Rozmowa klasyczna")
+    advanced_tabs.add(brain_tab, text="Badania LIF")
     tabs.add(web_tab, text="Internet")
     backup_tab = ttk.Frame(tabs)
-    tabs.add(backup_tab, text="Kopia pamięci")
+    tabs.add(backup_tab, text="Pamięć i kopie")
+    tabs.add(advanced_frame, text="Zaawansowane")
 
     tk.Label(backup_tab, text="Ochrona zapisanej wiedzy i pamięci",
              bg="#111827", fg="#f8fafc",
@@ -379,11 +388,11 @@ def launch(db_path: Path) -> int:
         wraplength=750).pack(anchor="w", padx=24)
     autonomy_controls = tk.Frame(brain_tab, bg="#111827")
     autonomy_controls.pack(fill="x", padx=24, pady=(12, 4))
-    autonomy_enabled = tk.BooleanVar(value=False)
+    autonomy_enabled = tk.BooleanVar(value=True)
     ttk.Checkbutton(autonomy_controls,
-                    text="AUTO: testuj ulepszenia co 30 s (wymaga nowych doświadczeń)",
+                    text="AUTO: niezależna ocena LIF po 40 nowych bodźcach",
                     variable=autonomy_enabled).pack(side="left")
-    autonomy_info = tk.StringVar(value="Automatyczny samorozwój wyłączony")
+    autonomy_info = tk.StringVar(value="Autonomiczna ocena LIF aktywna po nowych doświadczeniach")
     ttk.Label(brain_tab, textvariable=autonomy_info, wraplength=750).pack(
         fill="x", padx=24, pady=(4, 8))
 
@@ -401,12 +410,16 @@ def launch(db_path: Path) -> int:
     from .tk_mission import MissionDashboard
     from .tk_foundation_lab import install_foundation_lab
     from .tk_bundled_training import install_bundled_training
-    from .tk_bundled_chat import install_bundled_chat
+    from .tk_autonomous_home import install_autonomous_home
+    from .agent_goals import GoalStore
     from .local_knowledge import LocalKnowledge
     knowledge = LocalKnowledge(db_path.with_name("knowledge_local.sqlite3"))
-    foundation_tab = install_foundation_lab(tabs)
+    goals = GoalStore(db_path.with_name("agent_goals.sqlite3"))
+    foundation_tab = install_foundation_lab(advanced_tabs)
     training_tab = install_bundled_training(tabs, knowledge)
-    model_chat_tab = install_bundled_chat(tabs, knowledge)
+    model_chat_tab = install_autonomous_home(
+        tabs, memory, knowledge, supervisor, goals,
+        brain_enabled=autonomy_enabled)
     targets = {
         "foundation": foundation_tab,
         "training": training_tab,
@@ -416,14 +429,21 @@ def launch(db_path: Path) -> int:
         "web": web_tab,
         "mission": mission_tab,
     }
+    def navigate(where: str):
+        target = targets[where]
+        if where in ("chat", "brain", "foundation"):
+            tabs.select(advanced_frame)
+            advanced_tabs.select(target)
+        else:
+            tabs.select(target)
+
     mission = MissionDashboard(
-        mission_tab, memory,
-        navigate=lambda where: tabs.select(targets[where]),
+        mission_tab, memory, navigate=navigate,
         network_enabled=lambda: web_enabled.get(),
     )
-    # Dedicated specialist study tab, off until explicit HTTPS consent.
+    # Dedicated research-only specialisation tab grouped under Advanced.
     from .study_panel import install_study_panel
-    install_study_panel(tabs, memory, web_enabled)
+    install_study_panel(advanced_tabs, memory, web_enabled)
     ttk.Checkbutton(web_tab, text="Włącz odczyt HTTPS (domyślnie WYŁĄCZONY)",
                     variable=web_enabled).pack(anchor="w", padx=24, pady=3)
     ttk.Checkbutton(web_tab, text="Sprawdzaj zatwierdzony adres co 5 minut (opcjonalnie)",
@@ -576,12 +596,8 @@ def launch(db_path: Path) -> int:
     ttk.Button(autonomy_controls, text="Przetestuj ulepszenie",
                command=try_improve).pack(side="right")
 
-    def autonomy_tick() -> None:
-        if autonomy_enabled.get():
-            try_improve()
-        root.after(30_000, autonomy_tick)
-
-    root.after(30_000, autonomy_tick)
+    # The visible autonomous home owns the non-blocking supervisor scheduler.
+    # Do not run a competing legacy Tk-thread cycle every 30 seconds.
 
     def web_request(*, automatic: bool = False) -> None:
         if not web_enabled.get():
@@ -760,7 +776,7 @@ def launch(db_path: Path) -> int:
     message.bind("<Control-Return>", lambda _event: (send(), "break")[1])
     ttk.Label(chat_tab, text="Ctrl+Enter — zapytaj • przycisk Naucz: jawny zapis pary pytanie/odpowiedź w prywatnej bazie",
               wraplength=770).pack(anchor="w", padx=12, pady=(0, 8))
-    tabs.select(mission_tab)
+    tabs.select(model_chat_tab)
     mission.refresh()
     refresh()
 
