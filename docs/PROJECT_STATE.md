@@ -1,3 +1,9 @@
+## 2026-11-08 — BM25 comparison against current source retrieval (PR candidate)
+
+- PR #41 merged to main commit `7dd3094ac791b241b2b84d50dccb0fa3032bc8b6` after Python 3.11–3.13, dedicated real SQLite prospective QA CI, privacy and frozen Tk Windows EXE tests. It provides Wilson 95% source citation confidence bounds plus abstain-all comparison; fictional CI 40 supported/100 unsupported scored quote recall 1.0 and observed false citation 0, upper95 ~0.03699 — only an easy *seen synthetic* regression fixture.
+- Branch `feat/bm25-source-retrieval-benchmark-20261108` adds bounded real BM25 term-frequency/IDF passage baseline over same newest SQLite revisions as current `answer_question`. A read-only local rights-gated QA JSONL comparison measures literal URL+quote recall, unsupported false citation, strict score and median retrieval latency for both, never silently deploys BM25 nor changes current chat/model.
+- New real SQLite tests include source version replacement, negative unsupported claims sharing terms, no writes and no disclosure of private questions. Dedicated `qa-acceptance.yml` runs them. **Candidate awaiting final CI**; no independent human-authored audit performed, no semantic QA accuracy or CUDA/Qt release claim. Details [BM25_BASELINE.md](BM25_BASELINE.md).
+
 ## 2026-11-08 — prospective-source QA statistical acceptance gate (PR candidate)
 
 - Verified live `main` `da9a6c736f55c13b048101a4a07c2f5defff64a1`; no open PR, all latest main CI including actual PyTorch CPU, Windows Tk EXE, Qt Windows/Linux and publisher successful. Prior PR #36–#40 wording/claim-guard work is already merged; do **not** redo those heuristics. Historical candidate notes below must not override this.
