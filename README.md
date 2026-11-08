@@ -1,3 +1,13 @@
+## NeuroGenesis 0.12.2 — autonomia rzeczywiście korzysta z dowodów
+
+Naprawiono przerwę między pamięcią a rozumowaniem modelu: gdy autonomiczny agent przygotowuje raport, Qwen3-1.7B otrzymuje teraz **faktyczne wybrane fragmenty TXT i wcześniejszych, zatwierdzonych obserwacji HTTPS** wraz z nazwą lub URL i SHA-256. Samo dołączenie cytowania do wyniku nie jest już traktowane jako dowód, że model przeczytał źródło.
+
+Nowe zapisane źródło HTTPS lub aktualizacja TXT wybudza oczekujący cel do ponownej analizy. W panelu celów źródła są opisane jako **przekazane modelowi**. Zachowano kolejkę, limity i ręczne zatwierdzanie raportów. To ulepszenie wykorzystania wiedzy, nie dodatkowy trening wag językowych.
+
+[Dokładna architektura, warunki i ograniczenia](docs/EVIDENCE_DRIVEN_AUTONOMY_0122.md).
+
+---
+
 ## 0.12.1 — Samodzielne badania + wykorzystanie źródeł przez model
 
 Wersja 0.12.1 jest **rozszerzeniem głównego, autonomicznego interfejsu 0.12**, nie drugim, konkurencyjnym pulpitem. Pierwszy ekran pozostaje jeden: **NeuroGenesis — rozmowa, trwałe cele, postęp autonomii i rzeczywisty connectome**.
@@ -85,7 +95,7 @@ nie należy mylić starszego EXE 0.8.0 z nowymi funkcjami.
 
 # NeuroGenesis — Mission Control
 
-**research prototype v0.12.1.**  
+**research prototype v0.12.2.**  
 **Publiczne autorstwo: Miron przy pomocy AI.**
 
 NeuroGenesis to lokalny projekt badawczy AI: rzeczywista mała sieć neuronowa LIF ze strukturalną plastycznością, prywatna trwała baza SQLite, kontrolowane zdobywanie informacji ze źródeł HTTPS, ekstrakcyjne cytowanie oraz odrębny eksperymentalny model Foundation Brain trenowany w PyTorch. **System nie jest AGI, świadomością, modelem ludzkiego mózgu ani niezależnie zweryfikowanym systemem rozumienia języka naturalnego.**
