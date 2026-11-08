@@ -79,6 +79,18 @@ class SpecialistStudyTests(unittest.TestCase):
         self.assertTrue(any("example.org/mechanika" in x for x in observed))
         self.assertFalse(any("127.0.0.1" in x or "token" in x for x in observed))
 
+    def test_duplicate_observation_not_counted_as_new_learning(self):
+        events = []
+        study = SpecialistStudy(
+            "mechanika", lambda obs: {"web_duplicate": True},
+            max_pages=1, fetch=lambda url: object(),
+            robots=RobotsPolicy(fetch=lambda host: ""))
+        result = study.run(consent=True,
+                           on_event=lambda kind, url: events.append(kind))
+        self.assertEqual(result.attempted, 1)
+        self.assertEqual(result.accepted, 0)
+        self.assertIn("duplicate", events)
+
     def test_robots_denial_never_fetches_page(self):
         fetch = Mock()
         policy = RobotsPolicy(fetch=lambda host:
