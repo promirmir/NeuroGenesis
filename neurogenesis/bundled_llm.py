@@ -264,8 +264,11 @@ class BundledModelSession:
         # same real LLM, not an unrelated legacy-only conversation panel.
         # This is RAG, not gradient training and not proof of source truth.
         if self.web_memory is not None:
+            # The source-evidence index has an explicit 512-character
+            # query budget, while the dialogue accepts 1,800 characters.
+            # Limit only retrieval terms, never the actual LLM question.
             web_result = self.web_memory.answer_from_knowledge(
-                verified[-1]["content"])
+                verified[-1]["content"][:512])
             if web_result is not None and web_result.get("sources"):
                 first = web_result["sources"][0]
                 text = str(web_result.get("answer", ""))[:1050]
