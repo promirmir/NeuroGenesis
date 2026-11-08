@@ -41,7 +41,13 @@ def capture(output: Path) -> bool:
         for i in range(7):
             process_message(memory, f"Fikcyjny sygnał ekranowy numer {i + 1}")
         root = tk.Tk()
-        root.geometry("1450x940+32+32")
+        # GitHub-hosted Windows uses a virtual 1024px desktop in some jobs.
+        # Do not screenshot a huge offscreen window and mistake cropping for
+        # a bug in the application's responsive page.
+        virtual_width = max(720, root.winfo_screenwidth() - 24)
+        virtual_height = max(520, root.winfo_screenheight() - 92)
+        root.geometry(
+            f"{min(1450, virtual_width)}x{min(920, virtual_height)}+8+8")
         root.title("NeuroGenesis / Mission Control — synthetic QA only")
         root.configure(bg="#07111d")
         try:
