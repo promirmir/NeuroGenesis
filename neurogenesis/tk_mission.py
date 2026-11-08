@@ -13,6 +13,7 @@ import tkinter as tk
 from .memory import ExperienceMemory
 from .neural_telemetry import NeuralTelemetry, snapshot_neural_telemetry
 from .tk_connectome import TkConnectome
+from .tk_hologram import HolographicBrain
 
 
 BACKGROUND = "#07111d"
@@ -126,12 +127,25 @@ class MissionDashboard:
         self.neural_step = _label(band, "BEZ NOWEGO KROKU", size=9,
                                   color=ACCENT, background=PANEL)
         self.neural_step.pack(side="right")
+        # The actual shipped Windows EXE opens the 3D-looking view by default.
+        # The original exact 2D connectivity plot is preserved one click away.
+        self.hologram_canvas = tk.Canvas(neural, bg="#040d18", height=355,
+                                         highlightthickness=0, bd=0)
+        self.hologram_canvas.pack(fill="both", expand=True)
+        self.hologram = HolographicBrain(self.hologram_canvas)
         self.neural_canvas = tk.Canvas(neural, bg="#050e1a", height=355,
                                        highlightthickness=0, bd=0)
-        self.neural_canvas.pack(fill="both", expand=True)
         self.graph = TkConnectome(self.neural_canvas)
         self.neural_canvas.bind("<Configure>", self._resize_graph, add="+")
-        _label(neural, "Prawdziwe połączenia, wagi i ostatnie impulsy. Kółko myszy: powiększ.",
+        self._view_mode = "3d"
+        mode_row = tk.Frame(neural, bg=PANEL)
+        mode_row.pack(fill="x", padx=5, pady=(6, 0))
+        self.view_label = tk.StringVar(value="HOLOGRAM 3D / PODGLĄD PRZESTRZENNY")
+        _action(mode_row, "PRZEŁĄCZ 3D / 2D", self._toggle_neural_view).pack(side="left")
+        tk.Label(mode_row, textvariable=self.view_label, bg=PANEL, fg=ACCENT,
+                 font=("Consolas", 8, "bold")).pack(side="left", padx=10)
+        _action(mode_row, "PAUZA OBROTU", self._toggle_hologram_motion).pack(side="right")
+        _label(neural, "Obrót to ruch kamery. Świetlne impulsy pojawiają się tylko po rzeczywistym kroku LIF.",
                color=MUTED, size=9, background=PANEL).pack(fill="x", padx=5, pady=(7, 1))
         _action(neural, "OTWÓRZ PEŁNY MONITOR MÓZGU  ›",
                 lambda: navigate("brain")).pack(fill="x", pady=(7, 1))
@@ -193,6 +207,11 @@ class MissionDashboard:
             _label(cell, hint, size=8, color=MUTED,
                    background="#0d2739").pack(anchor="w")
 
+        self.capacity_text = tk.StringVar(value="LIMIT SIECI LIF: odczytywanie...")
+        tk.Label(self.body, textvariable=self.capacity_text, bg=BACKGROUND,
+                 fg="#769eaf", font=("Consolas", 9)).pack(
+                     anchor="w", pady=(0, 10))
+
         quick = tk.Frame(self.body, bg=BACKGROUND)
         quick.pack(fill="x", pady=(0, 4))
         for label, where in (
@@ -204,6 +223,26 @@ class MissionDashboard:
                     primary=where == "chat").pack(side="left", padx=(0, 10))
         _label(quick, "STATUS BADAWCZY · NIE AGI · BEZ UKRYTEJ SIECI",
                size=9, color=MUTED).pack(side="right")
+
+    def _toggle_neural_view(self) -> None:
+        if self._view_mode == "3d":
+            self.hologram_canvas.pack_forget()
+            self.neural_canvas.pack(fill="both", expand=True, before=self.hologram_canvas if
+                                    self.hologram_canvas.winfo_manager() else None)
+            self._view_mode = "2d"
+            self.view_label.set("CONNECTOME 2D / DOKŁADNA MAPA SYNAPS")
+            if self.graph._latest is not None:
+                self.graph.render(self.graph._latest, force=True)
+        else:
+            self.neural_canvas.pack_forget()
+            self.hologram_canvas.pack(fill="both", expand=True, before=self.neural_canvas if
+                                      self.neural_canvas.winfo_manager() else None)
+            self._view_mode = "3d"
+            self.view_label.set("HOLOGRAM 3D / PODGLĄD PRZESTRZENNY")
+
+    def _toggle_hologram_motion(self) -> None:
+        moving = self.hologram.toggle_motion()
+        self._event("KAMERA 3D / " + ("OBRÓT WŁĄCZONY" if moving else "OBRÓT ZATRZYMANY"))
 
     def _event(self, text: str) -> None:
         self.events.configure(state="normal")
@@ -272,11 +311,17 @@ class MissionDashboard:
             f"{status['knowledge']['passages']} frag.")
         self.modules["lif"].set(f"KROK {values['steps']}")
         self.modules["foundation"].set("TRENING OSOBNO")
-        state = snapshot_neural_telemetry(self.memory.brain())
+        brain = self.memory.brain()
+        state = snapshot_neural_telemetry(brain)
+        self.capacity_text.set(
+            f"AKTYWNY LIMIT LIF: {brain.config.max_neurons} NEURONÓW / "
+            f"{brain.config.max_synapses} SYNAPS / {brain.config.max_patterns} WZORCÓW  ·  "
+            "starsze pamięci zachowują swoje limity")
         was = self._last
         advanced = was is not None and state.step > was.step
         if was is None or advanced:
             self.graph.render(state)
+            self.hologram.update_state(state)
             self._samples.append((state.step, sum(int(n.fired) for n in state.nodes)))
             self._draw_signals()
             self.signal_label.set(
