@@ -207,7 +207,7 @@ class LocalTrainingTests(unittest.TestCase):
             str(self.python), str(self.model),
             device="cpu", tokens=64)
         worker = LocalChatWorker()
-        with mock.patch("subprocess.Popen", FakeProc) as popen:
+        with mock.patch("subprocess.Popen", side_effect=FakeProc) as popen:
             first = worker.run(argv, [{"role": "user", "content": "Cześć"}])
             second = worker.run(argv, [
                 {"role": "user", "content": "Cześć"},
