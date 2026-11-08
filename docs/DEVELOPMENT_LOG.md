@@ -110,3 +110,10 @@ Measured development status against `docs/VISION.md` using repository `main` `db
 
 - Reconciled old PR #23 with current main `542ba8272ceb4c0c13871b9f9fd954c23d4c4cdb` while retaining prior PR changes. Added a missing Windows-EXE workflow PR trigger for `.github/workflows/foundation-cpu.yml` so this CI-only change can receive its previously absent Windows regression/packaging gate. The dedicated real-PyTorch job now includes held-out baseline tests on relevant file changes.
 - No runtime code, SQLite schema, neural training or release change. Pending fresh CI and explicit merge decision; do not count old green checks as validating the updated head.
+
+## 2026-11-08 — PR #23 completed; source evidence integration PR #27 candidate
+
+- CI PR #23 squash-merged to main `66f3d61fa1696aaeeb3c33c0d035100a9aaacba1` after all five checks: Python 3.11/3.12/3.13, real PyTorch CPU foundation and Windows standalone EXE (privacy checks included).
+- Added dependency-free `neurogenesis/knowledge.py` and `tests/test_knowledge.py`: local bounded source passages + revisions + token index, exact quote and provenance retrieval, source deletion, unknown-question abstention; accepted web observations index in the same SQLite transaction as neural state, event and URL/SHA; no old brain/teaching data deletion.
+- Extended existing Windows conversation and frozen EXE self-test to cite a source after reloading local SQLite; manual teachings always take precedence. No Foundation weight training, general text generation, online real-site benchmark or rights verification claimed. Controlled test fixture defines three answerable and two unsupported questions (coverage 0/3 before and 3/3 after synthetic source acquisition, *not* model accuracy).
+- First Linux CI `42465142616`: 11/11 new knowledge tests green; one existing exact UI acknowledgment string test failed, so original text was restored in `d4fc8fe2a2b3ec2a5e0e06d70fbac96af4a417b3`. Fresh CI plus Windows EXE must verify final head. `docs/COMMAND_CENTER.md` is an additive Qt design specification, not a shipped GUI.

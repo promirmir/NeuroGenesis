@@ -86,6 +86,10 @@ class ExperienceMemory:
                     retrieved_utc TEXT NOT NULL,
                     UNIQUE(source_url, content_sha256)
                 )""")
+                # Additive schema: existing private SQLite and brain snapshots
+                # are never reset, and the old raw_text default stays NULL.
+                from .knowledge import ensure_schema
+                ensure_schema(con)
 
     def _connect(self) -> sqlite3.Connection:
         con = sqlite3.connect(self.path, timeout=5)
@@ -265,6 +269,14 @@ class ExperienceMemory:
                         " VALUES(?,?,?,?)",
                         (cur.lastrowid, web_provenance["url"],
                          web_provenance["sha256"], web_provenance["retrieved_utc"]))
+                    # Same transaction as neural state, provenance and event.
+                    # If indexing fails, every preceding mutation rolls back.
+                    from .knowledge import insert_source
+                    insert_source(con, event_id=cur.lastrowid,
+                                  url=web_provenance["url"],
+                                  sha256=web_provenance["sha256"],
+                                  retrieved_utc=web_provenance["retrieved_utc"],
+                                  text=text)
                 return {'event_id': cur.lastrowid, 'brain_step': brain.steps,
                         'stored_raw_text': store_text, 'neurons': len(brain.voltages),
                         'synapses': len(brain.synapses), 'observations': count + 1,
@@ -275,8 +287,10 @@ class ExperienceMemory:
         """Commit one verified web perception and its source atomically.
 
         Caller explicitly authorizes a URL, then uses read_public_page()
-        to produce WebObservation. No raw page text is stored in SQLite:
-        hashed neural features influence the existing brain.
+        to produce WebObservation. The legacy observations.raw_text remains
+        NULL; bounded evidence passages are now retained privately in separate
+        knowledge tables with source provenance. User-approved public source
+        text is untrusted and does not train Foundation Brain weights.
         """
         from .web_sense import WebObservation
         if not isinstance(observation, WebObservation):
@@ -297,6 +311,18 @@ class ExperienceMemory:
                 "ORDER BY w.event_id DESC LIMIT ?", (limit,)).fetchall()
         return [{"event_id": eid, "url": url, "sha256": digest,
                  "retrieved_utc": stamp} for eid, url, digest, stamp in rows]
+
+    def answer_from_knowledge(self, question: str) -> dict[str, Any] | None:
+        """Retrieve an unverified verbatim source extract, not model inference."""
+        from .knowledge import answer_question
+        with closing(self._connect()) as con:
+            return answer_question(con, question)
+
+    def knowledge_sources(self, *, limit: int = 20) -> list[dict[str, Any]]:
+        """Versioned local source ledger; no web access."""
+        from .knowledge import recent_sources
+        with closing(self._connect()) as con:
+            return recent_sources(con, limit)
 
     def teach(self, question: str, answer: str) -> dict[str, Any]:
         """Explicit user-approved Q/A training, atomically with brain stimulus.
@@ -349,8 +375,10 @@ class ExperienceMemory:
             n, raw = con.execute('SELECT COUNT(*), SUM(raw_text IS NOT NULL) FROM observations').fetchone()
             taught_count = con.execute("SELECT COUNT(*) FROM taught_responses").fetchone()[0]
             web_count = con.execute("SELECT COUNT(*) FROM web_observations").fetchone()[0]
+            from .knowledge import stats as knowledge_stats
             return {'observations': n, 'records_with_raw_text': raw or 0,
                     'taught_responses': taught_count, 'web_observations': web_count,
+                    'knowledge': knowledge_stats(con),
                     'brain': self._brain_from_connection(con).stats()}
 
     def recall(self, query: str, *, limit: int = 5,
@@ -393,6 +421,8 @@ class ExperienceMemory:
             raise ValueError('event_id must be positive integer')
         with closing(self._connect()) as con:
             with con:
+                from .knowledge import remove_event
+                remove_event(con, event_id)
                 con.execute('DELETE FROM web_observations WHERE event_id=?', (event_id,))
                 cursor = con.execute('DELETE FROM observations WHERE id=?', (event_id,))
                 return cursor.rowcount > 0

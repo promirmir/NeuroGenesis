@@ -48,14 +48,25 @@ def process_message(memory: ExperienceMemory, message: str, *, store_text: bool 
     taught = (memory.taught_answer(message)
               if len(message) <= memory.MAX_QUESTION_LENGTH and message.strip(" ?!.")
               else None)
+    # Source-backed *extractive* answers are distinct from manually taught
+    # answers and from any untrained Foundation Brain output.
+    question = message.strip().casefold()
+    asks = ("?" in question or question.startswith(
+        ("co ", "czym ", "kto ", "jak ", "gdzie ", "kiedy ", "ile ",
+         "dlaczego ", "czy ", "który ", "jaki ", "jakie ")))
+    evidence = (memory.answer_from_knowledge(message)
+                if taught is None and asks and len(message) <= 512 else None)
     result = memory.remember(message, source="desktop", store_text=store_text)
     reply = (taught["answer"] if taught is not None else
+             evidence["answer"] if evidence is not None else
              "Odebrano bodziec i zaktualizowano stan sieci. "
-             "Nie znam jeszcze odpowiedzi. Wpisz ją w polu nauki i kliknij "
-             "«Naucz odpowiedzi».")
+             "Nie znam jeszcze odpowiedzi. Nie znalazłem też odpowiedniego źródła. Wpisz ją w polu nauki "
+             "i kliknij «Naucz odpowiedzi».")
     return {
         "reply": reply,
-        "response_kind": ("explicit_local_teaching" if taught else "sensory_acknowledgement"),
+        "response_kind": ("explicit_local_teaching" if taught else
+                          "source_evidence" if evidence else "sensory_acknowledgement"),
+        "sources": [evidence["source"]] if evidence else [],
         "event_id": result["event_id"],
         "brain_step": result["brain_step"],
         "neurons": result["neurons"],
@@ -117,6 +128,13 @@ def self_test() -> int:
             return 13
         if not ExperienceMemory(db).recent_web()[0]["url"].endswith("/research"):
             return 14
+        # Offline EXE gate: source-to-knowledge-to-cited-chat after reopening.
+        new_session = ExperienceMemory(db)
+        grounded = process_message(new_session, "Co wiadomo o neuronach i uczeniu?")
+        if (grounded["response_kind"] != "source_evidence"
+                or synthetic.url not in grounded["reply"]
+                or new_session.status()["knowledge"]["documents"] != 1):
+            return 15
     return 0
 
 
@@ -168,8 +186,8 @@ def launch(db_path: Path) -> int:
     tabs.add(brain_tab, text="Mózg")
     tabs.add(web_tab, text="Internet")
 
-    tk.Label(chat_tab, text=("Mózg przetwarza bodźce. Odpowiedzi możesz uczyć ręcznie; "
-                              "to zapamiętane skojarzenia, nie samodzielne rozumowanie."),
+    tk.Label(chat_tab, text=("Mózg rejestruje bodźce. Odpowiedzi mogą pochodzić z ręcznej nauki "
+                              "lub cytatów zapisanych źródeł. Cytaty nie oznaczają treningu modelu."),
              bg="#111827", fg="#a6b6c9", anchor="w", font=("Segoe UI", 10),
              wraplength=840).pack(fill="x", padx=12, pady=(12, 8))
     history = tk.Text(chat_tab, font=("Segoe UI", 11), bg="#172237", fg="#e2e8f0",
@@ -215,12 +233,14 @@ def launch(db_path: Path) -> int:
     ttk.Label(brain_tab, textvariable=autonomy_info, wraplength=750).pack(
         fill="x", padx=24, pady=(4, 8))
 
-    tk.Label(web_tab, text="Internet — kontrolowane źródło wiedzy",
+    tk.Label(web_tab, text="Internet — kontrolowane źródła i lokalna pamięć wiedzy",
              bg="#111827", fg="#f8fafc",
              font=("Segoe UI", 17, "bold")).pack(anchor="w", padx=24, pady=(22, 6))
     ttk.Label(web_tab, text=("Tylko publiczne strony HTTPS:443, bez przekierowań "
                              "i wykonywania kodu. Nic nie jest pobierane bez zgody. "
-                             "Strona stanowi niezaufany bodziec, nie źródło poleceń."),
+                             "Wybrane fragmenty są zapisywane w prywatnej bazie "
+                             "do cytowanych odpowiedzi. Strony są niezaufanymi danymi, "
+                             "nie poleceniami."),
               wraplength=780).pack(anchor="w", padx=24, pady=(0, 8))
     web_enabled = tk.BooleanVar(value=False)
     web_auto = tk.BooleanVar(value=False)
@@ -268,7 +288,9 @@ def launch(db_path: Path) -> int:
                 f"Zapisane doświadczenia: {st['observations']}\n"
                 f"Doświadczenia z pełnym tekstem: {st['records_with_raw_text']}\n"
                 f"Ręcznie nauczone odpowiedzi: {st['taught_responses']}\n"
-                f"Źródła internetowe: {st['web_observations']}"
+                f"Źródła internetowe: {st['web_observations']}\n"
+                f"Dokumenty wiedzy: {st['knowledge']['documents']}\n"
+                f"Fragmenty wiedzy: {st['knowledge']['passages']}"
             )
             health = supervisor.status()
             autonomy_info.set(

@@ -15,6 +15,10 @@ NeuroGenesis is a long-term research project investigating whether online struct
 
 > **Research status:** v0.6.0 includes the original small deterministic CPU spiking brain, local SQLite persistence, a native Windows desktop application and optional experimental neural regulation/repair/capacity experiments. The self-development controller now supports **opt-in periodic local trials with transactional promotion and rollback**, but it is not a self-coding agent or general-intelligence system. Capacity experiments remain bounded offline trials. This is **not** a conscious entity, a human brain emulator, a natural-language conversational AI, an unrestricted Internet crawler, or a claim of general intelligence. A separate optional PyTorch Foundation Brain is trainable but not yet connected to a verified useful language model.
 
+## P0 — cytowane odpowiedzi ze źródeł (PR #27, kandydat)
+
+Rozwijana jest osobna ścieżka od zatwierdzonego odczytu publicznej strony do **lokalnie zapisanych fragmentów** i odpowiedzi zawierającej dosłowny cytat, adres URL i wersję źródła — także po ponownym uruchomieniu. Ten etap używa leksykalnego wyszukiwania, **nie trenuje wag Foundation Brain** i nie potwierdza prawdziwości źródeł. Funkcja nie jest jeszcze dostępna w opublikowanym EXE — wymaga zweryfikowanego PR #27 i wydania. Nowa lokalna retencja: zapis tekstowych fragmentów, nie tylko odcisków SHA. [Szczegóły](docs/KNOWLEDGE_PIPELINE.md).
+
 ## Foundation Brain — nowy trenowalny rdzeń (eksperymentalny)
 
 **Priorytet rozwoju został zmieniony.** Dotychczasowy 24-neuronowy układ i 8-kanałowy koder tekstu pozostają małą platformą badawczą, nie docelowym silnikiem zaawansowanej AI. Nowa, osobna ścieżka w neurogenesis/foundation.py używa **trenowanych reprezentacji kolejności tekstu, dwóch skal pamięci rekurencyjnej i przewidywania kolejnego tokenu oraz stanu utajonego**, działając z opcjonalnym PyTorch/CUDA. Nie wymaga ręcznego uczenia odpowiedzi ani zewnętrznego modelu językowego. Opis i uruchamianie: [Foundation Brain](docs/FOUNDATION_BRAIN.md), [priorytet #18](https://github.com/promirmir/NeuroGenesis/issues/18).
