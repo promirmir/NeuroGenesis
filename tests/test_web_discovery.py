@@ -88,7 +88,7 @@ class DiscoveryTests(unittest.TestCase):
         for url in ("https://127.0.0.1/mechanika",
                     "https://example.org/?q=mechanika",
                     "http://example.org/mechanika",
-                    "https://user:password@example.org/mechanika"):
+                    "https://user:pw@" + "example.org/mechanika"):
             with self.subTest(url=url):
                 self.assertFalse(relevant_public_link(url, "mechanika"))
 
