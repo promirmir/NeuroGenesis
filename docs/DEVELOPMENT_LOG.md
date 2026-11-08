@@ -101,3 +101,7 @@ Expanded specialist session beyond Wikipedia seeds: validate and extract up to 2
 ## 2026-11-08 — PR #24 merged and release verified
 
 Feature head `c90126532de97189d3717b4adabb25d71a0b55fe` passed Python 3.11–3.13, privacy and Windows standalone EXE smoke before merge. PR #24 squash-merged into main `578222800c5adc73c0a756352b5bef405535252a`. Main Python run `42463459779`, Windows EXE run `42463459963` and release publish run `42463541158` completed successfully. Immutable release `v0.6.0-main.57822280` contains `NeuroGenesis.exe` and checksum; EXE digest SHA-256 `20708872a4c2b35484da100a88794aaef321e329d469524eb63162b4638b4731`. Tests validate mocked public-web traversal and EXE packaging, NOT exhaustive web coverage, real-site success, or semantic expertise.
+
+## 2026-11-08 — Original vision versus deliverables audit (documentation)
+
+Measured development status against `docs/VISION.md` using repository `main` `db0b2210bb97c422d83d27f963725d3d6941c067` and the public release `v0.6.0-main.db0b2210`. Wrote `docs/DELIVERY_AUDIT.md` with a code-grounded feature matrix, critical missing web→knowledge→Foundation→conversation integration, missing UI quality/observability, no verified GPU performance/distributed execution, and staged measurable acceptance for v1. Audit did not run an independent user-facing Windows GUI session or real public web crawl; GitHub CI evidence is not substituted for those tests. No Python implementation change in this documentation PR.
