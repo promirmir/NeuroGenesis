@@ -25,6 +25,7 @@ import urllib.request
 
 from .local_knowledge import LocalKnowledge
 from .memory import ExperienceMemory
+from .acf_semantics import classification_payload, extract_response, VERSION as SEMANTIC_VERSION
 
 MODEL_FILE = "Qwen3-1.7B-Q4_K_M.gguf"
 MODEL_SHA256 = "ba491cf470c3cadc624e4c8d6c9a27c998809e8ba8eb938d1689ae87e024b6b7"
@@ -311,6 +312,27 @@ class BundledModelSession:
             "model_was_gradient_trained_by_neurogenesis": False,
         }
 
+    def classify_semantics(self, message: str) -> dict[str, Any]:
+        """Actually infer an eight-axis meaning vector with the bundled GGUF.
+
+        This is a second, independent local inference after conversation,
+        NOT a cached text hash, embedding claim, gradient update or web API.
+        Source text is never written by this method.
+        """
+        payload = classification_payload(message)
+        with self._lock:
+            proc, port = self._proc, self._port
+        if proc is None or proc.poll() is not None or port is None:
+            raise RuntimeError("Brak uruchomionego lokalnego Qwen do reprezentacji semantycznej.")
+        response = _http_request(
+            port, self._key, "/v1/chat/completions",
+            payload=payload, timeout=120)
+        vector = extract_response(response)
+        return {"axes": list(vector), "version": SEMANTIC_VERSION,
+                "model": "Qwen3-1.7B-Q4_K_M",
+                "inference": "actual_local_gguf_semantic_classification",
+                "cloud_api_used": False, "raw_text_persisted": False}
+
     def stop(self) -> None:
         with self._lock:
             self._start_epoch += 1
@@ -337,6 +359,15 @@ def offline_complete_self_test(*, assets_root: str | Path | None = None) -> dict
             {"role": "user", "content": "Odpowiedz po polsku jednym zdaniem: co to jest pamięć komputera?"},
         ])
         answer = result["reply"]
+        # Semantic integration MUST also work from the finished frozen EXE.
+        # A broken classifier blocks the release rather than inventing tags.
+        semantic = session.classify_semantics(
+            "Jak zaplanować napisanie programu komputerowego?")
+        if (semantic["inference"] != "actual_local_gguf_semantic_classification"
+                or len(semantic["axes"]) != 8
+                or not any(semantic["axes"])
+                or semantic["cloud_api_used"]):
+            raise RuntimeError("Nie przeprowadzono realnej klasyfikacji semantycznej GGUF.")
         if (len(answer) < 15 or result["cloud_api_used"] or
                 result["status"] != "offline_real_gguf_inference"):
             raise RuntimeError("Pełny test modelu nie uzyskał poprawnej odpowiedzi.")
