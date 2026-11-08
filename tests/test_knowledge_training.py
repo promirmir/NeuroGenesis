@@ -178,6 +178,68 @@ class ApprovedKnowledgeRightsTests(unittest.TestCase):
         self.assertFalse(service.snapshot().training_running)
 
     @unittest.skipIf(torch is None, "dedicated CI installs real PyTorch CPU")
+    def test_resumed_weights_keep_previous_checkpoint_and_accumulate_steps(self):
+        original = self.db.with_name("old-candidate.pt")
+        for s in self.add_sources():
+            self.memory.set_source_training_rights(s["id"], True)
+        initial = train_approved_knowledge(
+            self.db, original, confirm_rights=True,
+            steps=2, sequence=16, batch=1, hidden=16, seed=11)
+        self.assertFalse(initial["resumed_from_trusted_local_checkpoint"])
+        self.assertEqual(initial["checkpoint_total_training_steps"], 2)
+        old_sha = hashlib.sha256(original.read_bytes()).hexdigest()
+        resumed = train_approved_knowledge(
+            self.db, self.output, confirm_rights=True,
+            steps=2, sequence=16, batch=1, hidden=16, seed=11,
+            resume_from=original, trust_resume=True)
+        self.assertTrue(resumed["resumed_from_trusted_local_checkpoint"])
+        self.assertFalse(resumed["optimizer_state_resumed"])
+        self.assertEqual(resumed["checkpoint_total_training_steps"], 4)
+        self.assertEqual(resumed["resumed_checkpoint_sha256"], old_sha)
+        self.assertEqual(hashlib.sha256(original.read_bytes()).hexdigest(), old_sha)
+        self.assertNotEqual(hashlib.sha256(self.output.read_bytes()).hexdigest(), old_sha)
+        model, restored_steps = FoundationBrain.load_checkpoint(self.output)
+        self.assertEqual(restored_steps, 4)
+        self.assertEqual(model.config.hidden_size, 16)
+        self.assertEqual(self.memory.status()["knowledge"]["documents"], 3)
+        self.assertFalse(resumed["automatically_deployed"])
+        print("FOUNDATION_RESUME_CPU_METRICS=" + json.dumps({
+            "initial_steps": 2, "continued_steps": 2,
+            "total_steps": resumed["checkpoint_total_training_steps"],
+            "heldout_before": resumed["heldout_next_byte_ce_before"],
+            "heldout_after": resumed["heldout_next_byte_ce_after"],
+            "beats_markov": resumed["beats_markov_baseline"],
+        }, sort_keys=True), flush=True)
+
+    @unittest.skipIf(torch is None, "dedicated CI installs real PyTorch CPU")
+    def test_resume_requires_trust_does_not_overwrite_and_checks_architecture(self):
+        original = self.db.with_name("old.pt")
+        for s in self.add_sources():
+            self.memory.set_source_training_rights(s["id"], True)
+        train_approved_knowledge(
+            self.db, original, confirm_rights=True,
+            steps=1, sequence=16, batch=1, hidden=16)
+        old_sha = hashlib.sha256(original.read_bytes()).hexdigest()
+        with self.assertRaises(PermissionError):
+            train_approved_knowledge(
+                self.db, self.output, confirm_rights=True,
+                steps=1, sequence=16, hidden=16, resume_from=original)
+        self.assertFalse(self.output.exists())
+        with self.assertRaisesRegex(ValueError, "identical architecture"):
+            train_approved_knowledge(
+                self.db, self.output, confirm_rights=True,
+                steps=1, sequence=16, hidden=32,
+                resume_from=original, trust_resume=True)
+        self.output.write_bytes(b"existing private file should not be replaced")
+        with self.assertRaisesRegex(ValueError, "must not already exist"):
+            train_approved_knowledge(
+                self.db, self.output, confirm_rights=True,
+                steps=1, sequence=16, hidden=16,
+                resume_from=original, trust_resume=True)
+        self.assertEqual(self.output.read_bytes(), b"existing private file should not be replaced")
+        self.assertEqual(hashlib.sha256(original.read_bytes()).hexdigest(), old_sha)
+
+    @unittest.skipIf(torch is None, "dedicated CI installs real PyTorch CPU")
     def test_wrong_cuda_request_cannot_create_checkpoint(self):
         if torch.cuda.is_available():
             self.skipTest("GPU runner has real CUDA")
