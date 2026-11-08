@@ -20,8 +20,7 @@ without exposing page content. `stop()` interrupts between requests.
 - This is **not** model weight training, semantic understanding, specialist
   certification, forum discovery, or broad web search.
 - A topic may map to a nonexistent Wikipedia page; failures are reported.
-- No desktop tab is wired yet. The next PR should integrate this controller
-  into the existing Internet tab with consent, start/stop and progress events.
+- The Windows Tk desktop now includes a separate Specjalizacja tab with topic input, start/stop, progress and URL log. It shares the Internet tab's explicit HTTPS consent. SQLite writes are dispatched to the GUI thread.
 - Network behavior remains opt-in and must not run in CI. No GPU claimed.
 - Validate Python 3.11–3.13, privacy checks and Windows frozen EXE before merge.
 - Candidate source commits: `b7520d851b97a81dfcb6df1c1cdc1aa969a453ca`
