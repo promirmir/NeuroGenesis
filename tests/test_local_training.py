@@ -116,7 +116,7 @@ class LocalTrainingTests(unittest.TestCase):
         argv = build_local_chat_command(
             str(self.python), str(self.model), device="cpu", tokens=128)
         self.assertEqual(argv[2], "neurogenesis.local_dialogue")
-        self.assertIn("--respond-stdin", argv)
+        self.assertIn("--serve-stdio", argv)
         self.assertNotIn("--download-model", argv)
         self.assertNotIn("Cześć", " ".join(argv))
         (self.model / "weights.bin").write_bytes(b"unsafe")
@@ -184,6 +184,63 @@ class LocalTrainingTests(unittest.TestCase):
         self.assertTrue(tokenizer.kwargs["add_generation_prompt"])
         self.assertIsNone(masked_assistant_tokens(
             tokenizer, "długi", "test", seq=8))
+
+    def test_persistent_chat_model_loads_only_once_for_two_turns(self):
+        from neurogenesis.tk_local_chat import LocalChatWorker
+        answer = json.dumps({
+            "status": "local_conversational_model",
+            "offline_inference": True, "reply": "Lokalna odpowiedź",
+        }) + "\\n"
+        class FakeProc:
+            def __init__(self, *args, **kwargs):
+                self.stdin = io.StringIO()
+                self.stdout = io.StringIO(
+                    '{"status":"local_model_ready","offline":true}\\n'
+                    + answer + answer)
+                self.stderr = io.StringIO()
+                self.killed = False
+            def poll(self):
+                return -9 if self.killed else None
+            def kill(self):
+                self.killed = True
+        argv = build_local_chat_command(
+            str(self.python), str(self.model),
+            device="cpu", tokens=64)
+        worker = LocalChatWorker()
+        with mock.patch("subprocess.Popen", FakeProc) as popen:
+            first = worker.run(argv, [{"role": "user", "content": "Cześć"}])
+            second = worker.run(argv, [
+                {"role": "user", "content": "Cześć"},
+                {"role": "assistant", "content": first["reply"]},
+                {"role": "user", "content": "Kontynuuj"},
+            ])
+        self.assertEqual(popen.call_count, 1)
+        self.assertEqual(first["reply"], second["reply"])
+        self.assertEqual(worker.proc.stdin.getvalue().count("\\n"), 2)
+        worker.cancel()
+        self.assertTrue(worker.cancelled.is_set())
+
+    def test_persistent_server_reuses_one_loaded_model_for_multiple_requests(self):
+        from neurogenesis import local_dialogue
+        stream = (
+            json.dumps({"messages": [{"role": "user", "content": "Pierwsze pytanie"}]})
+            + "\\n" +
+            json.dumps({"messages": [{"role": "user", "content": "Drugie pytanie"}]})
+            + "\\n"
+        ).encode("utf-8")
+        fake_stdin = types.SimpleNamespace(buffer=io.BytesIO(stream))
+        with mock.patch.object(local_dialogue.sys, "stdin", fake_stdin), \\
+             mock.patch.object(local_dialogue, "load_local_runtime",
+                               return_value="cached-tokenizer-and-weights") as loader, \\
+             mock.patch.object(local_dialogue, "respond_loaded",
+                               return_value={"status": "local_conversational_model",
+                                             "reply": "Tak", "offline_inference": True}) as inference, \\
+             mock.patch("builtins.print") as printer:
+            self.assertEqual(local_dialogue.serve_local_stdio(
+                self.model, device="cpu"), 0)
+        self.assertEqual(loader.call_count, 1)
+        self.assertEqual(inference.call_count, 2)
+        self.assertEqual(printer.call_count, 3)
 
     def test_pinned_model_download_requires_consent_never_eager(self):
         location = self.root / "weights"
