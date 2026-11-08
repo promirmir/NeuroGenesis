@@ -1,5 +1,11 @@
 # NeuroGenesis — durable project state and recovery
 
+## 2026-11-08 — CI coverage correction (unmerged candidate)
+
+- Branch `ci/foundation-baseline-gates-20261108`, initial commit `e403afb3fd8d2607d3aa171a6dadd28aee02c357`: dedicated real-PyTorch CPU workflow now triggers for changes to `neurogenesis/foundation_baselines.py` and `tests/test_foundation_baselines.py` on pull requests as well as pushes, and explicitly executes the independent baseline tests. Previously the pull-request path filter omitted both files, and the dedicated command only selected `test_foundation.py` (the full regression suite still included baselines). This is a CI verification improvement, not a new learning capability.
+- No GPU benchmark or new language understanding measured. Await Python 3.11–3.13, dedicated PyTorch CPU and Windows EXE checks before merge. No release or training claims.
+
+
 Last documentation review: **2026-11-07**. This file is intended to survive chat interruptions and model/context changes.
 
 ## 2026-11-07 — Permanent mission and current v0.6.0 web-sense candidate
