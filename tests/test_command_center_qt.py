@@ -95,6 +95,32 @@ class QtCommandCenterSmokeTests(unittest.TestCase):
         self.assertEqual(self.service.memory.status()["knowledge"]["documents"], before)
         self.assertEqual(self.service.memory.status()["records_with_raw_text"], 0)
 
+    def test_true_live_neural_fabric_responds_only_to_actual_persisted_steps(self):
+        self.window.navigate(3)
+        original = self.window.brain_plot._frame
+        self.assertIsNotNone(original)
+        self.assertEqual(original.step, 0)
+        self.assertEqual(original.neurons, self.service.memory.brain().stats()["neurons"])
+        self.assertEqual(original.synapses, self.service.memory.brain().stats()["synapses"])
+        self.assertFalse(self.window.brain_plot._pulse_timer.isActive())
+        self.window.refresh_neural_view()
+        self.assertEqual(original, self.window.brain_plot._frame)
+        result = self.service.ask("Bodziec dla rzeczywistej sieci neuronowej")
+        self.window.refresh_neural_view()
+        observed = self.window.brain_plot._frame
+        self.assertEqual(observed.step, result["brain_step"])
+        self.assertEqual(observed.neurons, result["neurons"])
+        self.assertEqual(observed.synapses, result["synapses"])
+        self.assertGreater(observed.step, original.step)
+        self.assertEqual(observed.last_spikes, sum(self.service.memory.brain().spikes))
+        self.assertTrue(self.window.brain_plot._pulse_timer.isActive())
+        unchanged = self.service.memory.brain().to_dict()
+        self.window.refresh_neural_view()
+        self.assertEqual(observed, self.window.brain_plot._frame)
+        self.assertEqual(self.service.memory.brain().to_dict(), unchanged)
+        self.assertIn("graf", self.window.brain_metrics.text())
+        self.assertFalse(self.service.network_enabled)
+
     def test_memory_backup_panel_runs_real_offline_verified_service(self):
         self.window.navigate(6)
         self.assertTrue(self.window.backup_button.isEnabled())
