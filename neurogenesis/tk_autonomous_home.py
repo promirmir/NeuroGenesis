@@ -86,7 +86,7 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
 
     splitter = tk.PanedWindow(tab, orient="horizontal", bg=BG,
                               sashwidth=5, sashrelief="flat",
-                              borderwidth=0, highlightthickness=0)
+                              borderwidth=0)
     splitter.pack(fill="both", expand=True, padx=16, pady=(0, 13))
     left = tk.Frame(splitter, bg=PANEL, highlightthickness=1,
                     highlightbackground=BORDER)
