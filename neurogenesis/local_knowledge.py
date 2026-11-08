@@ -170,6 +170,17 @@ class LocalKnowledge:
         return [{"text": t, "file": name, "sha256": sha,
                  "rank": i + 1} for i, (t, name, sha, _score) in enumerate(rows)]
 
+    def corpus_fingerprint(self) -> str:
+        """Stable revision of approved local data without exposing private text."""
+        with self._open() as con:
+            rows = con.execute(
+                "SELECT source_key,content_sha256 FROM local_sources "
+                "ORDER BY source_key").fetchall()
+        h = hashlib.sha256()
+        for key, digest in rows:
+            h.update((key + ":" + digest + "\n").encode("ascii"))
+        return h.hexdigest()
+
     def status(self) -> dict[str, int]:
         with self._open() as con:
             return {
