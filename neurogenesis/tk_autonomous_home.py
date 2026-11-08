@@ -97,7 +97,7 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
     _caption(left, "ROZMOWA Z RZECZYWISTYM MODELEM JĘZYKOWYM")
     tk.Label(left, text="Wagi Qwen3-1.7B w EXE • rozmowa w RAM • "
              "źródła z prywatnego TXT • brak połączeń z zewnętrznym API",
-             bg=PANEL, fg=MUTED, anchor="w", wraplength=750).pack(
+             bg=PANEL, fg=MUTED, anchor="w", wraplength=475).pack(
                  fill="x", padx=10, pady=(0, 5))
     buttons = tk.Frame(left, bg=PANEL)
     buttons.pack(side="bottom", fill="x", padx=10, pady=(4, 10))
@@ -108,7 +108,7 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
     input_field.pack(side="bottom", fill="x", padx=10, pady=(2, 4))
     tk.Label(left, textvariable=conversation_status,
              bg=PANEL, fg=MUTED, anchor="w", justify="left",
-             wraplength=720).pack(side="bottom", fill="x", padx=10, pady=(2, 2))
+             wraplength=470).pack(side="bottom", fill="x", padx=10, pady=(2, 2))
     transcript = tk.Text(left, wrap="word", bg="#061624", fg=WHITE,
                          padx=13, pady=11, relief="flat",
                          font=("Segoe UI", 11), state="disabled")
@@ -124,6 +124,10 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
         transcript.insert("end", content + "\n\n")
         transcript.see("end")
         transcript.configure(state="disabled")
+
+    log("SYSTEM", "Witaj w centrum NeuroGenesis. Wpisz pytanie poniżej lub dodaj "
+        "samodzielny cel w panelu po prawej. Statusy i graf przedstawiają "
+        "rzeczywistą pracę zapisanych modułów — bez symulowania zdarzeń.")
 
     def background(task, fn, *, detail=None, brain=False):
         key = "brain_job" if brain else "job"
@@ -236,7 +240,14 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
         return "break"
     input_field.bind("<Return>", key_send)
 
-    # Right sidebar scrolls independently at laptop resolutions.
+    # Always-visible real neural monitor: separate from the scrolling
+    # autonomous goals, so the user can inspect both on a 768p laptop.
+    brain_footer = tk.Frame(right_container, bg=PANEL, height=220,
+                            highlightbackground=BORDER, highlightthickness=1)
+    brain_footer.pack(side="bottom", fill="x", pady=(6, 0))
+    brain_footer.pack_propagate(False)
+
+    # Right goal list scrolls independently at laptop resolutions.
     side_canvas = tk.Canvas(right_container, bg=BG, highlightthickness=0,
                             borderwidth=0)
     side_scroll = ttk.Scrollbar(right_container, orient="vertical",
@@ -364,27 +375,28 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
             show_details()
         last_goal_refresh["value"] = signature
 
-    brain_card = card("NEURAL FABRIC / FAKTYCZNY ZAPIS LIF")
+    brain_card = brain_footer
+    _caption(brain_card, "NEURAL FABRIC / RZECZYWISTY LIF")
     brain_activity = tk.StringVar(master=tab, value="Stan bez nowych impulsów.")
     tk.Label(brain_card, textvariable=brain_activity,
              bg=PANEL, fg=MUTED, anchor="w", wraplength=345).pack(
                  fill="x", padx=10, pady=(0, 5))
-    neural_canvas = tk.Canvas(brain_card, width=320, height=230,
+    neural_canvas = tk.Canvas(brain_card, width=320, height=146,
                               bg="#041624", highlightthickness=0)
     neural_canvas.pack(fill="x", padx=10, pady=(0, 6))
     neural_canvas.bind("<Configure>",
-                       lambda _e: redraw_connectome(), add="+")
-    connectome = TkConnectome(neural_canvas)
+                       lambda _e: redraw_connectome(force=True), add="+")
+    connectome = TkConnectome(neural_canvas, compact=True)
     ttk.Checkbutton(brain_card, text="AUTO: testuj rozwój LIF po 40 nowych bodźcach",
                     variable=own_brain_enabled).pack(
                         anchor="w", padx=10, pady=(0, 6))
 
-    def redraw_connectome():
+    def redraw_connectome(*, force=False):
         if running["closing"]:
             return
         try:
             state = snapshot_neural_telemetry(memory.brain())
-            if state.step != last_brain_step["value"]:
+            if force or state.step != last_brain_step["value"]:
                 connectome.render(state, force=True)
                 last_brain_step["value"] = state.step
                 brain_activity.set(
@@ -523,7 +535,7 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
             model.stop()
 
     tab.bind("<Destroy>", on_destroy, add="+")
-    tab.after(170, refresh_status)
+    tab.after(0, refresh_status)
     if auto_start:
         tab.after(400, initialize_model)
     tab.after(500, poll)
