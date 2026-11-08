@@ -156,6 +156,13 @@ def restore_to_new_database(backup: str | Path, destination: str | Path, *,
     if confirmed is not True:
         raise PermissionError("explicit operator restoration confirmation required")
     prior = _file(backup)
+    # Restoring is only for standalone, quiescent backups. Copying the main
+    # file of a live WAL/rollback-journal database would silently lose
+    # committed sidecar data: create a SQLite backup snapshot first.
+    for suffix in ("-wal", "-journal"):
+        sidecar = Path(str(prior) + suffix)
+        if sidecar.exists() and sidecar.stat().st_size:
+            raise ValueError("active SQLite journal; create a verified backup first")
     original_check = inspect_private_database(prior)
     target = _target(destination, prior)
     fd, temp_name = tempfile.mkstemp(
