@@ -188,28 +188,51 @@ def launch(db_path: Path) -> int:
         return 1
 
     root = tk.Tk()
-    root.title("NeuroGenesis — cyfrowy mózg")
-    root.geometry("960x720")
-    root.minsize(720, 560)
-    root.configure(bg="#111827")
+    root.title("NeuroGenesis — Mission Control / cyfrowy mózg")
+    root.geometry("1450x920")
+    root.minsize(1030, 690)
+    root.configure(bg="#07111d")
 
     style = ttk.Style(root)
     style.theme_use("clam")
-    style.configure("TNotebook", background="#111827", borderwidth=0)
-    style.configure("TNotebook.Tab", padding=(20, 11), font=("Segoe UI", 10))
-    style.configure("TFrame", background="#111827")
-    style.configure("TLabel", background="#111827", foreground="#e5e7eb", font=("Segoe UI", 10))
-    style.configure("TCheckbutton", background="#111827", foreground="#cbd5e1")
-    style.configure("TButton", font=("Segoe UI", 10), padding=(13, 8))
+    style.configure("TNotebook", background="#07111d", borderwidth=0,
+                    lightcolor="#07111d", darkcolor="#07111d")
+    style.configure("TNotebook.Tab", padding=(21, 12), borderwidth=0,
+                    font=("Segoe UI", 10, "bold"),
+                    background="#112637", foreground="#a5c6d3",
+                    focuscolor="#112637")
+    style.map("TNotebook.Tab",
+              background=[("selected", "#135468"), ("active", "#1a4155")],
+              foreground=[("selected", "#e8ffff"), ("active", "#ffffff")],
+              expand=[("selected", (0, 0, 0, 0))])
+    style.configure("TFrame", background="#07111d")
+    style.configure("TLabel", background="#07111d", foreground="#cde9ef",
+                    font=("Segoe UI", 10))
+    style.configure("TCheckbutton", background="#07111d", foreground="#cde9ef")
+    style.map("TCheckbutton", background=[("active", "#07111d")],
+              foreground=[("active", "#ffffff")])
+    style.configure("TButton", font=("Segoe UI", 10, "bold"), padding=(14, 10),
+                    background="#164056", foreground="#e8fcff",
+                    relief="flat", borderwidth=0)
+    style.map("TButton", background=[("active", "#1c6678")],
+              foreground=[("active", "#ffffff")])
 
-    header = tk.Frame(root, bg="#111827")
-    header.pack(fill="x", padx=18, pady=(16, 8))
-    tk.Label(header, text="NeuroGenesis", bg="#111827", fg="#f8fafc",
-             font=("Segoe UI", 21, "bold")).pack(side="left")
-    tk.Label(header, text="Miron przy pomocy AI  •  LOKALNIE  •  SIEĆ TYLKO PO ZGODZIE",
-             bg="#111827", fg="#93a4bc", font=("Segoe UI", 9)).pack(side="right", padx=(10, 0))
+    header = tk.Frame(root, bg="#07111d")
+    header.pack(fill="x", padx=24, pady=(16, 10))
+    logo = tk.Frame(header, bg="#07111d")
+    logo.pack(side="left")
+    tk.Label(logo, text="NEUROGENESIS", bg="#07111d", fg="#f4fffb",
+             font=("Segoe UI", 22, "bold")).pack(anchor="w")
+    tk.Label(logo, text="MISSION CONTROL  /  LOCAL RESEARCH ENVIRONMENT",
+             bg="#07111d", fg="#53e9d5",
+             font=("Consolas", 9, "bold")).pack(anchor="w")
+    tk.Label(header, text="Miron przy pomocy AI    •    PRYWATNA PAMIĘĆ    •    HTTPS TYLKO PO ZGODZIE",
+             bg="#07111d", fg="#95b8c7", font=("Segoe UI", 9)).pack(
+                 side="right", padx=(10, 0))
     tabs = ttk.Notebook(root)
-    tabs.pack(fill="both", expand=True, padx=14, pady=(0, 14))
+    tabs.pack(fill="both", expand=True, padx=18, pady=(0, 15))
+    mission_tab = ttk.Frame(tabs)
+    tabs.add(mission_tab, text="  CENTRUM  ")
     chat_tab = ttk.Frame(tabs)
     brain_tab = ttk.Frame(tabs)
     web_tab = ttk.Frame(tabs)
@@ -305,6 +328,18 @@ def launch(db_path: Path) -> int:
               wraplength=780).pack(anchor="w", padx=24, pady=(0, 8))
     web_enabled = tk.BooleanVar(value=False)
     web_auto = tk.BooleanVar(value=False)
+    from .tk_mission import MissionDashboard
+    targets = {
+        "chat": chat_tab,
+        "brain": brain_tab,
+        "web": web_tab,
+        "mission": mission_tab,
+    }
+    mission = MissionDashboard(
+        mission_tab, memory,
+        navigate=lambda where: tabs.select(targets[where]),
+        network_enabled=lambda: web_enabled.get(),
+    )
     # Dedicated specialist study tab, off until explicit HTTPS consent.
     from .study_panel import install_study_panel
     install_study_panel(tabs, memory, web_enabled)
@@ -568,6 +603,17 @@ def launch(db_path: Path) -> int:
         if neural_graph._latest is not None else None))
     root.after(650, poll_neural_graph)
 
+    def mission_tick() -> None:
+        if tabs.select() == str(mission_tab):
+            try:
+                mission.refresh()
+            except (ValueError, OSError, RuntimeError, KeyError):
+                mission.status.configure(text="BŁĄD ODCZYTU PAMIĘCI",
+                                         fg="#f5b18b")
+        root.after(700, mission_tick)
+
+    root.after(700, mission_tick)
+
     def refresh_tick() -> None:
         refresh()
         root.after(3000, refresh_tick)
@@ -632,6 +678,8 @@ def launch(db_path: Path) -> int:
     message.bind("<Control-Return>", lambda _event: (send(), "break")[1])
     ttk.Label(chat_tab, text="Ctrl+Enter — zapytaj • przycisk Naucz: jawny zapis pary pytanie/odpowiedź w prywatnej bazie",
               wraplength=770).pack(anchor="w", padx=12, pady=(0, 8))
+    tabs.select(mission_tab)
+    mission.refresh()
     refresh()
 
     def on_close() -> None:
