@@ -240,3 +240,7 @@ Measured development status against `docs/VISION.md` using repository `main` `db
 - Panel treningu dodaje osobny wykres **wyłącznie rzeczywistych** wartości loss otrzymanych z workerów `train_progress`, nie wylicza sztucznych punktów. Czujnik braku nowych kroków pokazuje stan spoczynku. Szybka, futurystyczna grafika QPainter jest oparta na rzeczywistych danych; testy `test_neural_telemetry.py`, `test_command_center_qt.py` sprawdzają SQLite, aktywację, graf, puste dane i wymuszoną zmianę tylko po rzeczywistych zdarzeniach.
 - Kandydat oczekuje na Python 3.11–3.13, prywatność, Qt Windows/Ubuntu, Windows Qt frozen EXE i dotychczasowy Tk EXE. Brak certyfikacji LGPL i publicznej dystrybucji Qt; nie należy twierdzić, że pobrany Tk EXE ma ten widok. Brak wirtualnego wykresu fizycznego mózgu, świadomości czy wagi PyTorch w tym grafie.
 
+
+## 2026-11-08 — extend true real-time graph into distributable Tk app
+
+- Added dependency-free `tk_connectome.py` neon 2D graph of real LIF neurons/synapses/weights/spikes using same immutable headless telemetry as Qt. Updated Tk Brain tab to replace original thin bar chart with 420px responsive graph and 650ms poll only when pane visible, only repaints if persisted brain step changed. Mouse-wheel zoom; no fake motion. Added no-display fake-canvas source-provenance test. Existing source/memory/HTTPS controls retained and Qt remains technical-only until legal redistribution signoff. Full CI/frozen Windows EXE required.
