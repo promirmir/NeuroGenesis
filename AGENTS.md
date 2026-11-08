@@ -1,3 +1,9 @@
+## Active checkpoint inference pilot — PR candidate, November 8, 2026
+
+- Fresh main baseline `0afcb2b37ee908c4810b6c545e8833ebef9fd787`; all prior work #23–#31 merged. Continue from branch `feat/foundation-inference-lab-20261108` without replaying old implementations.
+- New `neurogenesis/foundation_infer.py` and Qt Training-only lab actually decode **trained FoundationBrain weights** into a bounded byte continuation; output can be unintelligible, is **ungrounded** and never becomes a cited or normal chat reply. Requires explicit local checkpoint trust, no network or SQLite mutation, separate background worker, ≤64 bytes, optional PyTorch. See `docs/FOUNDATION_INFERENCE.md`.
+- Dedicated *real* PyTorch CPU test plus Python 3.11–3.13, Qt Windows/Linux, Tk frozen EXE, Qt frozen EXE and privacy gates **must pass before merge**. No physical GPU test, no Qt redistributable legal clearance and no semantic competence claim. Resume with checks and resolve failures, then document verified merge SHA.
+
 ## Verified continuation checkpoint — November 8, 2026
 
 - `main` confirmed source integration merge `334b1afc842f662b422b8ca81404c3fd75874523`; PRs #23/#27/#28/#29/#30 completed. The previous "PR candidate" and pending-CI sections below are historical snapshots, NOT current project status.

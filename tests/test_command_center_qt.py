@@ -16,7 +16,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 if importlib.util.find_spec("PySide6") is None:
     raise unittest.SkipTest("optional Qt is not installed; dedicated Qt CI installs it")
 
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QScrollArea
 from neurogenesis.command_center import CommandCenter, PANELS
 from neurogenesis.command_service import CommandService
 from neurogenesis.web_sense import WebObservation
@@ -64,6 +64,15 @@ class QtCommandCenterSmokeTests(unittest.TestCase):
         self.window.sources_table.selectRow(0)
         self.window.show_selected_source()
         self.assertIn("połączeń neuronów", self.window.source_preview.toPlainText())
+
+    def test_inference_lab_requires_explicit_trusted_file_and_is_offline(self):
+        self.window.navigate(4)
+        self.assertFalse(self.window.trust_checkpoint.isChecked())
+        self.assertEqual(self.window.inference_bytes.value(), 16)
+        self.assertFalse(self.service.snapshot().inference_running)
+        self.assertFalse(self.service.network_enabled)
+        self.assertIn("predykcję", self.window.inference_start.text().lower())
+        self.assertIsNotNone(self.window.pages.widget(4).findChild(QScrollArea))
 
     def test_consent_updates_real_service_and_stops_on_close(self):
         self.window.navigate(6)

@@ -1,3 +1,7 @@
+## Eksperymentalne wnioskowanie z wag Foundation Brain — PR kandydat
+
+Oprócz cytowanych odpowiedzi z bazy, osobne laboratorium Qt potrafi eksperymentalnie uruchomić **rzeczywisty lokalny checkpoint PyTorch** i przewidywać kolejne bajty tekstu. Nie jest to jeszcze inteligentna rozmowa; wynik może być niepoprawnym UTF-8 lub bezsensowną sekwencją. Dostęp jest wyłącznie na żądanie i z potwierdzeniem zaufanego pliku, bez sieci i bez zmiany dotychczasowej pamięci. Funkcja pozostaje kandydatem do scalenia przed pełnym CI. [Opis i ograniczenia](docs/FOUNDATION_INFERENCE.md).
+
 # NeuroGenesis
 
 ### Windows — pobierz najnowszą wersję EXE

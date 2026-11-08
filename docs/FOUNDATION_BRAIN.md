@@ -93,3 +93,7 @@ GPU VRAM, throughput and numerical parity must be measured on hardware.
 
 These are architecture and evaluation references; the initial GRU is
 NOT a reproduction of Mamba-2, V-JEPA 2, or a frontier-scale model.
+
+## Explicit experimental model inference (subsequent PR candidate)
+
+A separately gated `neurogenesis.foundation_infer` module reads an operator-trusted, trained numerical checkpoint and produces deterministic next-byte predictions using the **actual** fast/slow GRU weights. The Qt Training lab can show these bytes, their UTF-8 decoding status and measured throughput. This is an isolated laboratory, not source-grounded dialogue, semantic understanding or candidate promotion. No automatic checkpoint loading; no private SQLite writes. See `docs/FOUNDATION_INFERENCE.md`. Keep independent held-out QA, calibrated abstention and competitor baselines as prerequisites for real model-based conversation.
