@@ -16,6 +16,8 @@ on:
       - 'neurogenesis/foundation.py'
       - 'neurogenesis/foundation_train.py'
       - 'tests/test_foundation.py'
+      - 'neurogenesis/foundation_baselines.py'
+      - 'tests/test_foundation_baselines.py'
       - 'pyproject.toml'
       - '.github/workflows/foundation-cpu.yml'
   workflow_dispatch:
@@ -42,6 +44,7 @@ jobs:
       - name: Run dedicated, real learned foundation tests
         run: |
           python -m unittest discover -s tests -p test_foundation.py -v
+          python -m unittest discover -s tests -p test_foundation_baselines.py -v
       - name: Regression of original CPU brain and Windows-independent code
         run: |
           python -m unittest discover -s tests -v
