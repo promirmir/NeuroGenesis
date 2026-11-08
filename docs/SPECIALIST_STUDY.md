@@ -1,4 +1,4 @@
-# NeuroGenesis — public-web specialist discovery (PR #24 candidate)
+# NeuroGenesis — public-web specialist discovery (PR #24 merged)
 
 **Public credit: Miron przy pomocy AI.**
 
@@ -49,11 +49,7 @@ instructions discovered on external pages.
 
 ## Acceptance / release state
 
-The candidate lives in PR #24. Merge only after Python 3.11–3.13 regression,
-privacy audit and Windows frozen EXE smoke tests are green on the **final**
-commit. Verify separate real PyTorch foundation gates when changed, and verify
-the main-branch Windows release before advertising a downloadable new EXE.
-No new main release is claimed by this document.
+PR #24 has been squash-merged to main SHA `578222800c5adc73c0a756352b5bef405535252a` after green Python 3.11–3.13, privacy and Windows standalone EXE checks. Main-branch Linux/Windows validation and release workflow succeeded. Verified Windows download is release `v0.6.0-main.57822280`, containing `NeuroGenesis.exe` and its SHA-256. The crawler's actual effectiveness on public websites is **not** independently established by CI. The optional PyTorch Foundation Brain is unaffected and still not trained on these pages.
 
 Relevant code: \`neurogenesis/specialist_study.py\`,
 \`neurogenesis/web_discovery.py\`, \`neurogenesis/web_sense.py\`,

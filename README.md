@@ -27,11 +27,11 @@ Nowa zakładka **Internet** pozwala po jawnym włączeniu odczytać wskazaną pu
 
 **Ograniczenie:** na obecnym etapie pobrana strona trafia do starego mózgu LIF (8 kanałów), a nie bezpośrednio do trenowanego Foundation Brain. Sama ekspozycja na tekst nie jest jeszcze rozumieniem wiedzy ani tworzeniem prawdziwych odpowiedzi. [Stała wizja projektu](docs/VISION.md).
 
-## Autonomiczne badanie dziedziny — wielodomenowy crawler (kandydat PR #24)
+## Autonomiczne badanie dziedziny — wielodomenowy crawler (wydanie v0.6.0)
 
 Nowa zakładka **Specjalizacja** pozwala wpisać temat i po jawnym zezwoleniu HTTPS uruchomić automatyczne badanie publicznych stron. Program rozpoczyna od tematycznych artykułów Wikipedii, wykrywa odnośniki i przechodzi również do **innych domen**, jeżeli adresy dotyczą tematu oraz pozwala na to `robots.txt`. Użytkownik ustawia limit 1–500 stron (domyślnie 120), widzi próby, zapisane obserwacje, błędy i liczbę odkrytych domen, może zatrzymać proces. Każda strona jest pobierana bez wykonywania kodu; źródła trafiają do lokalnej pamięci. [Zasady i ograniczenia](docs/SPECIALIST_STUDY.md).
 
-**To nie jest indeks ani skan całego internetu, automatyczny trening Foundation Brain lub potwierdzona specjalizacja.** Program nie omija ograniczeń serwisów, wymaga ręcznej zgody i nie działa sieciowo po samym uruchomieniu. Funkcja jest kandydatem PR #24 do wydania dopiero po zielonych testach, nie opisem dowolnego wcześniejszego EXE.
+**To nie jest indeks ani skan całego internetu, automatyczny trening Foundation Brain lub potwierdzona specjalizacja.** Program nie omija ograniczeń serwisów, wymaga ręcznej zgody i nie działa sieciowo po samym uruchomieniu. Funkcja jest już dostępna w sprawdzonym wydaniu [`v0.6.0-main.57822280`](https://github.com/promirmir/NeuroGenesis/releases/tag/v0.6.0-main.57822280) po scaleniu PR #24. Starsze pliki EXE nie mają tej zakładki.
 
 ## Pierwsze działające uczenie dialogowe (v0.5.6)
 

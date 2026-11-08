@@ -1,15 +1,15 @@
-## 2026-11-08 — Multi-domain specialist research, PR #24 (candidate, not merged)
+## 2026-11-08 — Multi-domain specialist research, PR #24 MERGED
 
 - Expanded beyond static Wikipedia seeds: safe HTML anchor extraction, topic-filtered BFS across public HTTPS domains, robots.txt policy, crawl-delay, 500-attempt upper budget, 50 domains, 20 attempts/host, depth 3, 600 URL queue, >=5 seconds between page fetches. GUI default 120 attempts and displays domain/discovery/error counts. Existing Internet opt-in controls all network access.
 - Manual page reader retains 128 KiB limit; explicit crawler mode has a separately bounded 512 KiB limit. HTML text is capped at 6000 chars and URLs are revalidated through pinned TLS/public IP checks. No unrestricted entire-internet indexing, search API, forum guarantees, semantic understanding or PyTorch gradient training.
 - New offline tests validate robots transport, denied paths, failed robots reads, cross-domain discovery, URL filtering, content size, stop and consent. Latest code and Windows tests must be verified on final branch head before any merge/release.
-- Latest documented candidate source commit: `8c845dd60d68691bbc92393bb4e0863e2db3f6ea`. See [docs/SPECIALIST_STUDY.md](SPECIALIST_STUDY.md). PR #23 remains separate and open.
+- PR #24 source head `c90126532de97189d3717b4adabb25d71a0b55fe` passed Python 3.11–3.13, source/privacy audit and Windows EXE build/smoke. Squash merged to `main` commit `578222800c5adc73c0a756352b5bef405535252a`. Main Python CI (run 42463459779), Windows standalone EXE build/smoke (run 42463459963) and release publishing (run 42463541158) all succeeded. Verified GitHub release `v0.6.0-main.57822280` targets `578222800c5adc73c0a756352b5bef405535252a` and contains `NeuroGenesis.exe` plus SHA-256. The executable asset digest is `20708872a4c2b35484da100a88794aaef321e329d469524eb63162b4638b4731`. No production real-site research benchmark has yet been verified. See [docs/SPECIALIST_STUDY.md](SPECIALIST_STUDY.md). PR #23 remains separate and open.
 
-## 2026-11-08 — Specialist study candidate PR #24 (NOT MERGED)
+## 2026-11-08 — Historical initial PR #24 candidate (subsequently merged)
 
 - The original bounded Wikipedia-only candidate has since been expanded in the above PR #24 milestone to multi-domain link discovery. Retained historical note: GUI-thread SQLite persistence and network-off-by-default.
 - No full-Internet indexing, general search API, trained language model, or demonstrated expertise. Follow latest PR #24 details above and `docs/SPECIALIST_STUDY.md`.
-- Relevant candidate commit: `44e579c71335f6ae02d568aaba99244bb81280dd`. PR #23 is independent and remains unmerged until gates pass.
+- Historical initial source commit: `44e579c71335f6ae02d568aaba99244bb81280dd`; final merged commit is `578222800c5adc73c0a756352b5bef405535252a`. PR #23 remains independent.
 
 # NeuroGenesis — durable project state and recovery
 
