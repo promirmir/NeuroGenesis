@@ -85,7 +85,7 @@ class MissionDashboard:
         headline = tk.Frame(top, bg=BACKGROUND)
         headline.pack(fill="x", pady=(3, 4))
         _label(headline, "MISSION CONTROL", size=26, bold=True).pack(side="left")
-        self.status = _label(headline, "● LIF / GOTOWY", size=10,
+        self.status = _label(headline, "● GOTOWY", size=10,
                              bold=True, color=ACCENT)
         self.status.pack(side="right", padx=(15, 0))
         _label(top, "Rzeczywisty zapisany stan mózgu LIF, prywatna pamięć i źródła · bez symulowanej inteligencji",
@@ -288,7 +288,7 @@ class MissionDashboard:
             self.status.configure(text="● LIF / NOWY KROK", fg=ACCENT)
             self.neural_step.configure(text=f"KROK {state.step}", fg=ACCENT)
         else:
-            self.status.configure(text="○ LIF / BRAK NOWEGO KROKU", fg=MUTED)
+            self.status.configure(text="○ BEZ NOWEGO KROKU", fg=MUTED)
             self.neural_step.configure(text=f"KROK {state.step} / BEZ ZMIANY",
                                        fg=MUTED)
         self._last = state
