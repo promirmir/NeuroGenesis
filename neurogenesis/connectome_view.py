@@ -7,9 +7,10 @@ pseudo-intelligence animation. Drawing is bounded and occurs on the UI thread.
 from __future__ import annotations
 
 import math
+import time
 
-from PySide6.QtCore import QPointF, Qt
-from PySide6.QtGui import QColor, QFont, QPainter, QPen
+from PySide6.QtCore import QPointF, Qt, QTimer, QRectF
+from PySide6.QtGui import QColor, QFont, QPainter, QPen, QRadialGradient
 from PySide6.QtWidgets import QSizePolicy, QWidget
 
 from .neural_telemetry import (
@@ -31,6 +32,12 @@ class ConnectomeView(QWidget):
         self._selected: int | None = None
         self._coordinates: dict[int, QPointF] = {}
         self.setToolTip("Najedź na neuron, aby odczytać jego rzeczywiste wartości")
+        self._pulse_started = -1e9
+        self._pulse = QTimer(self)
+        self._pulse.setInterval(48)
+        self._pulse.timeout.connect(self._event_pulse_tick)
+        self._pan = QPointF(0, 0)
+        self._drag_from: QPointF | None = None
 
     @property
     def snapshot(self) -> NeuralTelemetry | None:
@@ -47,9 +54,31 @@ class ConnectomeView(QWidget):
             # No new brain step => do NOT flash or pretend the network works.
             self._delta = diff_neural_telemetry(None, data)
             return
+        is_real_new_step = self._snapshot is not None and data.step > self._snapshot.step
         self._delta = diff_neural_telemetry(self._snapshot, data)
         self._snapshot = data
+        if is_real_new_step:
+            self._pulse_started = time.monotonic()
+            self._pulse.start()
         self.update()
+
+    def _event_pulse_tick(self) -> None:
+        # Sub-second render after an ACTUAL observed step: animation is a
+        # visual transition, not an inferred axonal propagation measurement.
+        if not self.isVisible() or time.monotonic() - self._pulse_started >= .8:
+            self._pulse.stop()
+            return
+        self.update()
+
+    def mousePressEvent(self, event) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._drag_from = event.position()
+            event.accept()
+
+    def mouseReleaseEvent(self, event) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._drag_from = None
+            event.accept()
 
     def wheelEvent(self, event) -> None:
         self._zoom = max(0.70, min(2.3, self._zoom * (
@@ -58,6 +87,13 @@ class ConnectomeView(QWidget):
         event.accept()
 
     def mouseMoveEvent(self, event) -> None:
+        if self._drag_from is not None and event.buttons() & Qt.MouseButton.LeftButton:
+            movement = event.position() - self._drag_from
+            self._pan += movement
+            self._drag_from = event.position()
+            self.update()
+            event.accept()
+            return
         nearby = [(i, math.hypot(event.position().x()-p.x(),
                                  event.position().y()-p.y()))
                   for i, p in self._coordinates.items()]
@@ -76,8 +112,8 @@ class ConnectomeView(QWidget):
             self.setToolTip("Rzeczywiste neurony i synapsy z prywatnej bazy SQLite")
 
     def _positions(self, state: NeuralTelemetry) -> dict[int, QPointF]:
-        center_x = self.width() * 0.50
-        center_y = self.height() * 0.51
+        center_x = self.width() * 0.50 + self._pan.x()
+        center_y = self.height() * 0.51 + self._pan.y()
         base = min(self.width() * 0.44, self.height() * 0.43) * self._zoom
         total = len(state.nodes)
         inputs = min(state.input_channels, total)
@@ -99,77 +135,127 @@ class ConnectomeView(QWidget):
     def paintEvent(self, event) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
-        painter.fillRect(self.rect(), QColor("#060c17"))
         w, h = self.width(), self.height()
-        cx, cy = w * .5, h * .51
-        radius = min(w * .44, h * .43) * self._zoom
-        painter.setPen(QPen(QColor(29, 72, 102, 100), 1))
-        for portion in (.25, .50, .75, 1.0):
-            r = radius * portion
+        cx, cy = w*.50 + self._pan.x(), h*.51 + self._pan.y()
+        radius = min(w*.44, h*.43) * self._zoom
+
+        # Background, contours and navigation grid are decoration ONLY.
+        # Every lit foreground node/edge below is backed by persisted LIF data.
+        night = QRadialGradient(QPointF(cx, cy), max(w, h)*.65)
+        night.setColorAt(0, QColor("#17384c"))
+        night.setColorAt(.55, QColor("#0a1c2d"))
+        night.setColorAt(1, QColor("#040b15"))
+        painter.fillRect(self.rect(), night)
+        painter.setPen(QPen(QColor(26, 69, 86, 46), 1))
+        for x in range(0, w+1, 38):
+            painter.drawLine(x, 0, x, h)
+        for y in range(0, h+1, 38):
+            painter.drawLine(0, y, w, y)
+        painter.setPen(QPen(QColor(40, 141, 164, 48), 1))
+        for portion in (.24, .47, .72, 1.0):
+            r = radius*portion
             painter.drawEllipse(QPointF(cx, cy), r, r)
-        painter.setPen(QPen(QColor(34, 98, 122, 75), 1, Qt.PenStyle.DashLine))
-        painter.drawLine(QPointF(cx - radius, cy), QPointF(cx + radius, cy))
-        painter.drawLine(QPointF(cx, cy - radius), QPointF(cx, cy + radius))
+        painter.setPen(QPen(QColor(67, 149, 165, 60), 1, Qt.PenStyle.DashLine))
+        painter.drawLine(QPointF(cx-radius, cy), QPointF(cx+radius, cy))
+        painter.drawLine(QPointF(cx, cy-radius), QPointF(cx, cy+radius))
+        painter.setFont(QFont("Consolas", 9))
+        painter.setPen(QColor("#a4eff1"))
+        painter.drawText(20, 29, "NEUROGENESIS  /  REAL NEURAL FABRIC")
+
         state = self._snapshot
-        if not state:
-            painter.setPen(QColor("#a2c3d3"))
+        if state is None:
+            painter.setPen(QColor("#98b5c3"))
             painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter,
-                             "Brak stanu neuronu · brak syntetycznych animacji")
+                             "Oczekiwanie na zapisany stan neuronowy")
             painter.end()
             return
         positions = self._positions(state)
         self._coordinates = positions
+        elapsed = time.monotonic() - self._pulse_started
+        transient = bool(self._delta.get("advanced")) and 0 <= elapsed < .8
+        phase = max(0.0, min(1.0, elapsed/.8)) if transient else 1.0
         max_weight = max((edge.weight for edge in state.edges), default=1.0) or 1.0
         selected = self._selected
         for edge in state.edges:
             a, b = positions.get(edge.source), positions.get(edge.target)
             if a is None or b is None:
                 continue
-            src = state.nodes[edge.source]
-            active = src.fired
-            selected_edge = selected in (edge.source, edge.target)
-            strength = max(0, min(1, edge.weight / max_weight))
-            color = QColor("#48e8ef") if active else QColor("#4e719b")
-            color.setAlpha(245 if active else (205 if selected_edge else 38 + int(105 * strength)))
-            painter.setPen(QPen(color, 2.2 if active else (1.6 if selected_edge else .55 + 1.25 * strength)))
+            active = transient and state.nodes[edge.source].fired
+            related = selected in (edge.source, edge.target)
+            strength = max(0.0, min(1.0, edge.weight/max_weight))
+            ink = QColor("#62f7ef" if active else "#53a1be")
+            ink.setAlpha(230 if active else (205 if related else 26 + int(110*strength)))
+            painter.setPen(QPen(ink, 2.4 if active else (1.65 if related else .65 + 1.15*strength)))
             painter.drawLine(a, b)
+            if active:
+                # Traversing light = a stylized visualization of the observed
+                # presynaptic spike; NOT a measured conduction speed or delay.
+                spot = QPointF(a.x()+(b.x()-a.x())*phase,
+                               a.y()+(b.y()-a.y())*phase)
+                glow = QRadialGradient(spot, 11)
+                glow.setColorAt(0, QColor(235, 255, 243, 235))
+                glow.setColorAt(.55, QColor(86, 250, 227, 115))
+                glow.setColorAt(1, QColor(86, 250, 227, 0))
+                painter.setPen(Qt.PenStyle.NoPen)
+                painter.setBrush(glow)
+                painter.drawEllipse(spot, 11, 11)
+        painter.setPen(Qt.PenStyle.NoPen)
         for node in state.nodes:
             point = positions[node.index]
+            intensity = max(0.0, min(1.0, node.trace/5.0))
             selected_node = node.index == selected
-            intensity = max(0, min(1, node.trace / 5.0))
-            if node.fired:
-                fill, halo = QColor("#f3fdff"), QColor(40, 235, 255, 95)
-                diameter = 6.0
+            is_pulsing = transient and node.fired
+            if is_pulsing:
+                fill = QColor("#fff4c8")
+                aura = QColor(255, 194, 105, 160)
+                size = 5.8
             elif node.input_channel:
-                fill, halo = QColor("#55a8ff"), QColor(50, 132, 255, 45)
-                diameter = 4.2
+                fill = QColor("#62b6ff")
+                aura = QColor(64, 153, 252, 90)
+                size = 4.3
             else:
-                fill = QColor.fromRgb(42 + int(intensity * 76),
-                                      175 + int(intensity * 65),
-                                      179 + int(intensity * 64))
-                halo = QColor(38, 224, 210, 18 + int(intensity * 63))
-                diameter = 3.0 + 2.5 * intensity
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(halo)
-            painter.drawEllipse(point, diameter + (8 if selected_node else 4),
-                                diameter + (8 if selected_node else 4))
+                fill = QColor.fromRgb(39+int(intensity*63),
+                                     160+int(intensity*90),
+                                     157+int(intensity*90))
+                aura = QColor(56, 231, 214, 22+int(intensity*83))
+                size = 3.1 + intensity*2.8
+            r = 17 if is_pulsing else (12 if intensity>.25 else 8)
+            glow = QRadialGradient(point, r)
+            glow.setColorAt(0, aura)
+            fade = QColor(aura)
+            fade.setAlpha(0)
+            glow.setColorAt(1, fade)
+            painter.setBrush(glow)
+            painter.drawEllipse(point, r, r)
             painter.setBrush(fill)
-            painter.drawEllipse(point, diameter, diameter)
+            painter.drawEllipse(point, size, size)
             if selected_node:
-                painter.setPen(QPen(QColor("#f7d782"), 1.5))
+                painter.setPen(QPen(QColor("#ffe49b"), 1.5))
                 painter.setBrush(Qt.BrushStyle.NoBrush)
-                painter.drawEllipse(point, 13, 13)
-        painter.setFont(QFont("Consolas", 9))
-        painter.setPen(QColor("#87b8cd"))
-        painter.drawText(20, 27, "CONNECTOME / LIF    •    STRUKTURA + SYGNAŁY RZECZYWISTE")
-        painter.setPen(QColor("#a6c5d4"))
-        painter.drawText(20, h - 24, (
-            f"KROK {state.step}  /  {state.total_neurons} NEURONÓW  /  "
-            f"{state.total_synapses} SYNAPS  /  "
-            + ("POMIAR ZMIENIONY" if self._delta.get("advanced") else "BEZ NOWEGO KROKU")))
+                painter.drawEllipse(point, 14, 14)
+                painter.setPen(Qt.PenStyle.NoPen)
+        # UI overlays are telemetry labels, not extra simulated computation.
+        painter.fillRect(QRectF(0, max(0,h-56), w, 56), QColor(3, 12, 24, 220))
+        painter.setPen(QColor("#c3f5f2"))
+        painter.drawText(18, h-32,
+                         f"STEP {state.step:>6}  ·  {state.total_neurons} NEURONS  "
+                         f"·  {state.total_synapses} SYNAPSES  ·  {state.total_spikes} RECORDED SPIKES")
+        painter.setPen(QColor("#8baebf"))
+        painter.drawText(18, h-12,
+                         "SOURCE: LOCAL LIF / SQLite   •   DRAG: PAN   •   SCROLL: ZOOM   "
+                         "•   PATH ANIMATION: SCHEMATIC")
+        painter.setPen(QColor("#77decf" if transient else "#8ba6b6"))
+        painter.drawText(max(20, w-210), 29,
+                         "● OBSERVED STEP" if transient else "○ NO NEW STEP")
         if state.truncated:
-            painter.setPen(QColor("#ffca7c"))
-            painter.drawText(20, 48, "LIMIT WYŚWIETLANIA — część połączeń pominięta")
+            painter.setPen(QColor("#ffc17f"))
+            painter.drawText(20, 49, "DISPLAY LIMIT / partial neural graph")
+        if selected is not None and 0 <= selected < len(state.nodes):
+            n = state.nodes[selected]
+            painter.setPen(QColor("#f1d9a6"))
+            painter.drawText(20, 48,
+                             f"NEURON {selected:03d} / V={n.voltage:.4f} / "
+                             f"TRACE={n.trace:.4f} / SPIKE={int(n.fired)}")
         painter.end()
 
 
