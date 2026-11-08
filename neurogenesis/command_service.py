@@ -41,6 +41,7 @@ class CommandSnapshot:
     training_total: int
     training_last_loss: float | None
     inference_running: bool
+    memory_maintenance_running: bool
 
 
 class CommandService:
@@ -63,6 +64,7 @@ class CommandService:
         self._training_last_loss: float | None = None
         self._inference_thread: threading.Thread | None = None
         self._inference_cancel: threading.Event | None = None
+        self._memory_maintenance: threading.Thread | None = None
         # Volatile ONLY: no raw conversation history is saved to SQLite.
         self._last_grounded_question: str | None = None
         self._last_grounded_source_url: str | None = None
@@ -94,6 +96,7 @@ class CommandService:
             training_total = self._training_total
             training_last_loss = self._training_last_loss
             inference_thread = self._inference_thread
+            maintenance_thread = self._memory_maintenance
         progress = study.progress() if study is not None else None
         return CommandSnapshot(
             cpu_threads=os.cpu_count(), database=str(self.memory.path),
@@ -111,7 +114,9 @@ class CommandService:
             training_running=training_thread is not None and training_thread.is_alive(),
             training_step=training_step, training_total=training_total,
             training_last_loss=training_last_loss,
-            inference_running=inference_thread is not None and inference_thread.is_alive())
+            inference_running=inference_thread is not None and inference_thread.is_alive(),
+            memory_maintenance_running=(maintenance_thread is not None
+                                        and maintenance_thread.is_alive()))
 
     def ask(self, question: str) -> dict[str, Any]:
         from .dialogue_context import expand_followup
@@ -140,6 +145,39 @@ class CommandService:
                 self._last_grounded_question = None
                 self._last_grounded_source_url = None
         return result
+
+    def start_memory_backup(self, destination: str | Path) -> None:
+        """Save verified consistent SQLite snapshot on a background thread."""
+        self._memory_job("backup", Path(destination))
+
+    def start_memory_verification(self, snapshot: str | Path) -> None:
+        """Check selected backup without changing it or the live memory."""
+        self._memory_job("verify", Path(snapshot))
+
+    def _memory_job(self, action: str, path: Path) -> None:
+        if action not in ("backup", "verify"):
+            raise ValueError("unsupported memory action")
+        with self._state_lock:
+            if self._memory_maintenance is not None and self._memory_maintenance.is_alive():
+                raise RuntimeError("Trwa już kopia lub kontrola integralności")
+            if self._training_thread is not None and self._training_thread.is_alive():
+                raise RuntimeError("Zakończ trening przed tworzeniem kopii pamięci")
+            def run() -> None:
+                try:
+                    from .recovery import backup_private_database, inspect_private_database
+                    data = (backup_private_database(self.memory.path, path)
+                            if action == "backup"
+                            else inspect_private_database(path))
+                    self._events.put(("memory_" + action + "_done",
+                                      json.dumps(data, ensure_ascii=False)))
+                except Exception as exc:
+                    # No paths or sensitive SQLite contents in public logs;
+                    # UI only receives a bounded local error category.
+                    self._events.put(("memory_" + action + "_failed",
+                                      type(exc).__name__))
+            self._memory_maintenance = threading.Thread(
+                target=run, name="NeuroGenesis-private-memory-maintenance", daemon=True)
+            self._memory_maintenance.start()
 
     def clear_conversation_context(self) -> None:
         """Forget only transient topic carryover, never persistent SQLite."""
