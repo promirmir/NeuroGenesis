@@ -18,6 +18,11 @@ Read [docs/DELIVERY_AUDIT.md](docs/DELIVERY_AUDIT.md) after [docs/VISION.md](doc
 - Branch `feat/command-center-qt-service-20261108` adds an optional real PySide6 Command Center with actual memory/chat/research/brain views and a dependency-free service adapter; the default Tk EXE remains unchanged. Read `docs/COMMAND_CENTER.md`. Dedicated real Qt CI on Windows/Linux, Python 3.11–3.13, Windows EXE regression, privacy and packaging/legal checks are mandatory before calling this a release.
 - Future actual Foundation Brain inference and GPU gains remain open; training panel is truthful about not being connected. No claim of humanlike cognition.
 
+## Optional Qt frozen Windows validation now in progress
+
+- PR #28 merged to main `2bd5af5a1db70dee8566f848a41d5024e8fa8bba` with real Qt offscreen Windows/Linux CI, Python 3.11–3.13, PyTorch CPU, Windows Tk EXE and privacy green. Optional GUI source exists; not automatically included in published EXE.
+- Branch `ci/qt-windows-frozen-smoke-20261108` introduces separate `command_center_launcher.py` and frozen Qt `--self-test` plus technical onedir PyInstaller CI. Do not claim Qt package released; audit LGPLv3 obligations and redistribution notices first. Preserve original Tk EXE and SQLite and never publish private data. See `docs/COMMAND_CENTER.md`.
+
 ## Highest-priority permanent contract
 
 Read [docs/VISION.md](docs/VISION.md) before planning new changes. The user explicitly wants a powerful and novel self-learning, GPU-scalable, human-neurobiology-inspired cognitive engine, permissioned live Internet knowledge perception, meaningful Windows conversation, rich realtime visual observability, long-lived memory and continuity across chats. A 24-neuron/8-channel toy or a list of handwritten replies is not the target; retain those as research baselines only. No unverified promise of human brain emulation, consciousness or global breakthrough is allowed.

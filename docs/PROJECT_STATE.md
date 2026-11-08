@@ -1,3 +1,8 @@
+## 2026-11-08 — Windows Qt EXE technical smoke candidate (not a release)
+
+- PR #28 **merged** to main `2bd5af5a1db70dee8566f848a41d5024e8fa8bba` after actual Qt offscreen Windows and Ubuntu checks, real PyTorch CPU, Python 3.11–3.13, Windows frozen original Tk EXE and privacy gates all passed. Qt Command Center source GUI is implemented, but **no Qt EXE has been released**.
+- Branch `ci/qt-windows-frozen-smoke-20261108` adds a separate optional Qt launcher, local temporary-SQLite evidence/chat `--self-test` and a Windows `--onedir` PyInstaller technical-only workflow that must run the actual Qt EXE, verify dynamically linked DLLs, SHA256 and package size. Does **not** publish a redistributable bundle before license and packaging audit. See `docs/COMMAND_CENTER.md`. Await CI.
+
 ## 2026-11-08 — Actual Qt Command Center candidate (PR pending)
 
 - PR #27 merged to main `a284aae07934fee42db55897a8cde4eb3312713e` after successful Python 3.11–3.13 and Windows standalone EXE/priva­cy checks. This implements local sourced **lexical** responses but not neural weight learning. Final release publication must be independently checked.

@@ -1,0 +1,70 @@
+name: Qt Command Center Windows frozen smoke (no release)
+
+on:
+  pull_request:
+    paths:
+      - 'command_center_launcher.py'
+      - 'neurogenesis/command_center.py'
+      - 'neurogenesis/command_service.py'
+      - '.github/workflows/qt-windows-frozen.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'command_center_launcher.py'
+      - 'neurogenesis/command_center.py'
+      - 'neurogenesis/command_service.py'
+      - '.github/workflows/qt-windows-frozen.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qt-frozen-build:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Privacy and syntax checks
+        run: |
+          python -m scripts.privacy_audit --git
+          python -m compileall -q neurogenesis tests command_center_launcher.py
+      - name: Install actual optional Qt and Windows packager
+        run: python -m pip install "PySide6-Essentials>=6.8,<7" "pyinstaller>=6,<7"
+      - name: Run real Qt offscreen source smoke
+        run: |
+          python -m unittest tests.test_command_center_qt tests.test_command_service -v
+          python command_center_launcher.py --self-test
+      - name: Build dynamic Qt DLL standalone directory (technical proof only)
+        run: |
+          python -m PyInstaller --noconfirm --clean --onedir --windowed --name NeuroGenesisCommandCenter command_center_launcher.py
+      - name: Smoke-test the actual frozen EXE and report checksum
+        shell: pwsh
+        run: |
+          $folder = '.\dist\NeuroGenesisCommandCenter'
+          $exe = (Resolve-Path "$folder\NeuroGenesisCommandCenter.exe").Path
+          $core = @(Get-ChildItem -Path $folder -Recurse -Filter Qt6Core.dll -File)
+          $widgets = @(Get-ChildItem -Path $folder -Recurse -Filter Qt6Widgets.dll -File)
+          if ($core.Count -lt 1 -or $widgets.Count -lt 1) {
+            throw 'Qt dynamic DLLs missing: cannot evaluate LGPL replacement path'
+          }
+          $proc = Start-Process -FilePath $exe -ArgumentList '--self-test' -Wait -PassThru
+          if ($null -eq $proc -or $proc.ExitCode -ne 0) {
+            throw "Actual Qt frozen EXE failed its SQLite+GUI self-test ($($proc.ExitCode))"
+          }
+          $sha = (Get-FileHash $exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          $sum = (Get-ChildItem $folder -File -Recurse | Measure-Object -Property Length -Sum).Sum
+          Write-Host "QtEXE-SHA256=$sha"
+          Write-Host "QtPackage-MiB=$([math]::Round($sum / 1MB, 2))"
+          Write-Host "QtCore-path=$($core[0].FullName)"
+          Write-Host "QtWidget-path=$($widgets[0].FullName)"
+      # No public upload/release: redistribution/legal notice review is
+      # separate from the successful technical frozen-EXE smoke.
