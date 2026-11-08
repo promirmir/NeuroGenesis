@@ -1,3 +1,9 @@
+## Current v0.7.0 Command Center status (2026-11-08, release candidate)
+
+The earlier "first candidate" wording below is historical. The optional real PySide6 Command Center has seven working views: source-cited conversation with volatile short topic follow-ups, bounded opt-in research, actual legacy brain traces, source version browser and consent, separately authorized real PyTorch byte-prediction training/inference, and settings. This branch adds a **nonblocking Settings → Backup/Verify** panel using the same private transactional SQLite snapshots as the Tk desktop. The tests verify the actual Qt view and job event queue; **no Qt EXE has been publicly released**.
+
+**Qt licensing:** Official Qt states LGPLv3 distribution requires prominent notices, LGPL license copies, library source distribution or a compliant written offer, and the user's ability to replace/relink the covered libraries. A one-directory technical PyInstaller smoke test with replaceable Qt DLLs is not sufficient by itself. Do not distribute a Qt bundle until all applicable Qt/PySide6/Shiboken/third-party license obligations have been independently checked. Official references: https://www.qt.io/development/open-source-lgpl-obligations and https://www.qt.io/faq/qt-open-source-licensing . See `docs/MEMORY_RECOVERY.md` for data protection.
+
 # NeuroGenesis Command Center — first functional Qt implementation (PR candidate)
 
 **Public credit: Miron przy pomocy AI.**
