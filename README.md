@@ -1,3 +1,7 @@
+## Krótkie pytania uzupełniające — PR kandydat
+
+Opcjonalne Command Center zaczyna obsługiwać **kontekst jednej sesji**: po pytaniu ze źródłową odpowiedzią można zadać krótkie pytanie zaczynające się od „A…?” pod warunkiem, że wskazany nowy szczegół jest obecny w zachowanym fragmencie poprzedniego źródła. Brak potwierdzenia oznacza brak odpowiedzi — bez zgadywania i zmyślonych cytatów. Przycisk „Wyczyść kontekst” kasuje wyłącznie temat z pamięci działającej aplikacji, nie SQLite. To wyszukiwanie leksykalne, **nie rozumowanie modelu**. Funkcja oczekuje na pełny CI. [Szczegóły](docs/KNOWLEDGE_PIPELINE.md).
+
 ## Weryfikacja wielu źródeł — etap badawczy (PR kandydat)
 
 NeuroGenesis potrafi pokazać **dwa dosłowne fragmenty** na ten sam temat z różnych hostów oraz ich adresy i wersje. Jeżeli fragmenty zawierają różne wartości liczbowe albo odmienne słowa przeczenia, pojawia się **ostrzeżenie o możliwej rozbieżności wymagającej sprawdzenia**, a nie bezpodstawna deklaracja ustalonej sprzeczności. Dwie domeny nie gwarantują niezależności autorów ani prawdziwości treści. Stary system ręcznie uczonych odpowiedzi i prywatna pamięć pozostają bez zmian. Przed publikacją w EXE wymagane jest pełne CI. [Opis architektury](docs/KNOWLEDGE_PIPELINE.md).

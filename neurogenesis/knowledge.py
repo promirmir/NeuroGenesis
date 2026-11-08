@@ -160,7 +160,9 @@ def _discrepancy_signals(excerpts: tuple[str, ...]) -> tuple[str, ...]:
     return tuple(flags)
 
 
-def answer_question(con: sqlite3.Connection, question: str) -> dict[str, Any] | None:
+def answer_question(con: sqlite3.Connection, question: str, *,
+                    source_url: str | None = None,
+                    focus_terms: tuple[str, ...] = ()) -> dict[str, Any] | None:
     """Return bounded, source-grounded excerpts, never synthesized facts.
 
     The strongest lexical passage remains the first answer for compatibility.
@@ -173,7 +175,16 @@ def answer_question(con: sqlite3.Connection, question: str) -> dict[str, Any] | 
     terms = _terms(question)[:MAX_QUERY_TERMS]
     if not terms:
         return None
+    if source_url is not None and (type(source_url) is not str
+                                   or not 1 <= len(source_url) <= 2048):
+        raise ValueError("invalid exact prior source URL")
+    if (type(focus_terms) is not tuple or len(focus_terms) > 4
+            or any(type(t) is not str or not 1 <= len(t) <= 64
+                   or t not in terms for t in focus_terms)):
+        raise ValueError("focus must be a bounded subset of query terms")
     placeholders = ",".join("?" for _ in terms)
+    url_filter = " AND s.url=?" if source_url is not None else ""
+    args = (*terms, source_url) if source_url is not None else terms
     rows = con.execute(
         "SELECT p.body, s.url, s.sha256, s.retrieved_utc, s.rights_status, "
         "s.id, COUNT(DISTINCT t.term) AS overlap "
@@ -181,9 +192,16 @@ def answer_question(con: sqlite3.Connection, question: str) -> dict[str, Any] | 
         "JOIN knowledge_passages p ON p.id=t.passage_id "
         "JOIN knowledge_sources s ON s.id=p.source_id "
         f"WHERE t.term IN ({placeholders}) "
+        + url_filter + " "
         "AND s.id=(SELECT MAX(newer.id) FROM knowledge_sources newer WHERE newer.url=s.url) "
         "GROUP BY p.id ORDER BY overlap DESC, s.id DESC, p.ordinal ASC LIMIT 24",
-        terms).fetchall()
+        args).fetchall()
+    if focus_terms:
+        # A follow-up must genuinely mention its NEW subject/predicate in
+        # the very quoted passage, not merely repeat the previous topic.
+        minimum_focus = max(1, (len(focus_terms) + 1) // 2)
+        rows = [row for row in rows if len(set(focus_terms) & set(_terms(row[0])))
+                >= minimum_focus]
     if not rows:
         return None
     best = rows[0]

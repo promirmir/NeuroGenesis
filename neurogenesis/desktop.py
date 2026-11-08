@@ -37,12 +37,20 @@ def default_db_path() -> Path:
     return default_data_dir() / "experiences.sqlite3"
 
 
-def process_message(memory: ExperienceMemory, message: str, *, store_text: bool = False) -> dict[str, Any]:
+def process_message(memory: ExperienceMemory, message: str, *, store_text: bool = False,
+                    evidence_query: str | None = None,
+                    evidence_source_url: str | None = None,
+                    evidence_focus_terms: tuple[str, ...] = ()) -> dict[str, Any]:
     """Call the actual brain/memory transaction, without fabricating conversation."""
     if type(message) is not str or not message.strip():
         raise ValueError("Wiadomość nie może być pusta")
     if type(store_text) is not bool:
         raise ValueError("store_text must be boolean")
+    if evidence_query is None:
+        if evidence_source_url is not None or evidence_focus_terms:
+            raise ValueError("context filters require an explicit contextual query")
+    elif type(evidence_query) is not str or not evidence_query.strip() or len(evidence_query) > 512:
+        raise ValueError("invalid bounded contextual evidence query")
     # Look up only user-taught exact associations before advancing the brain.
     # Long messages and punctuation-only stimuli remain valid observations.
     taught = (memory.taught_answer(message)
@@ -54,7 +62,10 @@ def process_message(memory: ExperienceMemory, message: str, *, store_text: bool 
     asks = ("?" in question or question.startswith(
         ("co ", "czym ", "kto ", "jak ", "gdzie ", "kiedy ", "ile ",
          "dlaczego ", "czy ", "który ", "jaki ", "jakie ")))
-    evidence = (memory.answer_from_knowledge(message)
+    evidence = (memory.answer_from_knowledge(
+                    evidence_query if evidence_query is not None else message,
+                    source_url=evidence_source_url,
+                    focus_terms=evidence_focus_terms)
                 if taught is None and asks and len(message) <= 512 else None)
     result = memory.remember(message, source="desktop", store_text=store_text)
     reply = (taught["answer"] if taught is not None else
@@ -68,6 +79,7 @@ def process_message(memory: ExperienceMemory, message: str, *, store_text: bool 
                           "source_evidence" if evidence else "sensory_acknowledgement"),
         "sources": evidence.get("sources", [evidence["source"]]) if evidence else [],
         "evidence_review": evidence.get("evidence_review") if evidence else None,
+        "context_used": evidence is not None and evidence_query is not None,
         "event_id": result["event_id"],
         "brain_step": result["brain_step"],
         "neurons": result["neurons"],

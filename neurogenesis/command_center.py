@@ -252,6 +252,9 @@ class CommandCenter(QMainWindow):
         teach_button = QPushButton("Naucz ręcznie")
         teach_button.clicked.connect(self.teach_answer)
         buttons.addWidget(teach_button)
+        clear = QPushButton("Wyczyść kontekst")
+        clear.clicked.connect(self.clear_context)
+        buttons.addWidget(clear)
         layout.addLayout(buttons)
         self.chat_status = label("Dane rozmowy nie są przesyłane przez internet.", kind="subtle")
         layout.addWidget(self.chat_status)
@@ -278,8 +281,15 @@ class CommandCenter(QMainWindow):
         self.chat_input.clear()
         self.chat_status.setText("Odpowiedź: " + result["response_kind"]
                                  + (" · źródła: " + str(len(result["sources"]))
-                                    if result["sources"] else ""))
+                                    if result["sources"] else "")
+                                 + (" · użyto kontekstu sesji"
+                                    if result.get("context_used") else ""))
         self.refresh()
+
+    def clear_context(self) -> None:
+        self.service.clear_conversation_context()
+        self.chat_status.setText(
+            "Wyczyszczono wyłącznie temat bieżącej sesji. Zapisana wiedza SQLite pozostała nienaruszona.")
 
     def teach_answer(self) -> None:
         question = self.chat_input.toPlainText().strip()

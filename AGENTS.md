@@ -1,3 +1,9 @@
+## Active PR candidate — evidence-grounded one-session follow-up (2026-11-08)
+
+- Baseline main `0bcfb6a158c57465b0b39dda26e4ed3ca20e22bd`; PR #36 merged with green Python, Qt Windows/Linux, real CPU Torch, Windows Tk EXE and privacy checks.
+- Branch `feat/session-grounded-followups-20261108` adds a **strictly session-only** topic anchor in Qt `CommandService` for explicit `A/I/Or az ...?` follow-up questions. It only uses latest stored text from the **same URL**, requires a novel substantive focus term in the quotation and otherwise abstains. No raw user conversation is persisted; legacy Tk/source API/default source retrieval and manual teaching remain unchanged.
+- New `tests/test_dialogue_context.py` plus Qt offscreen test. Must pass fresh Python 3.11–3.13, Qt Windows/Ubuntu, privacy and frozen Tk Windows EXE before merge. No model-based semantic conversation or reliable coreference claim. After CI update project state and merged SHA.
+
 ## Active evidence quality PR candidate — November 8, 2026
 
 - Main baseline `200a78cbe7e60777a9fc6a368268c6a055b74c4d` (PR #35 merged). Branch `feat/evidence-review-multi-source-20261108` addresses P0 source quality: two bounded **verbatim newest-revision excerpts** from different hostnames, exact URLs and additive signals for possible numeric/negation divergence. Different hostnames do not establish publisher independence; flags are NOT factual contradiction proof. Keep existing deterministic lexical retrieval and manual teaching priority.

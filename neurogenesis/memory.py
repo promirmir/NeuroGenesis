@@ -312,11 +312,17 @@ class ExperienceMemory:
         return [{"event_id": eid, "url": url, "sha256": digest,
                  "retrieved_utc": stamp} for eid, url, digest, stamp in rows]
 
-    def answer_from_knowledge(self, question: str) -> dict[str, Any] | None:
-        """Retrieve an unverified verbatim source extract, not model inference."""
+    def answer_from_knowledge(self, question: str, *,
+                              source_url: str | None = None,
+                              focus_terms: tuple[str, ...] = ()) -> dict[str, Any] | None:
+        """Retrieve inert excerpts; optional context still constrained to one source.
+
+        No changes to persistent question memory or brain state occur here.
+        """
         from .knowledge import answer_question
         with closing(self._connect()) as con:
-            return answer_question(con, question)
+            return answer_question(con, question, source_url=source_url,
+                                   focus_terms=focus_terms)
 
     def knowledge_sources(self, *, limit: int = 20) -> list[dict[str, Any]]:
         """Versioned local source ledger; no web access."""
