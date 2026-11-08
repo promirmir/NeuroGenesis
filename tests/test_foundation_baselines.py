@@ -14,7 +14,7 @@ class FoundationBaselineTests(unittest.TestCase):
         self.assertEqual(result["scored_holdout_transitions"], 199)
 
     def test_holdout_never_updates_training_counts(self):
-        training = bytes([0, 1] * 90)
+        training = bytes([0, 1] * 45)
         a = evaluate(training + bytes([2] * 10))
         b = evaluate(training + bytes([3] * 10))
         self.assertAlmostEqual(a["unigram_next_byte_ce_nats"],
