@@ -33,6 +33,10 @@ Implement all of: explicit user opt-in, read-only allowlists, domain and IP vali
 
 Require sandbox execution, restricted capabilities, independent test gates, resource quotas, reproducible comparisons, rollback, signed artifact provenance, and explicit human approval for deployment. **Do not let untrusted pages or model output directly execute commands or modify production source.**
 
+## Operator-approved neural training candidate (not default behavior)
+
+A later feature PR adds explicit local source-revision training rights status with timestamped consent/revocation audit. Public web availability, source title, robots.txt permission or a citation never imply training rights. The trainer reads only latest revisions explicitly approved by the operator, then separately requires corpus-rights confirmation and uses private local PyTorch CPU or approved CUDA. It has strict source/step/batch/sequence caps, no network/API calls, candidate-only atomic numerical checkpoint, and stop-before-save. It does not install web-trained weights into chat automatically; deleted/revoked source data cannot reverse prior trained gradients. `*.pt`/`*.pth` remain private ignored files. The model and sources are not assumed factually reliable. See [KNOWLEDGE_TRAIN.md](KNOWLEDGE_TRAIN.md); do not claim a release before CI.
+
 ## Vulnerability reporting
 
 Avoid posting exploit details and secrets in public issues. Contact repository maintainers through an agreed private reporting channel if one is published. No private reporting endpoint is asserted to exist yet.
