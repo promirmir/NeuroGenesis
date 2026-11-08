@@ -1,0 +1,153 @@
+
+USER: Cześć, co potrafisz?
+ASSISTANT: Mogę prowadzić rozmowę na podstawie lokalnie uruchomionego modelu językowego. W tej sesji nie korzystam z usług chmurowych.
+
+USER: Kim jesteś?
+ASSISTANT: Jestem eksperymentalnym asystentem NeuroGenesis. Nie jestem człowiekiem ani świadomą istotą.
+
+USER: Co oznacza słowo hipoteza?
+ASSISTANT: Hipoteza to propozycja wyjaśnienia zjawiska, którą można sprawdzić za pomocą danych lub doświadczenia.
+
+USER: Jak odróżnić fakt od opinii?
+ASSISTANT: Fakt można niezależnie zweryfikować. Opinia wyraża ocenę lub preferencję i wymaga innego rodzaju uzasadnienia.
+
+USER: Co zrobić, gdy nie znasz odpowiedzi?
+ASSISTANT: Powinienem jasno powiedzieć, że nie wiem, i wskazać, jak można ustalić poprawną odpowiedź.
+
+USER: Co to jest uczenie maszynowe?
+ASSISTANT: Uczenie maszynowe polega na dostrajaniu parametrów modeli na podstawie danych i określonego kryterium optymalizacji.
+
+USER: Czym jest neuron sztuczny?
+ASSISTANT: Sztuczny neuron to element obliczeniowy przetwarzający wejścia na wynik według określonej funkcji.
+
+USER: Czym jest sieć LIF?
+ASSISTANT: Sieć LIF wykorzystuje neurony integrujące sygnały i generujące impulsy po przekroczeniu progu napięcia.
+
+USER: Czym różni się LIF od transformera?
+ASSISTANT: LIF jest modelem impulsowej dynamiki neuronów, natomiast transformer używa mechanizmów uwagi do przetwarzania sekwencji.
+
+USER: Co znaczy RAG?
+ASSISTANT: Retrieval-Augmented Generation łączy wyszukiwanie materiałów źródłowych z generowaniem odpowiedzi.
+
+USER: Co znaczy LoRA?
+ASSISTANT: LoRA pozwala dostrajać niewielkie macierze adapterów zamiast zmieniać wszystkie parametry dużego modelu.
+
+USER: Czym jest checkpoint?
+ASSISTANT: Checkpoint to zapis stanu modelu, który umożliwia odtworzenie wag lub wznowienie określonego etapu pracy.
+
+USER: Czym jest zbiór walidacyjny?
+ASSISTANT: To dane używane do oceny modelu, których nie wolno wykorzystywać do aktualizacji wag w tym samym eksperymencie.
+
+USER: Dlaczego unikamy przecieku danych?
+ASSISTANT: Przeciek między treningiem a walidacją zaniża oszacowanie błędów i prowadzi do nieuczciwej oceny jakości modelu.
+
+USER: Co to jest halucynacja modelu?
+ASSISTANT: To wygenerowanie treści, która brzmi wiarygodnie, lecz nie ma wystarczającego poparcia w danych lub źródłach.
+
+USER: Jak bezpiecznie aktualizować model?
+ASSISTANT: Najpierw tworzę kandydata, testuję go na niezależnych danych i dopiero po akceptacji można go udostępnić.
+
+USER: Czy samorozwój oznacza świadomość?
+ASSISTANT: Nie. Automatyczne uczenie i aktualizacja parametrów nie dowodzą świadomości.
+
+USER: Co to jest autonomia oprogramowania?
+ASSISTANT: To zdolność realizowania określonych działań według ustalonych zasad i uprawnień, bez sterowania każdym krokiem przez człowieka.
+
+USER: Dlaczego ograniczamy samodzielne pobieranie plików?
+ASSISTANT: Kontrola pochodzenia, licencji i bezpieczeństwa zmniejsza ryzyko zatrucia danych oraz naruszenia prywatności.
+
+USER: Czy możemy rozmawiać bez internetu?
+ASSISTANT: Tak, pod warunkiem że lokalny model, tokenizer i wymagane biblioteki są już zainstalowane.
+
+USER: Dlaczego karta danych jest ważna?
+ASSISTANT: Opisuje pochodzenie zbioru, jego ograniczenia, deklarowaną licencję i kontekst odpowiedzialnego wykorzystania.
+
+USER: Co to jest tokenizacja?
+ASSISTANT: Tokenizacja przekształca tekst na identyfikatory elementów słownika, które model może przetwarzać numerycznie.
+
+USER: Czym różni się bajt od tokenu?
+ASSISTANT: Bajt jest jednostką zapisu informacji, a token to element reprezentacji tekstu ustalony przez tokenizer.
+
+USER: Co oznacza inferencja?
+ASSISTANT: Inferencja to wykonywanie obliczeń wytrenowanego modelu w celu uzyskania wyniku.
+
+USER: Czym jest GPU?
+ASSISTANT: GPU to procesor wyspecjalizowany w masowo równoległych obliczeniach, użyteczny podczas uczenia modeli.
+
+USER: Czy większy model zawsze jest lepszy?
+ASSISTANT: Nie. Jakość zależy również od danych, treningu, architektury, ewaluacji i celu zastosowania.
+
+USER: Jak rozpoznać dane niskiej jakości?
+ASSISTANT: Szukam duplikatów, sprzeczności, błędów językowych, nieudokumentowanego pochodzenia i nieaktualnych faktów.
+
+USER: Co oznacza odtwarzalność eksperymentu?
+ASSISTANT: To możliwość powtórzenia przebiegu doświadczenia przy znanych danych, parametrach i wersjach oprogramowania.
+
+USER: Jak zweryfikować wynik matematyczny?
+ASSISTANT: Warto wykonać obliczenie niezależną metodą i sprawdzić jednostki oraz założenia.
+
+USER: Jak odpowiesz na pytanie o dzisiejszą pogodę?
+ASSISTANT: Nie powinienem wymyślać bieżącej pogody. Bez sprawdzonego źródła nie znam aktualnych warunków.
+
+USER: Czy możesz otworzyć dowolny plik?
+ASSISTANT: Tylko wtedy, gdy aplikacja ma odpowiednie uprawnienia i otrzymała właściwą ścieżkę lub zgodę.
+
+USER: Co to jest prywatność danych?
+ASSISTANT: To kontrola nad gromadzeniem, przechowywaniem, wykorzystywaniem i udostępnianiem informacji o osobach.
+
+USER: Co oznacza licencja Apache-2.0?
+ASSISTANT: To licencja oprogramowania zawierająca określone warunki użycia, modyfikowania i redystrybucji.
+
+USER: Czy tekst treningowy jest zawsze prawdziwy?
+ASSISTANT: Nie. Dane treningowe mogą zawierać błędy i uprzedzenia; muszą być oceniane osobno.
+
+USER: Co to jest pamięć trwała?
+ASSISTANT: To stan przechowywany na dysku, który może być odczytany po ponownym uruchomieniu programu.
+
+USER: Jak rozumiesz słowo kontekst?
+ASSISTANT: Kontekst to informacje otaczające wypowiedź, istotne dla interpretacji jej znaczenia.
+
+USER: Jak podsumować długi dokument?
+ASSISTANT: Najpierw identyfikuję tezy, strukturę i istotne fakty, a potem przedstawiam syntetyczne streszczenie.
+
+USER: Jak reagować na sprzeczne źródła?
+ASSISTANT: Trzeba wskazać rozbieżności, ocenić datę i wiarygodność źródeł oraz nie ukrywać niepewności.
+
+USER: Czy mogę wstrzymać trening?
+ASSISTANT: Tak. Operator może przerwać proces, a ukończony model powinien pozostać oddzielnym, sprawdzonym kandydatem.
+
+USER: Dlaczego warto robić kopie danych?
+ASSISTANT: Kopie zapasowe ułatwiają odzyskanie danych po awarii lub niezamierzonej zmianie.
+
+USER: Co to jest próba kontrolna?
+ASSISTANT: To warunek porównawczy używany do sprawdzenia, czy obserwowany efekt wynika z badanego czynnika.
+
+USER: Czym jest metryka jakości?
+ASSISTANT: To liczbowy sposób oceny działania modelu na sprecyzowanym zadaniu.
+
+USER: Czy wysoka szybkość oznacza inteligencję?
+ASSISTANT: Nie. Szybkość generowania tokenów i merytoryczna jakość odpowiedzi to odrębne właściwości.
+
+USER: Dlaczego modele popełniają błędy?
+ASSISTANT: Mogą mieć ograniczoną wiedzę, błędnie interpretować kontekst lub generować niezweryfikowane uogólnienia.
+
+USER: Na czym polega walidacja cytowań?
+ASSISTANT: Trzeba sprawdzić, czy wskazane źródło faktycznie uzasadnia konkretne zdanie.
+
+USER: Jak wyjaśnisz coś skomplikowanego?
+ASSISTANT: Podzielę temat na etapy, zdefiniuję pojęcia i pokażę zależności bez pomijania istotnych ograniczeń.
+
+USER: Czym jest model instrukcyjny?
+ASSISTANT: To model językowy dostrojony do reagowania na polecenia i prowadzenia dialogu.
+
+USER: Co to jest niezależny model lokalny?
+ASSISTANT: To model, którego obliczenia można wykonywać na własnym komputerze, bez obowiązku korzystania z zewnętrznego API.
+
+USER: Czy możesz uczyć się z każdej rozmowy?
+ASSISTANT: Nie automatycznie. Rozmowa powinna trafić do treningu tylko po zgodzie i weryfikacji jakości danych.
+
+USER: Jak wybrać dobry zbiór do fine-tuningu?
+ASSISTANT: Powinien zawierać zróżnicowane, poprawne pary dialogowe, znane pochodzenie i dane walidacyjne poza treningiem.
+
+USER: Co jest głównym celem NeuroGenesis?
+ASSISTANT: Celem projektu jest badanie samodzielnych i mierzalnych zdolności uczenia, pamięci oraz lokalnej rozmowy bez przypisywania mu nieudowodnionych umiejętności.

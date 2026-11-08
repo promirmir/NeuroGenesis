@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neurogenesis-research"
-version = "0.9.0"
+version = "0.10.0"
 description = "Experimental spiking network with bounded structural neuroplasticity and auditable self-state"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -16,6 +16,7 @@ dependencies = []
 [project.optional-dependencies]
 foundation = ["torch>=2.5,<3"]
 command-center = ["PySide6-Essentials>=6.8,<7"]
+dialogue = ["torch>=2.5,<3", "transformers>=4.51,<6", "peft>=0.15,<1", "accelerate>=1,<2", "huggingface-hub>=0.30,<2", "datasets>=3,<7", "safetensors>=0.4,<1"]
 
 [project.scripts]
 neurogenesis = "neurogenesis.__main__:main"

@@ -179,6 +179,8 @@ def ui_self_test() -> int:
     from tkinter import ttk
     from .tk_mission import MissionDashboard
     from .tk_foundation_lab import install_foundation_lab
+    from .tk_text_training import install_text_training
+    from .tk_local_chat import install_local_chat
 
     with tempfile.TemporaryDirectory(prefix="ng-public-tk-ui-check-") as folder:
         memory = ExperienceMemory(Path(folder) / "synthetic-private.sqlite3")
@@ -186,6 +188,8 @@ def ui_self_test() -> int:
         root.withdraw()
         try:
             root.geometry("1350x830")
+            from .tk_theme import apply_dark_tk_theme
+            apply_dark_tk_theme(root)
             tabs = ttk.Notebook(root)
             tabs.pack(fill="both", expand=True)
             dashboard = ttk.Frame(tabs)
@@ -193,6 +197,11 @@ def ui_self_test() -> int:
             foundation_tab = install_foundation_lab(tabs)
             if tabs.tab(foundation_tab, "text") != "Foundation Lab":
                 return 37
+            training_tab = install_text_training(tabs)
+            model_chat_tab = install_local_chat(tabs)
+            if (tabs.tab(training_tab, "text") != "Trening TXT"
+                    or tabs.tab(model_chat_tab, "text") != "Model Chat"):
+                return 39
             mission = MissionDashboard(
                 dashboard, memory, navigate=lambda _where: None,
                 network_enabled=lambda: False)
@@ -251,29 +260,8 @@ def launch(db_path: Path) -> int:
     root.minsize(min(940, available_width), min(620, available_height))
     root.configure(bg="#07111d")
 
-    style = ttk.Style(root)
-    style.theme_use("clam")
-    style.configure("TNotebook", background="#07111d", borderwidth=0,
-                    lightcolor="#07111d", darkcolor="#07111d")
-    style.configure("TNotebook.Tab", padding=(21, 12), borderwidth=0,
-                    font=("Segoe UI", 10, "bold"),
-                    background="#112637", foreground="#a5c6d3",
-                    focuscolor="#112637")
-    style.map("TNotebook.Tab",
-              background=[("selected", "#135468"), ("active", "#1a4155")],
-              foreground=[("selected", "#e8ffff"), ("active", "#ffffff")],
-              expand=[("selected", (0, 0, 0, 0))])
-    style.configure("TFrame", background="#07111d")
-    style.configure("TLabel", background="#07111d", foreground="#cde9ef",
-                    font=("Segoe UI", 10))
-    style.configure("TCheckbutton", background="#07111d", foreground="#cde9ef")
-    style.map("TCheckbutton", background=[("active", "#07111d")],
-              foreground=[("active", "#ffffff")])
-    style.configure("TButton", font=("Segoe UI", 10, "bold"), padding=(14, 10),
-                    background="#164056", foreground="#e8fcff",
-                    relief="flat", borderwidth=0)
-    style.map("TButton", background=[("active", "#1c6678")],
-              foreground=[("active", "#ffffff")])
+    from .tk_theme import apply_dark_tk_theme
+    apply_dark_tk_theme(root)
 
     header = tk.Frame(root, bg="#07111d")
     header.pack(fill="x", padx=24, pady=(16, 10))
@@ -410,9 +398,15 @@ def launch(db_path: Path) -> int:
     web_auto = tk.BooleanVar(value=False)
     from .tk_mission import MissionDashboard
     from .tk_foundation_lab import install_foundation_lab
+    from .tk_text_training import install_text_training
+    from .tk_local_chat import install_local_chat
     foundation_tab = install_foundation_lab(tabs)
+    training_tab = install_text_training(tabs)
+    model_chat_tab = install_local_chat(tabs)
     targets = {
         "foundation": foundation_tab,
+        "training": training_tab,
+        "local_chat": model_chat_tab,
         "chat": chat_tab,
         "brain": brain_tab,
         "web": web_tab,
