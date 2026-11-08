@@ -8,6 +8,8 @@ on:
       - 'neurogenesis/knowledge.py'
       - 'tests/test_qa_acceptance.py'
       - 'tests/test_qa_eval.py'
+      - 'neurogenesis/qa_baselines.py'
+      - 'tests/test_qa_baselines.py'
       - '.github/workflows/qa-acceptance.yml'
   push:
     branches: [main]
@@ -17,6 +19,8 @@ on:
       - 'neurogenesis/knowledge.py'
       - 'tests/test_qa_acceptance.py'
       - 'tests/test_qa_eval.py'
+      - 'neurogenesis/qa_baselines.py'
+      - 'tests/test_qa_baselines.py'
       - '.github/workflows/qa-acceptance.yml'
   workflow_dispatch:
 
@@ -43,3 +47,4 @@ jobs:
         run: |
           python -m unittest discover -s tests -p test_qa_acceptance.py -v
           python -m unittest discover -s tests -p test_qa_eval.py -v
+          python -m unittest discover -s tests -p test_qa_baselines.py -v
