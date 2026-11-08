@@ -200,7 +200,7 @@ def ui_self_test() -> int:
             if tabs.tab(foundation_tab, "text") != "Foundation Lab":
                 return 37
             training_tab = install_bundled_training(tabs, knowledge)
-            model_chat_tab = install_bundled_chat(tabs, knowledge)
+            model_chat_tab = install_bundled_chat(tabs, knowledge, memory)
             if (tabs.tab(training_tab, "text") != "Trening TXT"
                     or tabs.tab(model_chat_tab, "text") != "Model Chat"):
                 return 39
@@ -428,7 +428,7 @@ def launch(db_path: Path) -> int:
     knowledge = LocalKnowledge(db_path.with_name("knowledge_local.sqlite3"))
     foundation_tab = install_foundation_lab(tabs)
     training_tab = install_bundled_training(tabs, knowledge)
-    model_chat_tab = install_bundled_chat(tabs, knowledge)
+    model_chat_tab = install_bundled_chat(tabs, knowledge, memory)
     targets = {
         "foundation": foundation_tab,
         "training": training_tab,
