@@ -1,3 +1,26 @@
+## NeuroGenesis 0.12.5 — ACF podejmuje pierwszą mierzalną decyzję
+
+Nowa `semantic_policy.py` zamyka pierwszą realną pętlę działania:
+**lokalne doświadczenie → plastyczne uczenie → porównanie błędów →
+wybór strategii → odczyt zatwierdzonej wiedzy TXT**. Agent może
+samodzielnie przygotować maksymalnie 3 lokalne fragmenty dotyczące
+spodziewanego następnego tematu. Własna plastyczna sieć ACF musi
+najpierw uzyskać wystarczającą liczbę przyczynowo ocenionych prognoz
+i **udowodnioną, wstępną przewagę MSE nad trzema punktami odniesienia**.
+W przeciwnym razie powstrzymuje się od działania; pulpit podaje
+konkretny powód. Żadnych samoczynnych zapytań do Internetu.
+
+Jest to rzeczywista, odwracalna operacja na własnej bazie wiedzy.
+Nie należy jej mylić z automatyczną poprawą odpowiedzi Qwen:
+program nie wstawia przewidywanych materiałów do rozmowy bez
+niezależnej weryfikacji, a przewidywanie tematu nie jest skalibrowaną
+pewnością. Testy oceniają trafność prognoz na kolejnych prawdziwych
+zdarzeniach, uwzględniając niewykonane decyzje i wyniki ujemne.
+
+[**Metodologia, progi, ograniczenia i polecenie audytu**](docs/SEMANTIC_DECISION_GATE_0125.md).
+
+---
+
 ## NeuroGenesis 0.12.4 — rzeczywiste znaczenie trafia do plastycznej sieci
 
 Po każdej udanej rozmowie (przy włączonej zgodzie na uczenie) **wbudowany Qwen3-1.7B** osobno klasyfikuje znaczenie wypowiedzi w ośmiu kategoriach. Powstaje rzeczywisty modelowy wektor semantyczny — nie dotychczasowy hash liter. Trafia on do drugiego, niezależnego ACF, który autonomicznie uczy się przewidywać kolejne kategorie, porównuje plastykę strukturalną z nierozrastającą się kontrolą i zapisuje mierzalny samomodel.
@@ -117,7 +140,7 @@ nie należy mylić starszego EXE 0.8.0 z nowymi funkcjami.
 
 # NeuroGenesis — Mission Control
 
-**research prototype v0.12.4.**  
+**research prototype v0.12.5.**  
 **Publiczne autorstwo: Miron przy pomocy AI.**
 
 NeuroGenesis to lokalny projekt badawczy AI: rzeczywista mała sieć neuronowa LIF ze strukturalną plastycznością, prywatna trwała baza SQLite, kontrolowane zdobywanie informacji ze źródeł HTTPS, ekstrakcyjne cytowanie oraz odrębny eksperymentalny model Foundation Brain trenowany w PyTorch. **System nie jest AGI, świadomością, modelem ludzkiego mózgu ani niezależnie zweryfikowanym systemem rozumienia języka naturalnego.**
