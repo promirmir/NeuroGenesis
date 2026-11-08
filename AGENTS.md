@@ -1,3 +1,10 @@
+## Verified continuation checkpoint — QA gates and BM25, November 8, 2026
+
+- Main source SHA `a29ba37689c0bfe21cba028d1c819428fe40da09`; PR #41 and #42 merged and full feature-PR Python 3.11–3.13, offline real SQLite QA, privacy, Windows frozen EXE tests green. Historical "candidate" paragraphs below are not latest status.
+- Actual quote QA is still lexical. #41 adds disjoint QA Wilson confidence + abstain-all gate. Public fake 40/100 fixture: observed 0 false citations, **not** proven zero real error (upper95 `3.699%`). #42 adds actual BM25 control, **not** an automatic deployment. Public fake 2/3 fixture: current and BM25 each 80% strict accuracy and **one unsupported false citation**. Neither proves semantic reasoning.
+- The published Windows app remains Tk. Optional Qt Command Center, separate real Foundation byte predictor, checkpoint resumption and retention evaluator remain in source/CI; no physical GPU benchmark or legally approved Qt public bundle.
+- Next P0: real, unused and rights-cleared natural QA/entailment benchmark with false-premise negatives and matched BM25/abstain/neural baseline; only if independent measured gains support it, consider changing default dialogue with regression/rollback tests. Do not keep tuning heuristics to public six-question/140-question developer fixtures. Verify next release target after main post-merge CI. See `docs/PROJECT_STATE.md`, `docs/QA_ACCEPTANCE.md`, `docs/BM25_BASELINE.md`.
+
 ## Active matched retrieval baseline candidate — 2026-11-08
 
 - PR #41 merged main `7dd3094ac791b241b2b84d50dccb0fa3032bc8b6` after Python 3.11–3.13, dedicated offline QA, privacy, Windows Tk EXE checks. It established read-only disjoint-question Wilson confidence/abstain-all literal source QA gate; public 40/100 synthetic proof is **seen test data**, NOT validation of real-world accuracy.
