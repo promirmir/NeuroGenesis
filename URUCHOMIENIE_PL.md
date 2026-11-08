@@ -44,14 +44,14 @@ Ten tryb nie jest dowodem rozumienia języka: to jawnie nauczone skojarzenie, za
 
 Serwer zobaczy adres IP Twojego połączenia. Program nie otwiera stron wymagających logowania i nie wykonuje kodu ze stron. Odwiedzane adresy zostają zapisane w lokalnej pamięci; ich treść nie jest trwale przechowywana w postaci pełnego tekstu. To pierwszy zmysł internetowy; nie oznacza rozumienia zawartości.
 
-## Jak uruchomić autonomiczne badanie dziedziny? (po wydaniu PR #24)
+## Jak uruchomić autonomiczne badanie dziedziny? (od wydania v0.6.0-main.57822280)
 
 1. Otwórz **Internet** i świadomie zaznacz **Włącz odczyt HTTPS**.
 2. Przejdź do nowej zakładki **Specjalizacja**. Wpisz dziedzinę, na przykład „Mechanika”, i ustal limit stron (1–500; domyślnie 120).
 3. Kliknij **Rozpocznij badanie**. Program najpierw szuka stron z Wikipedii, a następnie odkrywa powiązane adresy z innych publicznych domen. Pokazuje liczbę prób, zapisanych obserwacji, błędów i odkrytych źródeł.
 4. Kliknij **Stop**, aby przerwać kolejne odczyty. Wyłączenie zgody HTTPS również zatrzymuje proces.
 
-Robot respektuje `robots.txt`, wykonuje nie więcej niż jedno żądanie strony na 5 sekund i nakłada dodatkowe limity domen. Część stron może być niedostępna. **Nie jest to pełny skan internetu ani nauka wag modelu PyTorch**. Przy wcześniejszym EXE zakładka może być nieobecna; najpierw sprawdź, czy nowy kod został scalony i opublikowany.
+Robot respektuje `robots.txt`, wykonuje nie więcej niż jedno żądanie strony na 5 sekund i nakłada dodatkowe limity domen. Część stron może być niedostępna. **Nie jest to pełny skan internetu ani nauka wag modelu PyTorch**. Zakładka jest zawarta w zweryfikowanym wydaniu `v0.6.0-main.57822280`. Starsze EXE jej nie mają. Przetestowanie rzeczywistego skutecznego pobierania stron publicznych pozostaje odrębnym zadaniem.
 
 ## Gdzie jest pamięć?
 
