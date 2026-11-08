@@ -1,3 +1,9 @@
+## 2026-11-08 — safe continued Foundation training weights (PR candidate)
+
+- PR #32 merged `ec5bc9fcfdbc2fa7c940e33fc8b090a48ed610b7`; PR #33 merged `fd4ab6a723baad237d583d62991dbfdcd84b3f74`. PR #33 passed Python 3.11–3.13, actual PyTorch CPU, privacy and Windows Tk frozen EXE. Its synthetic paired old/new test **rejected** the candidate because improvement on the new task was below 1% threshold, preserving scientific integrity. Qt was unchanged in PR #33.
+- New branch `feat/safe-foundation-continue-learning-20261108`: controlled continuation from an operator-trusted local checkpoint, preserving prior weights and adding real Torch gradient steps. Generates **a new checkpoint without overwriting the previous file**; model architecture must match, rights for current source versions confirmed, and optimizer moments are **not** persisted (fresh AdamW). Qt Training UI exposes explicit opt-in. Tests cover actual CPU weight/step continuation, source hash preservation, no overwrite, trust failure, architecture mismatch and service worker.
+- Candidate pending Python, PyTorch CPU, Qt Windows/Ubuntu, frozen original Tk EXE and Qt EXE quality gates. No independent semantic chat, automatic model promotion, real CUDA benchmark or redistributable Qt download claimed. Read `docs/KNOWLEDGE_TRAIN.md`, `docs/RETENTION_GATE.md`.
+
 ## 2026-11-08 — old-skill/new-task paired checkpoint audit candidate
 
 - `main` advanced to `ec5bc9fcfdbc2fa7c940e33fc8b090a48ed610b7` by merging PR #32 after real PyTorch CPU, Python 3.11–3.13, Qt Windows/Ubuntu, Windows Tk frozen EXE, Qt frozen EXE and privacy checks. It adds an operator-trusted, offline actual Foundation checkpoint inference **laboratory**, never automatically used as chat or a factual source. Prior candidate notes below are historical.
