@@ -1,8 +1,8 @@
 # NeuroGenesis — delivery gap audit and completion plan
 
 **Audit date:** 2026-11-08. **Public credit:** Miron przy pomocy AI.
-**Baseline:** main \`db0b2210bb97c422d83d27f963725d3d6941c067\`,
-verified release \`v0.6.0-main.db0b2210\`. This document is a *code and CI
+**Baseline:** main `db0b2210bb97c422d83d27f963725d3d6941c067`,
+verified release `v0.6.0-main.db0b2210`. This document is a *code and CI
 audit*, not a visual inspection of a running Windows app or an independent
 live-Internet benchmark.
 
@@ -15,7 +15,7 @@ self-development, functional neural telemetry, a professional one-click Windows
 UI, and eventually voluntary distributed computation. The target is research,
 not an established human brain simulation, consciousness or AGI.
 
-Source of truth: \`docs/VISION.md\`, \`AGENTS.md\`, issue #18.
+Source of truth: `docs/VISION.md`, `AGENTS.md`, issue #18.
 Keep the old LIF / 8-dimensional hash substrate as a baseline, **not** the main
 path to advanced language reasoning.
 
@@ -35,11 +35,11 @@ path to advanced language reasoning.
 | Visualization/UX | Basic dark Tkinter tabs, text panels, 205-pixel activity bar canvas and status labels | Functional prototype, **not** professional observability/dashboard |
 | Windows distribution | PyInstaller EXE, source-SHA release workflow and SHA-256 asset | Implemented and verified by GitHub Actions |
 
-**Evidence:** \`neurogenesis/desktop.py\`, \`study_panel.py\`,
-\`specialist_study.py\`, \`web_sense.py\`, \`web_discovery.py\`,
-\`memory.py\`, \`foundation.py\`, \`foundation_train.py\`,
-\`autonomy.py\`, \`docs/FOUNDATION_BRAIN.md\`,
-\`docs/AUTONOMY_SUPERVISOR.md\`.
+**Evidence:** `neurogenesis/desktop.py`, `study_panel.py`,
+`specialist_study.py`, `web_sense.py`, `web_discovery.py`,
+`memory.py`, `foundation.py`, `foundation_train.py`,
+`autonomy.py`, `docs/FOUNDATION_BRAIN.md`,
+`docs/AUTONOMY_SUPERVISOR.md`.
 PRs #24 and #25 merged. Latest release and CI checked on audit date.
 Open PR #23 concerns dedicated PyTorch baseline-test coverage and has green
 Linux standard/CPU foundation runs, but a Windows gate is not confirmed for
@@ -179,7 +179,7 @@ regression/manual review, preserved private data and package reproducibility.
 
 ## Priority and workflow
 
-**First:** verify the current \`main\`/latest release and finish or explicitly
+**First:** verify the current `main`/latest release and finish or explicitly
 resolve PR #23; do not accidentally undo PRs #24–25. Then establish one
 working end-to-end evidence-backed domain scenario (A), while implementing
 professional UI shell/widgets behind a safe feature flag (C). Only then
@@ -191,10 +191,10 @@ existing APIs/tests; retain old SQLite and public CLI; run Python 3.11–3.13,
 privacy audit, dedicated actual PyTorch CPU for foundation changes, Windows
 standalone EXE smoke, and relevant real GPU/manual web/UI checks when
 available. Merge only verified. Record PR, SHA, test numbers, real measured
-outcomes and limitations in \`docs/PROJECT_STATE.md\` and
-\`docs/DEVELOPMENT_LOG.md\`.
+outcomes and limitations in `docs/PROJECT_STATE.md` and
+`docs/DEVELOPMENT_LOG.md`.
 
-**Public privacy:** only \`Miron przy pomocy AI\`. Never expose surname,
+**Public privacy:** only `Miron przy pomocy AI`. Never expose surname,
 private personal data, secrets or private datasets in tracked source.
 Operator approval required before external network, paid resources,
 distributed machines or irreversible actions. Work directly in the current
@@ -218,8 +218,8 @@ chat through the connected GitHub tools; do not suggest another work mode.
 
 ## Resume from a new chat
 
-Read in order: \`AGENTS.md\` => \`docs/VISION.md\` =>
-\`docs/DELIVERY_AUDIT.md\` => \`docs/PROJECT_STATE.md\` =>
-\`docs/DEVELOPMENT_LOG.md\`. Recheck current GitHub \`main\`, issues/PRs
+Read in order: `AGENTS.md` => `docs/VISION.md` =>
+`docs/DELIVERY_AUDIT.md` => `docs/PROJECT_STATE.md` =>
+`docs/DEVELOPMENT_LOG.md`. Recheck current GitHub `main`, issues/PRs
 and Actions; never assume this audit's SHA stays current. Prioritize finishing
 a vertically useful product over collecting more unused source text.
