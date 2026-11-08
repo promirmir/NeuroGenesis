@@ -61,6 +61,9 @@ jobs:
       - name: Capture REAL public Tk Mission dashboard from synthetic SQLite
         continue-on-error: true
         run: python -m scripts.tk_mission_screenshot --output preview/NeuroGenesis-Mission-Control.png --avatar-output preview/NeuroGenesis-Avatar.png
+      - name: Capture actual public TXT training and Model Chat tabs
+        continue-on-error: true
+        run: python -m scripts.tk_training_screenshot --training-output preview/NeuroGenesis-Training-TXT.png --model-chat-output preview/NeuroGenesis-Model-Chat.png
       - name: Upload human-review screenshot when interactive desktop is available
         uses: actions/upload-artifact@v4
         with:
@@ -68,6 +71,8 @@ jobs:
           path: |
             preview/NeuroGenesis-Mission-Control.png
             preview/NeuroGenesis-Avatar.png
+            preview/NeuroGenesis-Training-TXT.png
+            preview/NeuroGenesis-Model-Chat.png
           if-no-files-found: warn
           retention-days: 14
       - uses: actions/upload-artifact@v4
