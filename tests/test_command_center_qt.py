@@ -75,6 +75,26 @@ class QtCommandCenterSmokeTests(unittest.TestCase):
         self.assertIn("predykcję", self.window.inference_start.text().lower())
         self.assertIsNotNone(self.window.pages.widget(4).findChild(QScrollArea))
 
+    def test_contextual_followup_visible_and_user_can_clear_topic(self):
+        text = "Raport Fenix opisuje temperaturę graniczną urządzenia."
+        self.service.memory.observe_web(WebObservation(
+            url="https://example.org/fenix", host="example.org", text=text,
+            content_sha256=hashlib.sha256(text.encode()).hexdigest(),
+            retrieved_utc=datetime.now(timezone.utc).isoformat(),
+            bytes_read=len(text.encode())))
+        self.window.navigate(1)
+        self.window.chat_input.setPlainText("Co opisuje raport Fenix?")
+        self.window.send_message()
+        self.window.chat_input.setPlainText("A co z temperaturę graniczną?")
+        self.window.send_message()
+        self.assertIn("kontekstu sesji", self.window.chat_status.text())
+        self.assertIn("source_evidence", self.window.chat_history.toPlainText())
+        before = self.service.memory.status()["knowledge"]["documents"]
+        self.window.clear_context()
+        self.assertIn("Wyczyszczono", self.window.chat_status.text())
+        self.assertEqual(self.service.memory.status()["knowledge"]["documents"], before)
+        self.assertEqual(self.service.memory.status()["records_with_raw_text"], 0)
+
     def test_consent_updates_real_service_and_stops_on_close(self):
         self.window.navigate(6)
         self.window.allow_https.setChecked(True)
