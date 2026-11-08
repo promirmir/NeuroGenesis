@@ -7,6 +7,7 @@ No external services, libraries, credentials or model weights are needed.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from contextlib import contextmanager
 import hashlib
 from pathlib import Path
 import re
@@ -71,11 +72,24 @@ class LocalKnowledge:
                 );
             """)
 
-    def _open(self) -> sqlite3.Connection:
+    @contextmanager
+    def _open(self):
+        """Commit/rollback AND always release the SQLite handle on Windows.
+
+        sqlite3.Connection.__exit__ does not close its file handle, so
+        ordinary with sqlite3.connect(...) left temporary database locks.
+        """
         con = sqlite3.connect(str(self.db_path), timeout=20)
-        con.execute("PRAGMA foreign_keys=ON")
-        con.execute("PRAGMA busy_timeout=20000")
-        return con
+        try:
+            con.execute("PRAGMA foreign_keys=ON")
+            con.execute("PRAGMA busy_timeout=20000")
+            yield con
+            con.commit()
+        except BaseException:
+            con.rollback()
+            raise
+        finally:
+            con.close()
 
     def import_txt(self, source: str | Path, *, approved: bool = False) -> dict[str, Any]:
         if approved is not True:
