@@ -23,16 +23,24 @@ MAX_DOCUMENT_BYTES = 6000 * 4
 MAX_TRAINING_BYTES = 1_000_000
 
 
-def markov_holdout_cross_entropy(training: list[bytes], holdout: bytes) -> float:
-    """Laplace-smoothed non-neural first-order byte baseline; no doc leakage."""
+def markov_holdout_cross_entropy(training: list[bytes], holdout: bytes,
+                                  *, sequence: int | None = None) -> float:
+    """Laplace-smoothed byte baseline, matching heldout window boundaries."""
     context: Counter[int] = Counter()
     pairs: Counter[tuple[int, int]] = Counter()
     for document in training:
         for a, b in zip(document[:-1], document[1:]):
             context[a] += 1
             pairs[(a, b)] += 1
+    if sequence is None:
+        windows = [holdout]
+    else:
+        if type(sequence) is not int or sequence < 2:
+            raise ValueError("invalid baseline evaluation sequence")
+        windows = [holdout[start:start + sequence]
+                   for start in range(0, len(holdout) - 1, sequence)]
     scored = [(-math.log((pairs[(a, b)] + 1) / (context[a] + 256)))
-              for a, b in zip(holdout[:-1], holdout[1:])]
+              for window in windows for a, b in zip(window[:-1], window[1:])]
     if not scored:
         raise ValueError("held-out document too short")
     return sum(scored) / len(scored)
@@ -92,7 +100,7 @@ def train_approved_knowledge(db_path: str | Path, output: str | Path, *,
     model = FoundationBrain(cfg).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=0.002)
     before = evaluate_holdout(model, holdout, sequence=sequence, device=device)
-    baseline_ce = markov_holdout_cross_entropy(training, holdout)
+    baseline_ce = markov_holdout_cross_entropy(training, holdout, sequence=sequence)
     generator = torch.Generator(device="cpu").manual_seed(seed)
     # No held-out document is ever used for gradient updates.
     train_tensors = [torch.tensor(list(x), dtype=torch.long) for x in training]
