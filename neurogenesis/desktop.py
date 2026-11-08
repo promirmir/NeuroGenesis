@@ -224,6 +224,9 @@ def launch(db_path: Path) -> int:
               wraplength=780).pack(anchor="w", padx=24, pady=(0, 8))
     web_enabled = tk.BooleanVar(value=False)
     web_auto = tk.BooleanVar(value=False)
+    # Dedicated specialist study tab, off until explicit HTTPS consent.
+    from .study_panel import install_study_panel
+    install_study_panel(tabs, memory, web_enabled)
     ttk.Checkbutton(web_tab, text="Włącz odczyt HTTPS (domyślnie WYŁĄCZONY)",
                     variable=web_enabled).pack(anchor="w", padx=24, pady=3)
     ttk.Checkbutton(web_tab, text="Sprawdzaj zatwierdzony adres co 5 minut (opcjonalnie)",

@@ -1,3 +1,16 @@
+## 2026-11-08 — Multi-domain specialist research, PR #24 (candidate, not merged)
+
+- Expanded beyond static Wikipedia seeds: safe HTML anchor extraction, topic-filtered BFS across public HTTPS domains, robots.txt policy, crawl-delay, 500-attempt upper budget, 50 domains, 20 attempts/host, depth 3, 600 URL queue, >=5 seconds between page fetches. GUI default 120 attempts and displays domain/discovery/error counts. Existing Internet opt-in controls all network access.
+- Manual page reader retains 128 KiB limit; explicit crawler mode has a separately bounded 512 KiB limit. HTML text is capped at 6000 chars and URLs are revalidated through pinned TLS/public IP checks. No unrestricted entire-internet indexing, search API, forum guarantees, semantic understanding or PyTorch gradient training.
+- New offline tests validate robots transport, denied paths, failed robots reads, cross-domain discovery, URL filtering, content size, stop and consent. Latest code and Windows tests must be verified on final branch head before any merge/release.
+- Latest documented candidate source commit: `8c845dd60d68691bbc92393bb4e0863e2db3f6ea`. See [docs/SPECIALIST_STUDY.md](SPECIALIST_STUDY.md). PR #23 remains separate and open.
+
+## 2026-11-08 — Specialist study candidate PR #24 (NOT MERGED)
+
+- The original bounded Wikipedia-only candidate has since been expanded in the above PR #24 milestone to multi-domain link discovery. Retained historical note: GUI-thread SQLite persistence and network-off-by-default.
+- No full-Internet indexing, general search API, trained language model, or demonstrated expertise. Follow latest PR #24 details above and `docs/SPECIALIST_STUDY.md`.
+- Relevant candidate commit: `44e579c71335f6ae02d568aaba99244bb81280dd`. PR #23 is independent and remains unmerged until gates pass.
+
 # NeuroGenesis — durable project state and recovery
 
 Last documentation review: **2026-11-07**. This file is intended to survive chat interruptions and model/context changes.

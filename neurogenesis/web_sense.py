@@ -16,13 +16,15 @@ import ipaddress
 import re
 import socket
 import ssl
-from urllib.parse import urlsplit
+from urllib.parse import urljoin, urlsplit
 
 
 MAX_URL = 2048
 MAX_BODY = 128 * 1024
+MAX_CRAWL_BODY = 512 * 1024
 MAX_TEXT = 6000
 CONNECT_TIMEOUT = 6.0
+MAX_LINKS = 256
 
 
 class WebSenseError(ValueError):
@@ -38,6 +40,7 @@ class WebObservation:
     retrieved_utc: str
     bytes_read: int
     response_status: int = 200
+    links: tuple[str, ...] = ()
 
 
 def validate_public_url(url: str) -> tuple[str, str, str]:
@@ -124,13 +127,27 @@ class _PlainTextParser(HTMLParser):
     BLOCK = frozenset(("p", "br", "article", "section", "h1", "h2", "h3",
                        "h4", "li", "blockquote", "div"))
 
-    def __init__(self) -> None:
+    def __init__(self, base_url: str | None = None) -> None:
         super().__init__(convert_charrefs=True)
+        self.base_url = base_url
+        self.links: list[str] = []
+        self._seen_links: set[str] = set()
         self._skip_stack: list[str] = []
         self.words: list[str] = []
         self.total = 0
 
     def handle_starttag(self, tag: str, attrs) -> None:
+        if (tag == "a" and self.base_url and not self._skip_stack
+                and len(self.links) < MAX_LINKS):
+            href = dict(attrs).get("href")
+            if isinstance(href, str) and href and len(href) <= MAX_URL:
+                try:
+                    candidate, _, _ = validate_public_url(urljoin(self.base_url, href))
+                    if candidate not in self._seen_links:
+                        self._seen_links.add(candidate)
+                        self.links.append(candidate)
+                except (WebSenseError, ValueError):
+                    pass
         if self._skip_stack:
             if tag in self.SKIP:
                 self._skip_stack.append(tag)
@@ -158,20 +175,22 @@ class _PlainTextParser(HTMLParser):
                       "".join(self.words))).strip()[:MAX_TEXT]
 
 
-def read_public_page(url: str, *, resolver=None, connection_factory=None
-                     ) -> WebObservation:
+def read_public_page(url: str, *, resolver=None, connection_factory=None,
+                     max_body: int = MAX_BODY) -> WebObservation:
     """Fetch one explicitly approved public HTML/text URL.
 
     Disallow all redirects; operator must approve their new destination.
     DNS is validated once, and that verified IP is *actually connected*.
     """
+    if type(max_body) is not int or not MAX_BODY <= max_body <= MAX_CRAWL_BODY:
+        raise WebSenseError("Nieprawidłowy limit rozmiaru strony")
     clean_url, host, path = validate_public_url(url)
     ip = resolve_public_address(host, resolver=resolver)
     factory = connection_factory or _PinnedHTTPS
     conn = factory(host, ip, timeout=CONNECT_TIMEOUT)
     try:
         conn.request("GET", path, headers={
-            "User-Agent": "NeuroGenesis-Research/0.6 (local read-only)",
+            "User-Agent": "NeuroGenesisResearchBot/0.7 (local read-only)",
             "Accept": "text/html,text/plain;q=0.9",
             "Accept-Encoding": "identity",
             "Connection": "close",
@@ -194,11 +213,11 @@ def read_public_page(url: str, *, resolver=None, connection_factory=None
                 declared = int(length)
             except ValueError as exc:
                 raise WebSenseError("Nieprawidłowy nagłówek rozmiaru") from exc
-            if not 0 <= declared <= MAX_BODY:
-                raise WebSenseError("Strona przekracza limit 128 KiB")
-        data = response.read(MAX_BODY + 1)
-        if len(data) > MAX_BODY:
-            raise WebSenseError("Strona przekracza limit 128 KiB")
+            if not 0 <= declared <= max_body:
+                raise WebSenseError("Strona przekracza dozwolony rozmiar")
+        data = response.read(max_body + 1)
+        if len(data) > max_body:
+            raise WebSenseError("Strona przekracza dozwolony rozmiar")
     except (OSError, ssl.SSLError, http.client.HTTPException) as exc:
         raise WebSenseError("Błąd połączenia HTTPS") from exc
     finally:
@@ -210,11 +229,13 @@ def read_public_page(url: str, *, resolver=None, connection_factory=None
         raise WebSenseError("Nieobsługiwane kodowanie strony")
     text = data.decode(charset, errors="replace")
     if media_type == "text/html":
-        parser = _PlainTextParser()
+        parser = _PlainTextParser(base_url=clean_url)
         parser.feed(text)
         result = parser.result()
+        links = tuple(parser.links)
     else:
         result = text.strip()[:MAX_TEXT]
+        links = ()
     if not result or len(result) < 20:
         raise WebSenseError("Nie znaleziono wystarczającej treści tekstowej")
     return WebObservation(
@@ -224,4 +245,5 @@ def read_public_page(url: str, *, resolver=None, connection_factory=None
         content_sha256=hashlib.sha256(data).hexdigest(),
         retrieved_utc=datetime.now(timezone.utc).isoformat(),
         bytes_read=len(data),
+        links=links,
     )
