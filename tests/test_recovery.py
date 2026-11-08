@@ -1,7 +1,7 @@
 """Transactional private SQLite memory recovery, real data and WAL regression."""
 from __future__ import annotations
 
-from contextlib import redirect_stdout
+from contextlib import closing, redirect_stdout
 from datetime import datetime, timezone
 import hashlib
 from io import StringIO
@@ -97,7 +97,7 @@ class MemoryBackupTests(unittest.TestCase):
     def test_new_snapshot_contains_committed_wal_writes(self):
         # Keep a WAL reader open so SQLite must copy the logical snapshot,
         # not just bytes from the main .sqlite3 file.
-        with sqlite3.connect(self.db) as writer:
+        with closing(sqlite3.connect(self.db)) as writer:
             writer.execute("PRAGMA journal_mode=WAL")
             writer.execute("PRAGMA wal_autocheckpoint=0")
             self.memory.remember("Nowy zapis po przejściu do WAL", source="local")
