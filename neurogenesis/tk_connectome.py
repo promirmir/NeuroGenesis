@@ -11,8 +11,9 @@ from .neural_telemetry import NeuralTelemetry
 
 
 class TkConnectome:
-    def __init__(self, canvas):
+    def __init__(self, canvas, *, compact: bool = False):
         self.canvas = canvas
+        self.compact = bool(compact)
         self._step: int | None = None
         self._zoom = 1.0
         self._latest: NeuralTelemetry | None = None
@@ -33,8 +34,8 @@ class TkConnectome:
         self._latest = data
         c = self.canvas
         c.delete("all")
-        width = max(320, c.winfo_width())
-        height = max(260, c.winfo_height())
+        width = max(180 if self.compact else 320, c.winfo_width())
+        height = max(150 if self.compact else 260, c.winfo_height())
         mid_x, mid_y = width * .5, height * .52
         radius = min(width * .43, height * .42) * self._zoom
         for fraction in (.25, .50, .75, 1.0):

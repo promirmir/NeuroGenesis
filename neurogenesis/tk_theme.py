@@ -46,3 +46,14 @@ def apply_dark_tk_theme(root) -> None:
               foreground=[("readonly", "#ecfaff")])
     style.configure("Vertical.TScrollbar", background="#164056",
                     troughcolor="#07111d", arrowcolor="#82cfce")
+
+    style.configure("Treeview", background="#091d2d", foreground="#d8f7f1",
+                    fieldbackground="#091d2d", borderwidth=0,
+                    font=("Segoe UI", 9), rowheight=25)
+    style.map("Treeview",
+              background=[("selected", "#14556b")],
+              foreground=[("selected", "#efffff")])
+    style.configure("Treeview.Heading", background="#123449",
+                    foreground="#79e9da", font=("Segoe UI", 9, "bold"),
+                    relief="flat")
+    style.map("Treeview.Heading", background=[("active", "#1a5267")])

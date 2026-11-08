@@ -1,3 +1,15 @@
+## NeuroGenesis 0.12.0 — autonomiczny ekran startowy i aktywny agent celów
+
+**Rozwijane w PR (weryfikacja CI przed wydaniem):** zamiast domyślnie otwierać statystyczny Mission Control, nowy Windows EXE od razu pokazuje **NEUROGENESIS**: lokalną rozmowę Qwen3-1.7B, autonomiczne cele z trwałą kolejką, podgląd rzeczywistej sieci LIF i bieżące stany systemu. Model sam ładuje wbudowane wagi; pytanie napisane podczas uruchamiania zostaje w kolejce i jest automatycznie obsługiwane.
+
+**Nowe niezależne zadania:** wpisz cel raz; system tworzy plan, analizuje dostępne zatwierdzone TXT i samodzielnie ponawia analizę po zmianie wiedzy. Raporty z faktycznymi SHA-256 źródeł wymagają zatwierdzenia — nie są automatycznie uznawane za zweryfikowane. Rejestracja numerycznych cech rozmowy do badawczego mózgu LIF jest widoczna i może być wyłączona; 40 świeżych bodźców umożliwia osobne badawcze próby autoregulacji. Panel nie udaje impulsów, kiedy nie ma nowych zdarzeń.
+
+Zakładki laboratoryjne, stary system rozmowy i specjalizacja nie zostały usunięte — są teraz pod **Zaawansowane**. [Zobacz dokładnie jak działa autonomia i co jest, a czego nie ma](docs/AUTONOMOUS_HOME.md).
+
+**Wersja 0.12 nie jest jeszcze ukończonym AGI ani autonomicznym trenerem 1,7 mld parametrów.** Główny model nadal jest wstępnie wytrenowanym Qwen; autonomiczne zadania wykonują kontrolowane planowanie i analizę zatwierdzonych źródeł lokalnych. Publikację nowej wersji uzależniamy od testów, rzeczywistej kompilacji Windows i wygenerowania odpowiedzi wewnątrz finalnego EXE.
+
+---
+
 # NeuroGenesis 0.11.0 — COMPLETE OFFLINE AI / Windows
 
 **Miron przy pomocy AI.**
@@ -60,7 +72,7 @@ nie należy mylić starszego EXE 0.8.0 z nowymi funkcjami.
 
 # NeuroGenesis — Mission Control
 
-**research prototype v0.11.0.**  
+**research prototype v0.12.0.**  
 **Publiczne autorstwo: Miron przy pomocy AI.**
 
 NeuroGenesis to lokalny projekt badawczy AI: rzeczywista mała sieć neuronowa LIF ze strukturalną plastycznością, prywatna trwała baza SQLite, kontrolowane zdobywanie informacji ze źródeł HTTPS, ekstrakcyjne cytowanie oraz odrębny eksperymentalny model Foundation Brain trenowany w PyTorch. **System nie jest AGI, świadomością, modelem ludzkiego mózgu ani niezależnie zweryfikowanym systemem rozumienia języka naturalnego.**

@@ -1,3 +1,21 @@
+2026-11-08 / NeuroGenesis 0.12.0, branch feat/autonomous-home-and-goals-20261108.
+
+User insists mission to build genuine, powerful brain-inspired AI, not many manually operated widgets. New release must have actual intuitive autonomous MAIN screen and retain FULL onefile Qwen3-1.7B+llama.cpp offline model from 0.11.0 (GitHub Release v0.11.0-main.4fffde76 publicly exists with 1.136 GB EXE and verified CI). Do not substitute stock screenshots or fake metrics; credit ONLY "Miron przy pomocy AI"; preserve existing SQLite, no surname, no Work handoff.
+
+IMPLEMENTED ON BRANCH:
+- neurogenesis/agent_goals.py: persistent offline goals, real source-dependent fingerprint, bounded autonomous reanalysis when TXT corpus changes, model-generated plan if no sources, separately reviewed candidate results with source name/SHA, human accept/pause/resume, auto-recovery after interruption and limits on active goals/attempts.
+- neurogenesis/local_knowledge.py: add corpus_fingerprint() on actual content SHA revisions.
+- neurogenesis/tk_autonomous_home.py: new default first Tk tab NEUROGENESIS. Auto-loads actual bundled LLM; retains user message queued during startup; one LLM shared between chat and goals; human messages prioritized; left conversation, right independently scrollable goals and authentic LIF miniature connectome via snapshot_neural_telemetry, real metrics. Optional local numeric LIF input from chat text without storing raw text; autonomous supervisor attempts only after 40 genuine new experiences and can reject changes; background threads and visible state. No fake activity on idle.
+- desktop.py: default new home tab, reduced top-level tabs by grouping old classic chat, brain research, Foundation Lab and specialist study under Advanced, preserved Mission Control and manual browser permissions. Old competing 30s LIF timer removed; new single home scheduler. Frozen Windows --ui-self-test instantiates new real home.
+- scripts/tk_training_screenshot.py: capture same actual new autonomous home and controls (no duplicate/copy appearance).
+- tests/test_agent_goals.py: goal/no-source plan, real new source reanalysis, revisions, bound, crash recovery and permissions.
+- tk_theme.py supports dark Treeview. version 0.12.0. docs/AUTONOMOUS_HOME.md and README.
+PENDING: open PR, run CI Python/Qt/CPU/Windows FULL 1GB real EXE/real inference/screenshot. Fix failures. Only then squash merge, confirm latest 0.12 GitHub Release with full executable. Do not claim completed if CI not passed.
+LIMITS: RAG/goal scheduling != gradient training of transformer weights or AGI; approved TXT-only autonomous source updates; internet separate opt-in; CPU native llama.cpp until verified GPU. No arbitrary code self-mutation or unsafe open-ended web crawling. The outcome is tangible self-directed local task loop, not human brain.
+
+
+---
+
 2026-11-08 - v0.11 FULL one-file offline corrective work, branch feat/complete-offline-llm-windows-20261108.
 
 NEVER substitute stock/Agent Forge imagery for our real Tk app. User specifically needs an EXE that contains ALL dependencies required for local dialogue. Previously 0.10 had only 13MB GUI and a separate Python+PyTorch/model requirement, which was unacceptable.
