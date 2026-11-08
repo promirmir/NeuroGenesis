@@ -84,7 +84,27 @@ def capture(training_output: Path, model_chat_output: Path) -> bool:
             btn = find_action(chat, label)
             if (btn is None or not btn.winfo_ismapped() or
                     btn.winfo_rooty() + btn.winfo_height() > root.winfo_rooty() + root.winfo_height() - 3):
-                raise RuntimeError("Model Chat button is outside the visible desktop: " + label)
+                raise RuntimeError("Autonomous home action outside viewport: " + label)
+        # Do not ship a dashboard where live LIF is hidden beneath a giant
+        # scrollable goal panel. This is the same real canvas bound to SQLite.
+        def find_neural_canvas(widget):
+            if widget.winfo_class() == "Canvas":
+                try:
+                    if widget.cget("background") == "#041624":
+                        return widget
+                except tk.TclError:
+                    pass
+            for child in widget.winfo_children():
+                found = find_neural_canvas(child)
+                if found is not None:
+                    return found
+            return None
+        neural = find_neural_canvas(chat)
+        if (neural is None or not neural.winfo_ismapped() or
+                neural.winfo_height() < 90 or
+                neural.winfo_rooty() + neural.winfo_height() >
+                root.winfo_rooty() + root.winfo_height() - 3):
+            raise RuntimeError("Actual LIF neural connectome is not visible on startup")
         return True
     finally:
         root.destroy()
