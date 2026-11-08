@@ -360,6 +360,21 @@ class CommandCenter(QMainWindow):
         for kind, description in events:
             if kind == "discovered":
                 continue
+            if kind in ("memory_backup_done", "memory_verify_done"):
+                report = json.loads(description)
+                what = ("Utworzono zweryfikowaną kopię" if kind == "memory_backup_done"
+                        else "Integralność kopii zweryfikowana")
+                self.backup_status.setText(
+                    what + f" · {report['size_bytes']} bajtów"
+                    + f" · {report['observations']} doświadczeń"
+                    + f" · {report['source_versions']} wersji źródeł"
+                    + "\nSHA-256: " + report["sha256"])
+                continue
+            if kind in ("memory_backup_failed", "memory_verify_failed"):
+                self.backup_status.setText(
+                    "Nie ukończono operacji. Zachowano dotychczasowe dane. "
+                    "Powód: " + description)
+                continue
             if kind == "train_progress":
                 metrics = json.loads(description)
                 self.training_log.appendPlainText(
@@ -653,11 +668,71 @@ class CommandCenter(QMainWindow):
         inner.addWidget(label("Strony są niezaufanymi danymi. Odczyt respektuje robots.txt i "
                                "nie wykonuje kodu z internetu. Witryny widzą publiczny adres IP.", kind="subtle"))
         layout.addWidget(card)
+        backup, b = block(
+            "Bezpieczeństwo pamięci — kopie i integralność",
+            "Ręczna kopia zapisuje pełny, spójny stan SQLite, także aktualne wersje źródeł. "
+            "Nie wysyła danych do sieci. Plik NIE jest szyfrowany — chroń go jak prywatny dokument.")
+        tools = QHBoxLayout()
+        self.backup_button = QPushButton("Zapisz kopię pamięci…")
+        self.backup_button.setObjectName("primary")
+        self.backup_button.clicked.connect(self.save_memory_backup)
+        tools.addWidget(self.backup_button)
+        self.verify_button = QPushButton("Sprawdź kopię…")
+        self.verify_button.clicked.connect(self.verify_memory_backup)
+        tools.addWidget(self.verify_button)
+        tools.addStretch()
+        b.addLayout(tools)
+        self.backup_status = label("Brak uruchomionego zadania kopii.", kind="subtle")
+        self.backup_status.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse)
+        b.addWidget(self.backup_status)
+        b.addWidget(label(
+            "Przywracanie odbywa się wyłącznie do NOWEGO pliku, z osobnej komendy "
+            "neurogenesis.recovery. Aplikacja nigdy nie nadpisuje automatycznie "
+            "bieżącej pamięci.", kind="subtle"))
+        layout.addWidget(backup)
         diag, d = block("Diagnostyka")
         self.diag_status = label("Odczytywanie...", kind="subtle")
         d.addWidget(self.diag_status)
         layout.addWidget(diag)
         layout.addStretch()
+
+    def save_memory_backup(self) -> None:
+        if (QMessageBox.question(
+                self, "Prywatna kopia pamięci",
+                "Kopia obejmuje zapisane informacje, źródła i ewentualne "
+                "teksty prywatne. Plik nie jest szyfrowany. "
+                "Czy utworzyć kopię tylko na tym komputerze?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                != QMessageBox.StandardButton.Yes):
+            return
+        default = str(self.service.memory.path.parent / "NeuroGenesis-backup.sqlite3")
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Nowa kopia — nie nadpisuj istniejącej", default,
+            "Baza NeuroGenesis (*.sqlite3)")
+        if not path:
+            return
+        try:
+            self.service.start_memory_backup(path)
+        except (ValueError, RuntimeError, OSError) as exc:
+            QMessageBox.warning(self, "Kopia pamięci", str(exc))
+            return
+        self.backup_status.setText("Trwa bezpieczna kopia SQLite…")
+        self.refresh()
+
+    def verify_memory_backup(self) -> None:
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Wskaż kopię do weryfikacji",
+            str(self.service.memory.path.parent), "Baza NeuroGenesis (*.sqlite3)")
+        if not path:
+            return
+        try:
+            self.service.start_memory_verification(path)
+        except (ValueError, RuntimeError, OSError) as exc:
+            QMessageBox.warning(self, "Weryfikacja pamięci", str(exc))
+            return
+        self.backup_status.setText("Sprawdzanie integralności kopii…")
+        self.refresh()
 
     def change_consent(self, enabled: bool) -> None:
         self.service.set_network_consent(enabled)
@@ -698,6 +773,8 @@ class CommandCenter(QMainWindow):
         self.training_stop.setEnabled(s.training_running)
         self.inference_start.setEnabled(not s.training_running and not s.inference_running)
         self.inference_stop.setEnabled(s.inference_running)
+        self.backup_button.setEnabled(not s.memory_maintenance_running)
+        self.verify_button.setEnabled(not s.memory_maintenance_running)
         self.diag_status.setText(
             f"SQLite: {s.database}\nSieć: {'zezwolono' if s.network_enabled else 'zablokowana'}\n"
             f"Aktywna sesja badawcza: {'tak' if s.research_running else 'nie'}")

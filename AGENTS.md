@@ -1,3 +1,10 @@
+## Active v0.7.0 research stabilization / memory safety candidate — 2026-11-08
+
+- Baseline main `bf77bb08819dfe626587e170b35e159df14bf931` had no open PR and passed Windows Tk, Python 3.11–3.13 and publisher checks. Branch `feat/safe-memory-recovery-and-desktop-stabilization-20261108` adds offline transactional private SQLite snapshot/verification and new-file-only recovery. `pyproject.toml` and `neurogenesis.__version__` increment to 0.7.0, but **not merged/released until all CI green**.
+- Both Tk Windows and Qt Settings have explicit manual background backup and SHA verification; original brain, source rights and teachings are not reset. `desktop --self-test` in real Windows frozen EXE verifies synthetic source -> snapshot -> restore; unit regression covers WAL, corruption, duplicate output, SHA, SQLite integrity. See `docs/MEMORY_RECOVERY.md`.
+- This is an **honest research release milestone, not a world-leading general AI**. Project has lexical evidence with known unsupported false-citations, PyTorch byte prediction with weak simple baseline, no independent natural semantic QA; Qt redistribution still requires LGPLv3/source/notice audit and is NOT bundled. Do not close unfinished v1/AGI research issues or claim physical GPU evidence. Preserve private user data and public credit **Miron przy pomocy AI**.
+- Before merge: verify Python 3.11–3.13, privacy, real optional Qt on Windows/Ubuntu, frozen Tk/Qt EXE; other Torch model gates unchanged. After merge verify new `v0.7.0-main.<SHA>` Windows Tk Release and checksum, then record final source hash. Historical candidate paragraphs below are superseded by this latest heading.
+
 ## Verified continuation checkpoint — QA gates and BM25, November 8, 2026
 
 - Main source SHA `a29ba37689c0bfe21cba028d1c819428fe40da09`; PR #41 and #42 merged and full feature-PR Python 3.11–3.13, offline real SQLite QA, privacy, Windows frozen EXE tests green. Historical "candidate" paragraphs below are not latest status.
