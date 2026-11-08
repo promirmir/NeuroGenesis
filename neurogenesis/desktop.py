@@ -443,6 +443,9 @@ def launch(db_path: Path) -> int:
         navigate=lambda where: tabs.select(targets[where]),
         network_enabled=lambda: web_enabled.get(),
     )
+    # Dedicated specialist study tab, off until explicit HTTPS consent.
+    from .study_panel import install_study_panel
+    study_tab = install_study_panel(tabs, memory, web_enabled)
     # Unified controls share the existing workers and Tk variables.
     # They do not spawn duplicate inference engines or watchers.
     from .tk_autonomy_hub import install_autonomy_hub
@@ -466,9 +469,6 @@ def launch(db_path: Path) -> int:
         study_stop=study_tab.ng_study_stop,
     )
     targets["operations"] = operations_tab
-    # Dedicated specialist study tab, off until explicit HTTPS consent.
-    from .study_panel import install_study_panel
-    study_tab = install_study_panel(tabs, memory, web_enabled)
     ttk.Checkbutton(web_tab, text="Włącz odczyt HTTPS (domyślnie WYŁĄCZONY)",
                     variable=web_enabled).pack(anchor="w", padx=24, pady=3)
     ttk.Checkbutton(web_tab, text="Sprawdzaj zatwierdzony adres co 5 minut (opcjonalnie)",
