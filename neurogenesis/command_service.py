@@ -6,6 +6,7 @@ Research is opt-in and network-disabled on each new process startup.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -128,9 +129,9 @@ class CommandService:
         """Operator-only, bounded Torch worker, never auto-started by GUI."""
         if confirmed is not True:
             raise PermissionError("Potwierdź prawa do zatwierdzonych dokumentów")
-        from .knowledge_train import train_approved_knowledge
-        from .foundation import torch
-        if torch is None:
+        # Checking installation must not import the heavyweight framework on
+        # Qt's UI thread; actual PyTorch initialization happens in the worker.
+        if importlib.util.find_spec("torch") is None:
             raise RuntimeError("Zainstaluj opcjonalny PyTorch: pip install -e '.[foundation]'")
         if len(self.memory.approved_training_documents()) < 3:
             raise ValueError("Zatwierdź prawa do co najmniej 3 aktualnych dokumentów")
@@ -154,6 +155,7 @@ class CommandService:
 
             def run() -> None:
                 try:
+                    from .knowledge_train import train_approved_knowledge
                     report = train_approved_knowledge(
                         self.memory.path, output, confirm_rights=True,
                         steps=steps, sequence=sequence, hidden=hidden,
