@@ -159,7 +159,10 @@ def respond_local(model_dir: str | Path, messages: list[dict[str, str]], *,
         return_tensors="pt", enable_thinking=False).to(device)
     with torch.inference_mode():
         generated = model.generate(
-            inputs, max_new_tokens=max_new_tokens, do_sample=False,
+            inputs, max_new_tokens=max_new_tokens,
+            # Follow official Qwen3 non-thinking mode recommendations; the
+            # vendor warns greedy generation can repetitively degenerate.
+            do_sample=True, temperature=0.7, top_p=0.8, top_k=20,
             pad_token_id=tokenizer.eos_token_id)
     text = tokenizer.decode(generated[0][inputs.shape[1]:],
                             skip_special_tokens=True).strip()
