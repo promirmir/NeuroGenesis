@@ -6,6 +6,7 @@ Research is opt-in and network-disabled on each new process startup.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 import os
 from pathlib import Path
 import queue
@@ -34,6 +35,10 @@ class CommandSnapshot:
     research_errors: int
     research_discovered: int
     research_domains: int
+    training_running: bool
+    training_step: int
+    training_total: int
+    training_last_loss: float | None
 
 
 class CommandService:
@@ -49,6 +54,11 @@ class CommandService:
         self._thread: threading.Thread | None = None
         self._events: queue.SimpleQueue[tuple[str, str]] = queue.SimpleQueue()
         self._study_factory = study_factory
+        self._training_thread: threading.Thread | None = None
+        self._training_cancel: threading.Event | None = None
+        self._training_step = 0
+        self._training_total = 0
+        self._training_last_loss: float | None = None
 
     @property
     def network_enabled(self) -> bool:
@@ -72,6 +82,10 @@ class CommandService:
             study = self._study
             thread = self._thread
             network = self._consent
+            training_thread = self._training_thread
+            training_step = self._training_step
+            training_total = self._training_total
+            training_last_loss = self._training_last_loss
         progress = study.progress() if study is not None else None
         return CommandSnapshot(
             cpu_threads=os.cpu_count(), database=str(self.memory.path),
@@ -85,7 +99,10 @@ class CommandService:
             research_accepted=progress.accepted if progress else 0,
             research_errors=progress.errors if progress else 0,
             research_discovered=progress.discovered if progress else 0,
-            research_domains=progress.domains if progress else 0)
+            research_domains=progress.domains if progress else 0,
+            training_running=training_thread is not None and training_thread.is_alive(),
+            training_step=training_step, training_total=training_total,
+            training_last_loss=training_last_loss)
 
     def ask(self, question: str) -> dict[str, Any]:
         return process_message(self.memory, question)
@@ -102,12 +119,70 @@ class CommandService:
     def neural_traces(self) -> tuple[float, ...]:
         return tuple(self.memory.brain().traces)
 
+    def set_source_training_rights(self, source_id: int, approved: bool) -> dict[str, Any]:
+        return self.memory.set_source_training_rights(source_id, approved)
+
+    def start_training(self, output: str | Path, *, confirmed: bool,
+                       steps: int, device: str, sequence: int = 32,
+                       hidden: int = 32) -> None:
+        """Operator-only, bounded Torch worker, never auto-started by GUI."""
+        if confirmed is not True:
+            raise PermissionError("Potwierdź prawa do zatwierdzonych dokumentów")
+        from .knowledge_train import train_approved_knowledge
+        from .foundation import torch
+        if torch is None:
+            raise RuntimeError("Zainstaluj opcjonalny PyTorch: pip install -e '.[foundation]'")
+        if len(self.memory.approved_training_documents()) < 3:
+            raise ValueError("Zatwierdź prawa do co najmniej 3 aktualnych dokumentów")
+        with self._state_lock:
+            if self._training_thread is not None and self._training_thread.is_alive():
+                raise RuntimeError("Trening jest już aktywny")
+            if self._thread is not None and self._thread.is_alive():
+                raise RuntimeError("Zatrzymaj badanie źródeł przed treningiem")
+            self._training_cancel = threading.Event()
+            cancel = self._training_cancel
+            self._training_step = 0
+            self._training_total = steps
+            self._training_last_loss = None
+
+            def progress(step: int, metrics: dict[str, float]) -> None:
+                with self._state_lock:
+                    self._training_step = step
+                    self._training_last_loss = metrics["loss"]
+                self._events.put(("train_progress", json.dumps({
+                    "step": step, "total": steps, "loss": metrics["loss"]})))
+
+            def run() -> None:
+                try:
+                    report = train_approved_knowledge(
+                        self.memory.path, output, confirm_rights=True,
+                        steps=steps, sequence=sequence, hidden=hidden,
+                        device=device, cancel_event=cancel, on_progress=progress)
+                    self._events.put(("train_done", json.dumps(report)))
+                except InterruptedError:
+                    self._events.put(("train_cancelled",
+                                      "Zatrzymano bez instalacji checkpointu"))
+                except Exception as exc:
+                    self._events.put(("train_fatal", type(exc).__name__ + ": " + str(exc)))
+
+            self._training_thread = threading.Thread(
+                target=run, name="NeuroGenesis-Foundation-training", daemon=True)
+            self._training_thread.start()
+
+    def stop_training(self) -> None:
+        with self._state_lock:
+            cancel = self._training_cancel
+        if cancel is not None:
+            cancel.set()
+
     def start_study(self, topic: str, pages: int) -> None:
         with self._state_lock:
             if not self._consent:
                 raise PermissionError("Włącz jawną zgodę HTTPS przed badaniem")
             if self._thread is not None and self._thread.is_alive():
                 raise RuntimeError("Inna sesja badawcza już trwa")
+            if self._training_thread is not None and self._training_thread.is_alive():
+                raise RuntimeError("Zatrzymaj trening przed pobieraniem źródeł")
             # Constructing the study is offline: plan_topic does not fetch.
             def persist(observation):
                 # Revocation before the write must also stop in-flight reads
