@@ -91,9 +91,9 @@ class RealCheckpointRetentionTests(unittest.TestCase):
         self.assertEqual(report["old_audit_sha256"], old_sha)
         self.assertEqual(report["incumbent_steps"], 3)
         self.assertEqual(report["candidate_steps"], 5)
-        self.assertEqual(report["old_audit_transitions"],
-                         report["new_audit_transitions"])
         self.assertGreater(report["old_audit_transitions"], 0)
+        self.assertGreater(report["new_audit_transitions"], 0)
+        self.assertNotEqual(report["old_audit_sha256"], report["new_audit_sha256"])
         for key in ("incumbent_old_ce_nats", "candidate_old_ce_nats",
                     "incumbent_new_ce_nats", "candidate_new_ce_nats"):
             self.assertTrue(math.isfinite(report[key]))
