@@ -97,3 +97,7 @@ NOT a reproduction of Mamba-2, V-JEPA 2, or a frontier-scale model.
 ## Explicit experimental model inference (subsequent PR candidate)
 
 A separately gated `neurogenesis.foundation_infer` module reads an operator-trusted, trained numerical checkpoint and produces deterministic next-byte predictions using the **actual** fast/slow GRU weights. The Qt Training lab can show these bytes, their UTF-8 decoding status and measured throughput. This is an isolated laboratory, not source-grounded dialogue, semantic understanding or candidate promotion. No automatic checkpoint loading; no private SQLite writes. See `docs/FOUNDATION_INFERENCE.md`. Keep independent held-out QA, calibrated abstention and competitor baselines as prerequisites for real model-based conversation.
+
+## Candidate-vs-incumbent retention proof (subsequent PR)
+
+The new optional `foundation_gate.py` provides **numerical** paired next-byte evaluation of a trained old model and a trained candidate on operator-held-out, separate old-domain/new-domain files. It detects old-task regression and new-task gain with configurable thresholds, but does not promote either checkpoint or validate question-answer semantics. Details and CLI: [RETENTION_GATE.md](RETENTION_GATE.md). Real Torch CPU and legacy Windows EXE CI gates required before merge.

@@ -1,3 +1,9 @@
+## 2026-11-08 — old-skill/new-task paired checkpoint audit candidate
+
+- `main` advanced to `ec5bc9fcfdbc2fa7c940e33fc8b090a48ed610b7` by merging PR #32 after real PyTorch CPU, Python 3.11–3.13, Qt Windows/Ubuntu, Windows Tk frozen EXE, Qt frozen EXE and privacy checks. It adds an operator-trusted, offline actual Foundation checkpoint inference **laboratory**, never automatically used as chat or a factual source. Prior candidate notes below are historical.
+- Branch `feat/foundation-candidate-retention-audit-20261108` adds `foundation_gate.py`: actual paired checkpoint CE on two different operator-supplied old/new audit text files, numeric regression and new-task improvement gates, explicit trusted/checkpoint and corpus permission, fixed comparable model architecture, zero automatic promotion. Separate real CPU tests and CI metric emission. See [RETENTION_GATE.md](RETENTION_GATE.md).
+- This remains a **candidate pending CI**. A numeric old/new task pass will not establish model-based contextual chat, prevent future forgetting in all domains, or prove datasets were unseen. CUDA hardware and Qt legal release remain open.
+
 ## 2026-11-08 — isolated trained-checkpoint inference (PR candidate)
 
 - Reverified baseline main `0afcb2b37ee908c4810b6c545e8833ebef9fd787`, no open PR, last main CI/Windows release successful. Current branch `feat/foundation-inference-lab-20261108` implements a separate, **actual PyTorch GRU checkpoint decoding path** (not automatically connected to default chat).

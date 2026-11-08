@@ -9,6 +9,8 @@ on:
       - 'tests/test_foundation.py'
       - 'neurogenesis/foundation_infer.py'
       - 'tests/test_foundation_infer.py'
+      - 'neurogenesis/foundation_gate.py'
+      - 'tests/test_foundation_gate.py'
       - 'neurogenesis/foundation_baselines.py'
       - 'tests/test_foundation_baselines.py'
       - 'neurogenesis/knowledge.py'
@@ -24,6 +26,8 @@ on:
       - 'tests/test_foundation.py'
       - 'neurogenesis/foundation_infer.py'
       - 'tests/test_foundation_infer.py'
+      - 'neurogenesis/foundation_gate.py'
+      - 'tests/test_foundation_gate.py'
       - 'neurogenesis/foundation_baselines.py'
       - 'tests/test_foundation_baselines.py'
       - 'neurogenesis/knowledge.py'
@@ -57,6 +61,7 @@ jobs:
         run: |
           python -m unittest discover -s tests -p test_foundation.py -v
           python -m unittest discover -s tests -p test_foundation_infer.py -v
+          python -m unittest discover -s tests -p test_foundation_gate.py -v
           python -m unittest discover -s tests -p test_foundation_baselines.py -v
           python -m unittest discover -s tests -p test_knowledge_training.py -v
       - name: Regression of original CPU brain and Windows-independent code

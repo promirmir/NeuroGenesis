@@ -1,3 +1,9 @@
+## Active continuation — checkpoint retention and evaluation (November 8, 2026)
+
+- PR #32 **merged** to main `ec5bc9fcfdbc2fa7c940e33fc8b090a48ed610b7`; actual trained-weight candidate next-byte inference exists in `foundation_infer.py`, but **is not deployed as sourced conversation**. Current feature branch: `feat/foundation-candidate-retention-audit-20261108`.
+- New candidate `foundation_gate.py` compares actual incumbent and candidate PyTorch checkpoints on separate old/new local audit documents, requiring measured old-skill retention AND new-task gain; zero automatic promotion, no claims of semantic chat, default Tk unaffected. See `docs/RETENTION_GATE.md`. Operator asserts audit data independence and rights; cannot assume truth or no leakage.
+- Required before merge: all Python 3.11–3.13/privacy checks, actual PyTorch CPU dedicated suite, Qt Windows/Ubuntu, frozen Tk and Qt Windows EXE checks. Keep private snapshots off public GitHub; no physical CUDA benchmark or Qt redistributable release yet.
+
 ## Active checkpoint inference pilot — PR candidate, November 8, 2026
 
 - Fresh main baseline `0afcb2b37ee908c4810b6c545e8833ebef9fd787`; all prior work #23–#31 merged. Continue from branch `feat/foundation-inference-lab-20261108` without replaying old implementations.
