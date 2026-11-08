@@ -179,12 +179,19 @@ class BundledModelSession:
         self._port: int | None = None
         self._key = secrets.token_urlsafe(36)
         self._lock = threading.Lock()
+        # Prevent a slow 1.1GB integrity scan from starting an orphaned model
+        # after the user pressed STOP or closed the Tk window.
+        self._start_epoch = 0
 
     def start(self, *, deadline_seconds: float = 125) -> None:
         with self._lock:
             if self._proc is not None and self._proc.poll() is None:
                 return
+            epoch = self._start_epoch
         server, model = validate_bundle(self.assets_root, check_sha=True)
+        with self._lock:
+            if epoch != self._start_epoch:
+                raise RuntimeError("Inicjalizacja modelu została anulowana.")
         port = _choose_port()
         args = [
             str(server), "-m", str(model), "--host", "127.0.0.1",
@@ -211,10 +218,19 @@ class BundledModelSession:
             if diagnostic is not None:
                 sink.close()
         with self._lock:
-            self._proc, self._port = proc, port
+            cancelled = epoch != self._start_epoch
+            if not cancelled:
+                self._proc, self._port = proc, port
+        if cancelled:
+            proc.kill()
+            proc.wait(timeout=8)
+            raise RuntimeError("Uruchamianie modelu zostało anulowane.")
         started = time.monotonic()
         try:
             while time.monotonic() - started < deadline_seconds:
+                with self._lock:
+                    if epoch != self._start_epoch:
+                        raise RuntimeError("Uruchamianie modelu zostało zatrzymane.")
                 if proc.poll() is not None:
                     reason = ("Lokalny silnik llama.cpp zakończył pracę przed załadowaniem wag "
                               + "(kod " + str(proc.returncode) + ").")
@@ -294,6 +310,7 @@ class BundledModelSession:
 
     def stop(self) -> None:
         with self._lock:
+            self._start_epoch += 1
             p = self._proc
             self._proc, self._port = None, None
         if p is not None and p.poll() is None:
