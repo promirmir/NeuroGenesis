@@ -178,6 +178,7 @@ def ui_self_test() -> int:
     import tkinter as tk
     from tkinter import ttk
     from .tk_mission import MissionDashboard
+    from .tk_foundation_lab import install_foundation_lab
 
     with tempfile.TemporaryDirectory(prefix="ng-public-tk-ui-check-") as folder:
         memory = ExperienceMemory(Path(folder) / "synthetic-private.sqlite3")
@@ -189,6 +190,9 @@ def ui_self_test() -> int:
             tabs.pack(fill="both", expand=True)
             dashboard = ttk.Frame(tabs)
             tabs.add(dashboard, text="CENTRUM")
+            foundation_tab = install_foundation_lab(tabs)
+            if tabs.tab(foundation_tab, "text") != "Foundation Lab":
+                return 37
             mission = MissionDashboard(
                 dashboard, memory, navigate=lambda _where: None,
                 network_enabled=lambda: False)
@@ -196,6 +200,8 @@ def ui_self_test() -> int:
             root.update_idletasks()
             if mission.refresh() or mission.metrics["steps"].get() != "0":
                 return 31
+            if mission.avatar.latest is None or mission.avatar.latest.step != 0:
+                return 38
             before = tuple(mission._samples)
             mission.refresh()
             if tuple(mission._samples) != before:
@@ -204,6 +210,7 @@ def ui_self_test() -> int:
             if not mission.refresh():
                 return 33
             if (mission._last is None or mission._last.step != result["brain_step"]
+                    or mission.avatar.latest.step != result["brain_step"]
                     or not mission.graph._latest
                     or mission.graph._latest.step != result["brain_step"]):
                 return 34
