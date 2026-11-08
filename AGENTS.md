@@ -1,3 +1,11 @@
+## Source-of-truth v0.7.0 continuation checkpoint — 2026-11-08
+
+- PR #44 **merged** to main as `ebd08ee4335cc1f76c0bf539a52b62a9ea947a86`. Feature PR head `c8bfa75d87ee51d9d505ad31a62160d8b1e2288b` had green Python 3.11–3.13/privacy, true PyTorch CPU, Qt offscreen Windows+Linux, Windows frozen Tk and separately frozen Qt technical EXE checks. The original SQLite schema and learned brain were **not reset**. Program metadata now 0.7.0.
+- Core private recovery is implemented: `neurogenesis.recovery` SQLite online backup, WAL consistency, validated Brain/schema/quick_check, verified SHA256, fail-closed no-replace backup, verified restore to NEW file only. Real Tk and optional Qt settings expose asynchronous manual Backup/Verify; full frozen Tk EXE self-test includes data copy/reopen. Existing rights audit and source version history preserved.
+- README has been rebuilt from out-of-date PR-candidate clutter. Only public attribution **Miron przy pomocy AI**. Never claim Qt executable legally released, physical CUDA benchmarking, general context understanding, human-brain equivalence or finished v1/AGI. Public Windows release needs exact live tag/asset checksum post-main CI; branch documentation updates may cause another SHA-bound build.
+- No further random experimental features: stabilize user experience, collect truly independent rights-cleared QA evidence before contemplating model-based conversational promotion. Existing 7 research issues are still genuine unresolved research goals. Prefer one high-quality release over endless unverified additions.
+- Runbook `docs/MEMORY_RECOVERY.md`, `docs/PROJECT_STATE.md`, `docs/DEVELOPMENT_LOG.md`. Historical candidate notes below are superseded by this heading.
+
 ## Active v0.7.0 research stabilization / memory safety candidate — 2026-11-08
 
 - Baseline main `bf77bb08819dfe626587e170b35e159df14bf931` had no open PR and passed Windows Tk, Python 3.11–3.13 and publisher checks. Branch `feat/safe-memory-recovery-and-desktop-stabilization-20261108` adds offline transactional private SQLite snapshot/verification and new-file-only recovery. `pyproject.toml` and `neurogenesis.__version__` increment to 0.7.0, but **not merged/released until all CI green**.
