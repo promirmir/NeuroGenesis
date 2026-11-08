@@ -162,11 +162,14 @@ class SpecialistStudy:
                     observation = self.fetch(url)
                     if self._stop.is_set():
                         break
-                    self.observe(observation)
-                    with self._lock:
-                        self.accepted += 1
+                    outcome = self.observe(observation)
+                    duplicate = (isinstance(outcome, dict)
+                                 and outcome.get("web_duplicate") is True)
+                    if not duplicate:
+                        with self._lock:
+                            self.accepted += 1
                     if on_event:
-                        on_event("saved", url)
+                        on_event("duplicate" if duplicate else "saved", url)
                     if depth < self.max_depth:
                         for candidate in getattr(observation, "links", ()):
                             if len(pending) >= MAX_QUEUE:
