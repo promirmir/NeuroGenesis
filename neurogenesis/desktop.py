@@ -12,6 +12,7 @@ from pathlib import Path
 import queue
 import tempfile
 import threading
+import time
 from typing import Any
 
 from .memory import ExperienceMemory
@@ -270,13 +271,22 @@ def launch(db_path: Path) -> int:
     teaching_controls = tk.Frame(teach_area, bg="#111827")
     teaching_controls.pack(fill="x")
 
-    status_text = tk.StringVar(value="Odczytywanie stanu...")
-    tk.Label(brain_tab, textvariable=status_text, bg="#111827", fg="#e2e8f0",
-             justify="left", anchor="nw", font=("Consolas", 12)).pack(fill="x", padx=24, pady=(24, 14))
-    canvas = tk.Canvas(brain_tab, bg="#172237", highlightthickness=0, height=205)
-    canvas.pack(fill="x", padx=24, pady=(0, 16))
-    ttk.Label(brain_tab, text="Wykres przedstawia aktualne ślady aktywności neuronów; nie jest miarą świadomości.",
-              wraplength=730).pack(anchor="w", padx=24)
+    tk.Label(brain_tab, text="NEURAL FABRIC  /  RZECZYWISTA TOPOLOGIA",
+             bg="#111827", fg="#7fe4ef",
+             font=("Segoe UI", 17, "bold")).pack(anchor="w", padx=24, pady=(12, 6))
+    status_text = tk.StringVar(value="Odczytywanie rzeczywistych danych...")
+    tk.Label(brain_tab, textvariable=status_text, bg="#111827", fg="#d6e7f4",
+             justify="left", anchor="nw", font=("Consolas", 10),
+             wraplength=950).pack(fill="x", padx=24, pady=(2, 10))
+    canvas = tk.Canvas(brain_tab, bg="#081222", highlightthickness=1,
+                       highlightbackground="#245571", height=420)
+    canvas.pack(fill="both", expand=True, padx=24, pady=(0, 8))
+    ttk.Label(brain_tab, text=(
+        "Podgląd OSTATNIEGO zapisanego kroku sieci LIF. Linie to rzeczywiste synapsy, "
+        "kolory i blaski wynikają z zapisanych impulsów oraz śladów neuronów. "
+        "Animowane znaczniki odzwierciedlają nowe zdarzenie, nie fizyczny czas transmisji. "
+        "Fundament PyTorch jest osobnym modułem, nie jest udawany na tym wykresie."),
+              wraplength=960).pack(anchor="w", padx=24, pady=(0, 8))
     autonomy_controls = tk.Frame(brain_tab, bg="#111827")
     autonomy_controls.pack(fill="x", padx=24, pady=(12, 4))
     autonomy_enabled = tk.BooleanVar(value=False)
@@ -427,17 +437,39 @@ def launch(db_path: Path) -> int:
                 f"Samorozwój: {'AUTO' if autonomy_enabled.get() else 'ręczny'}; "
                 f"nowe doświadczenia {health['new_events']}/{WINDOW}; "
                 f"próby {health['cycles']}; zatwierdzone {health['promotions']}")
-            traces = memory.brain().traces
-            canvas.delete("all")
-            canvas.update_idletasks()
-            width = max(200, canvas.winfo_width())
-            for i, t in enumerate(traces[:96]):
-                bw = width / max(1, len(traces[:96]))
-                height = min(180, max(1, 180 * float(t) / 5))
-                canvas.create_rectangle(i*bw+1, 195-height, (i+1)*bw-1, 195,
-                                        fill="#34d399", outline="")
+            # Graph refresh is handled separately on a 250 ms visible-tab
+            # poll, so counters do not clear the real-time network canvas.
         except (ValueError, OSError, KeyError) as exc:
             status_text.set(f"Błąd odczytu stanu: {exc}")
+
+    # Only poll saved state while the Brain tab is visible. All animation
+    # expires unless a genuine new computational step was observed.
+    from .neural_graph import snapshot_brain
+    from .tk_neural_view import render_tk_graph
+    live = {"step": None, "frame": None, "seen": 0.0, "size": (0, 0)}
+
+    def poll_neural_graph() -> None:
+        try:
+            if tabs.select() == str(brain_tab):
+                clock = time.monotonic()
+                snapshot = snapshot_brain(memory.brain())
+                dimensions = (canvas.winfo_width(), canvas.winfo_height())
+                changed = snapshot.step != live["step"]
+                if changed:
+                    live["seen"] = clock
+                    live["step"] = snapshot.step
+                    live["frame"] = snapshot
+                age = clock - live["seen"]
+                if changed or live["size"] != dimensions or age < 1.1:
+                    render_tk_graph(canvas, live["frame"], event_age=age)
+                    live["size"] = dimensions
+                # Distinguish UI polling from actual computational activity:
+                # no new spikes, learning or neuron state is generated here.
+        except (OSError, ValueError, RuntimeError) as exc:
+            status_text.set("Nie można odczytać zapisanego mózgu: " + type(exc).__name__)
+        root.after(250, poll_neural_graph)
+
+    root.after(250, poll_neural_graph)
 
     def try_improve() -> None:
         try:
