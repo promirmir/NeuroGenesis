@@ -149,6 +149,8 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
                 state_model.set("MODEL / BRAK PAKIETU FULL")
                 conversation_status.set(
                     "Nie znaleziono wag modelu w EXE. Wybierz wydanie FULL.")
+                running["pending_message"] = None
+                send_btn.configure(state="normal")
             return
         running["starting"] = True
         state_model.set("MODEL / ładowanie lokalnych wag...")
