@@ -21,9 +21,10 @@ from urllib.parse import urljoin, urlsplit
 
 MAX_URL = 2048
 MAX_BODY = 128 * 1024
+MAX_CRAWL_BODY = 512 * 1024
 MAX_TEXT = 6000
 CONNECT_TIMEOUT = 6.0
-MAX_LINKS = 64
+MAX_LINKS = 256
 
 
 class WebSenseError(ValueError):
@@ -174,13 +175,15 @@ class _PlainTextParser(HTMLParser):
                       "".join(self.words))).strip()[:MAX_TEXT]
 
 
-def read_public_page(url: str, *, resolver=None, connection_factory=None
-                     ) -> WebObservation:
+def read_public_page(url: str, *, resolver=None, connection_factory=None,
+                     max_body: int = MAX_BODY) -> WebObservation:
     """Fetch one explicitly approved public HTML/text URL.
 
     Disallow all redirects; operator must approve their new destination.
     DNS is validated once, and that verified IP is *actually connected*.
     """
+    if type(max_body) is not int or not MAX_BODY <= max_body <= MAX_CRAWL_BODY:
+        raise WebSenseError("Nieprawidłowy limit rozmiaru strony")
     clean_url, host, path = validate_public_url(url)
     ip = resolve_public_address(host, resolver=resolver)
     factory = connection_factory or _PinnedHTTPS
@@ -210,11 +213,11 @@ def read_public_page(url: str, *, resolver=None, connection_factory=None
                 declared = int(length)
             except ValueError as exc:
                 raise WebSenseError("Nieprawidłowy nagłówek rozmiaru") from exc
-            if not 0 <= declared <= MAX_BODY:
-                raise WebSenseError("Strona przekracza limit 128 KiB")
-        data = response.read(MAX_BODY + 1)
-        if len(data) > MAX_BODY:
-            raise WebSenseError("Strona przekracza limit 128 KiB")
+            if not 0 <= declared <= max_body:
+                raise WebSenseError("Strona przekracza dozwolony rozmiar")
+        data = response.read(max_body + 1)
+        if len(data) > max_body:
+            raise WebSenseError("Strona przekracza dozwolony rozmiar")
     except (OSError, ssl.SSLError, http.client.HTTPException) as exc:
         raise WebSenseError("Błąd połączenia HTTPS") from exc
     finally:
