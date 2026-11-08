@@ -19,7 +19,7 @@ import subprocess
 import sys
 import threading
 import time
-from typing import Any
+from typing import Any, Callable
 import urllib.error
 import urllib.request
 
@@ -35,6 +35,8 @@ LLAMA_CPU_ZIP_SHA256 = "23729000408c6968faf5e322afc99319d3b8c576ba872ef7663d9b89
 MAX_HISTORY = 14
 MAX_PROMPT = 1800
 MAX_RESPONSE_BYTES = 128 * 1024
+MAX_STREAM_BYTES = 512 * 1024
+MAX_STREAM_CHUNKS = 1024
 
 
 def resource_root(base: str | Path | None = None) -> Path:
@@ -162,6 +164,85 @@ def _http_request(port: int, key: str, endpoint: str, *,
     return decoded
 
 
+def _stream_chat_response(port: int, key: str, payload: dict,
+                          on_delta: Callable[[str], None], *,
+                          timeout: float = 180) -> dict:
+    """Actual llama.cpp SSE token-delivery on authenticated loopback only.
+
+    Each callback receives bytes generated and decoded by the REAL model,
+    never timer-generated fake words, simulator data, or a cloud answer.
+    Callbacks run on the worker thread and must not touch Tk widgets directly.
+    """
+    if (type(port) is not int or not 1 <= port <= 65535
+            or type(key) is not str or len(key) < 32
+            or not callable(on_delta) or type(payload) is not dict
+            or payload.get("stream") is not True):
+        raise ValueError("Invalid authenticated local streaming request.")
+    req = urllib.request.Request(
+        f"http://127.0.0.1:{port}/v1/chat/completions",
+        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+        headers={"Authorization": "Bearer " + key,
+                 "Content-Type": "application/json",
+                 "Accept": "text/event-stream",
+                 "User-Agent": "NeuroGenesis-offline/1.0"},
+        method="POST")
+    # Zero proxy consultation, always the local authenticated llama process.
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    segments: list[str] = []
+    count = 0
+    used_bytes = 0
+    done = False
+    reported_usage: dict = {}
+    with opener.open(req, timeout=timeout) as response:
+        while True:
+            line = response.readline(16 * 1024)
+            if not line:
+                break
+            used_bytes += len(line)
+            if used_bytes > MAX_STREAM_BYTES or len(line) >= 16 * 1024:
+                raise ValueError("Strumień modelu przekroczył limity bezpieczeństwa.")
+            line = line.strip()
+            if not line or line.startswith(b":"):
+                continue
+            if not line.startswith(b"data:"):
+                # SSE may also send :heartbeat or event: metadata lines.
+                continue
+            raw = line[5:].strip()
+            if raw == b"[DONE]":
+                done = True
+                break
+            frame = json.loads(raw.decode("utf-8", errors="strict"))
+            if not isinstance(frame, dict):
+                raise ValueError("Nieprawidłowa ramka SSE modelu.")
+            if frame.get("error"):
+                raise RuntimeError("Silnik odmówił generacji strumieniowej.")
+            if isinstance(frame.get("usage"), dict):
+                reported_usage = frame["usage"]
+            choices = frame.get("choices") or []
+            if not isinstance(choices, list):
+                raise ValueError("Nieprawidłowe dane odpowiedzi SSE.")
+            if not choices:
+                continue
+            delta = choices[0].get("delta") or {}
+            piece = delta.get("content") if isinstance(delta, dict) else None
+            if piece is None:
+                continue
+            if not isinstance(piece, str):
+                raise ValueError("Strumieniowa odpowiedź nie jest tekstem.")
+            if piece:
+                count += 1
+                if count > MAX_STREAM_CHUNKS:
+                    raise ValueError("Zbyt wiele ramek odpowiedzi modelu.")
+                segments.append(piece)
+                if sum(map(len, segments)) > 15000:
+                    raise ValueError("Zbyt długi tekst odpowiedzi modelu.")
+                on_delta(piece)
+    if not done or not "".join(segments).strip():
+        raise RuntimeError("Generowanie strumieniowe przerwane lub bez wyniku.")
+    return {"choices": [{"message": {"content": "".join(segments)}}],
+            "usage": reported_usage, "stream_chunks": count}
+
+
 class BundledModelSession:
     """One CPU GGUF model loaded once; authenticated loopback lifetime managed."""
 
@@ -250,7 +331,8 @@ class BundledModelSession:
             self.stop()
             raise
 
-    def chat(self, messages: list[dict[str, str]]) -> dict[str, Any]:
+    def chat(self, messages: list[dict[str, str]], *,
+             on_delta: Callable[[str], None] | None = None) -> dict[str, Any]:
         verified = check_chat_messages(messages)
         with self._lock:
             p, port = self._proc, self._port
@@ -284,14 +366,20 @@ class BundledModelSession:
             "messages": contextual_messages(verified, results),
             "max_tokens": self.max_tokens,
             "temperature": 0.7, "top_p": 0.8, "top_k": 20,
-            "stream": False,
+            "stream": on_delta is not None,
             "chat_template_kwargs": {"enable_thinking": False},
         }
         if len(json.dumps(payload, ensure_ascii=False).encode("utf-8")) > 25_000:
             raise ValueError("Zbyt duża historia rozmowy.")
-        response = _http_request(
-            port, self._key, "/v1/chat/completions",
-            payload=payload, timeout=180)
+        started = time.monotonic()
+        if on_delta is None:
+            response = _http_request(
+                port, self._key, "/v1/chat/completions",
+                payload=payload, timeout=180)
+        else:
+            response = _stream_chat_response(
+                port, self._key, payload, on_delta, timeout=180)
+        elapsed = max(0.0, time.monotonic() - started)
         choices = response.get("choices", [])
         if not isinstance(choices, list) or not choices:
             raise ValueError("Model nie zwrócił poprawnej odpowiedzi.")
@@ -309,6 +397,13 @@ class BundledModelSession:
             "sources": [{"label": f"L{i}", "file": r["file"],
                          "sha256": r["sha256"]} for i, r in enumerate(results, 1)],
             "model_was_gradient_trained_by_neurogenesis": False,
+            "generation_seconds": round(elapsed, 3),
+            "stream_chunks": int(response.get("stream_chunks", 0)),
+            "streaming_used": on_delta is not None,
+            # Real llama.cpp usage only; never invent a token count.
+            "reported_usage": (response.get("usage")
+                               if isinstance(response.get("usage"), dict)
+                               else {}),
         }
 
     def stop(self) -> None:
@@ -333,12 +428,15 @@ def offline_complete_self_test(*, assets_root: str | Path | None = None) -> dict
     session = BundledModelSession(assets_root=assets_root, max_tokens=80)
     try:
         session.start()
+        observed_deltas: list[str] = []
         result = session.chat([
             {"role": "user", "content": "Odpowiedz po polsku jednym zdaniem: co to jest pamięć komputera?"},
-        ])
+        ], on_delta=observed_deltas.append)
         answer = result["reply"]
         if (len(answer) < 15 or result["cloud_api_used"] or
-                result["status"] != "offline_real_gguf_inference"):
+                result["status"] != "offline_real_gguf_inference"
+                or not observed_deltas or "".join(observed_deltas).strip() != answer
+                or result["stream_chunks"] != len(observed_deltas)):
             raise RuntimeError("Pełny test modelu nie uzyskał poprawnej odpowiedzi.")
         return {
             "model": result["model"], "engine": result["engine"],
@@ -346,6 +444,8 @@ def offline_complete_self_test(*, assets_root: str | Path | None = None) -> dict
             "result": "actual_local_model_inference_passed",
             "cloud_api_used": False,
             "model_sha256_verified": True,
+            "real_stream_chunks": len(observed_deltas),
+            "real_streaming_verified": True,
         }
     finally:
         session.stop()
