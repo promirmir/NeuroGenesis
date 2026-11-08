@@ -379,7 +379,10 @@ def launch(db_path: Path) -> int:
         wraplength=750).pack(anchor="w", padx=24)
     autonomy_controls = tk.Frame(brain_tab, bg="#111827")
     autonomy_controls.pack(fill="x", padx=24, pady=(12, 4))
-    autonomy_enabled = tk.BooleanVar(value=False)
+    # Local LIF self-review is ON by default; it never executes an update
+    # without 40 NEW observations and passes strict promotion safeguards.
+    # Network and file-folder permissions remain OFF until approved.
+    autonomy_enabled = tk.BooleanVar(value=True)
     ttk.Checkbutton(autonomy_controls,
                     text="AUTO: testuj ulepszenia co 30 s (wymaga nowych doświadczeń)",
                     variable=autonomy_enabled).pack(side="left")
@@ -421,6 +424,24 @@ def launch(db_path: Path) -> int:
         navigate=lambda where: tabs.select(targets[where]),
         network_enabled=lambda: web_enabled.get(),
     )
+    # Unified controls share the existing workers and Tk variables.
+    # They do not spawn duplicate inference engines or watchers.
+    from .tk_autonomy_hub import install_autonomy_hub
+    operations_tab = install_autonomy_hub(
+        tabs, memory, knowledge, supervisor,
+        brain_auto=autonomy_enabled,
+        training_auto=training_tab.ng_auto,
+        training_folder=training_tab.ng_folder,
+        training_consent=training_tab.ng_consent,
+        model_status=model_chat_tab.ng_model_status,
+        navigate=lambda where: tabs.select(targets[where]),
+        run_brain_trial=lambda: try_improve(),
+        model_start=model_chat_tab.ng_model_start,
+        model_stop=model_chat_tab.ng_model_stop,
+        choose_training_folder=training_tab.ng_choose_folder,
+        allowed_web=lambda: web_enabled.get(),
+    )
+    targets["operations"] = operations_tab
     # Dedicated specialist study tab, off until explicit HTTPS consent.
     from .study_panel import install_study_panel
     install_study_panel(tabs, memory, web_enabled)
@@ -557,30 +578,63 @@ def launch(db_path: Path) -> int:
         except (ValueError, OSError, KeyError) as exc:
             status_text.set(f"Błąd odczytu stanu: {exc}")
 
+    trial_state = {"thread": None}
+    trial_queue = queue.SimpleQueue()
+
     def try_improve() -> None:
-        try:
-            result = supervisor.cycle()
-            if result["reason"] == "not_enough_new_experiences":
-                summary = f"Brakuje obserwacji: {result['available']}/{result['required']}"
-            else:
-                summary = ("Ulepszenie zatwierdzone" if result["promoted"]
-                           else "Zmiana odrzucona: " + result["reason"])
-            refresh()
-            autonomy_info.set(summary)
-        except (ValueError, OSError, RuntimeError, KeyError) as exc:
-            autonomy_enabled.set(False)
-            autonomy_info.set("Samorozwój zatrzymany: problem z pamięcią lub walidacją")
-            messagebox.showerror("NeuroGenesis — samorozwój",
-                                 f"Nie zmieniono danych po nieudanej próbie: {exc}")
+        """Never run optimization inside Tk's event loop."""
+        current = trial_state["thread"]
+        if isinstance(current, threading.Thread) and current.is_alive():
+            return
+        def execute():
+            try:
+                trial_queue.put(("ok", supervisor.cycle()))
+            except (ValueError, OSError, RuntimeError, KeyError) as exc:
+                trial_queue.put(("error", str(exc)[:350]))
+        work = threading.Thread(
+            target=execute, daemon=True, name="NG-bounded-LIF-evolution")
+        trial_state["thread"] = work
+        work.start()
 
     ttk.Button(autonomy_controls, text="Przetestuj ulepszenie",
                command=try_improve).pack(side="right")
 
+    def trial_poll() -> None:
+        try:
+            while True:
+                kind, payload = trial_queue.get_nowait()
+                if kind == "error":
+                    autonomy_enabled.set(False)
+                    autonomy_info.set("BŁĄD EWOLUCJI / " + payload)
+                elif payload["reason"] == "not_enough_new_experiences":
+                    autonomy_info.set(
+                        f"Brak nowych danych do treningu: "
+                        f"{payload['available']}/{payload['required']}.")
+                else:
+                    autonomy_info.set(
+                        "Zmiana ZATWIERDZONA" if payload["promoted"] else
+                        "Kandydat ODRZUCONY: " + str(payload["reason"]))
+                refresh()
+        except queue.Empty:
+            pass
+        if root.winfo_exists():
+            root.after(250, trial_poll)
+
     def autonomy_tick() -> None:
         if autonomy_enabled.get():
-            try_improve()
-        root.after(30_000, autonomy_tick)
+            try:
+                events = supervisor.status()
+                # An idle brain remains idle. Do not repeatedly run empty
+                # expensive trials and do not render synthetic progress.
+                if events["new_events"] >= WINDOW:
+                    try_improve()
+            except (ValueError, OSError, RuntimeError, KeyError) as exc:
+                autonomy_enabled.set(False)
+                autonomy_info.set("Autonomia LIF zatrzymana: " + str(exc)[:180])
+        if root.winfo_exists():
+            root.after(30_000, autonomy_tick)
 
+    root.after(250, trial_poll)
     root.after(30_000, autonomy_tick)
 
     def web_request(*, automatic: bool = False) -> None:
@@ -760,7 +814,7 @@ def launch(db_path: Path) -> int:
     message.bind("<Control-Return>", lambda _event: (send(), "break")[1])
     ttk.Label(chat_tab, text="Ctrl+Enter — zapytaj • przycisk Naucz: jawny zapis pary pytanie/odpowiedź w prywatnej bazie",
               wraplength=770).pack(anchor="w", padx=12, pady=(0, 8))
-    tabs.select(mission_tab)
+    tabs.select(operations_tab)
     mission.refresh()
     refresh()
 
