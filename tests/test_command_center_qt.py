@@ -65,6 +65,14 @@ class QtCommandCenterSmokeTests(unittest.TestCase):
         self.window.show_selected_source()
         self.assertIn("połączeń neuronów", self.window.source_preview.toPlainText())
 
+    def test_inference_lab_requires_explicit_trusted_file_and_is_offline(self):
+        self.window.navigate(4)
+        self.assertFalse(self.window.trust_checkpoint.isChecked())
+        self.assertEqual(self.window.inference_bytes.value(), 16)
+        self.assertFalse(self.service.snapshot().inference_running)
+        self.assertFalse(self.service.network_enabled)
+        self.assertIn("predykcję", self.window.inference_start.text().lower())
+
     def test_consent_updates_real_service_and_stops_on_close(self):
         self.window.navigate(6)
         self.window.allow_https.setChecked(True)
