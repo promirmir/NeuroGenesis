@@ -251,20 +251,31 @@ class BundledModelSession:
             self.stop()
             raise
 
-    def chat(self, messages: list[dict[str, str]]) -> dict[str, Any]:
+    def chat(self, messages: list[dict[str, str]], *,
+             use_context: bool = True,
+             deterministic: bool = False) -> dict[str, Any]:
+        """Real local inference; optional controls for a paired offline audit.
+
+        Defaults preserve the normal application behavior. Disabling context
+        removes BOTH local TXT and approved-HTTPS retrieval, not the model
+        itself. Deterministic generation removes sampling but is not a proof
+        that native inference is bit-identical across hardware.
+        """
+        if type(use_context) is not bool or type(deterministic) is not bool:
+            raise ValueError("Trial controls must be explicit booleans.")
         verified = check_chat_messages(messages)
         with self._lock:
             p, port = self._proc, self._port
         if p is None or p.poll() is not None or port is None:
             raise RuntimeError("Wbudowany model jeszcze nie działa. Uruchom go ponownie.")
         results = (self.knowledge.retrieve(verified[-1]["content"])
-                   if self.knowledge is not None else [])
+                   if use_context and self.knowledge is not None else [])
         # The research module already stores cited extracts in the existing
         # experiences.sqlite3 (and enforces source provenance). Feed those
         # independently validated-as-retrieved, UNTRUSTED snippets into the
         # same real LLM, not an unrelated legacy-only conversation panel.
         # This is RAG, not gradient training and not proof of source truth.
-        if self.web_memory is not None:
+        if use_context and self.web_memory is not None:
             # The source-evidence index has an explicit 512-character
             # query budget, while the dialogue accepts 1,800 characters.
             # Limit only retrieval terms, never the actual LLM question.
@@ -284,7 +295,9 @@ class BundledModelSession:
             "model": "NeuroGenesis-Qwen3-1.7B",
             "messages": contextual_messages(verified, results),
             "max_tokens": self.max_tokens,
-            "temperature": 0.7, "top_p": 0.8, "top_k": 20,
+            "temperature": 0.0 if deterministic else 0.7,
+            "top_p": 1.0 if deterministic else 0.8,
+            "top_k": 1 if deterministic else 20,
             "stream": False,
             "chat_template_kwargs": {"enable_thinking": False},
         }
