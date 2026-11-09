@@ -19,6 +19,7 @@ import time
 from typing import Any, Callable
 
 from .acf import AdaptiveCognitiveFabric
+from .acf_answer_router import validate_semantic_provenance
 from .bundled_llm import BundledModelSession
 from .dialogue_ab import (
     ReadOnlyKnowledge, _contains_answer, _citation_invalid, load_audit)
@@ -45,6 +46,8 @@ def evaluate_abc(database: str | Path, audit_jsonl: str | Path,
     # Do not proceed if snapshot is malformed; do not replace it with fabricated
     # confidence or let holdout questions train the ACF.
     inspected = AdaptiveCognitiveFabric.load(state_path)
+    if not validate_semantic_provenance(state_path, inspected):
+        raise ValueError("ACF checkpoint lacks matching pinned semantic SQLite provenance.")
     scores = {key: {"literal_hits": 0, "expected_source_hits": 0,
                     "invalid_citation_cases": 0,
                     "mean_latency_ms": 0.0} for key in KEYS}
@@ -56,10 +59,8 @@ def evaluate_abc(database: str | Path, audit_jsonl: str | Path,
         else session_factory(knowledge))
     outcomes: Counter[str] = Counter()
     route_status: Counter[str] = Counter()
-    started = False
     try:
         session.start()
-        started = True
         for index, case in enumerate(cases):
             # Rotate order A->B->C, B->C->A, C->A->B.
             ordered = list(KEYS[index % 3:] + KEYS[:index % 3])
@@ -95,8 +96,8 @@ def evaluate_abc(database: str | Path, audit_jsonl: str | Path,
                     route_status[route["status"]] += 1
             outcomes["".join("1" if hits[k] else "0" for k in KEYS)] += 1
     finally:
-        if started:
-            session.stop()
+        # This also terminates a partially initialized native model server.
+        session.stop()
     total = len(cases)
     for score in scores.values():
         score["literal_hit_rate"] = round(score["literal_hits"] / total, 6)
