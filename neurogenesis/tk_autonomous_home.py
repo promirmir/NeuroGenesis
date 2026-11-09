@@ -657,7 +657,10 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
                             f"SEMANTYKA Qwen / {learned} wektorów · nowe "
                             f"{value['processed']}\nACF: {route} · MSE {metric} "
                             f"· neurony {sm['adaptive_structure']['neurons']}\n"
-                            f"{status_text}")
+                            f"{status_text}"
+                            + ("\nODZYSKANO ACF: zweryfikowana poprzednia migawka "
+                               "i odtworzone zdarzenia."
+                               if value.get("checkpoint_recovered") else ""))
                     else:
                         semantic_status.set(
                             "SEMANTYCZNY ACF / błąd klasyfikacji, "
@@ -705,7 +708,10 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
                     f"Bodźce: {sm['observations']} · nowe: {data['processed']}\n"
                     f"Neurony {structural['neurons']} vs kontrola {fixed['neurons']} "
                     f"· zmiany +{structural['total_grown']} / -{structural['total_pruned']}\n"
-                    f"Przewidywanie: {selected} · zmierzony MSE: {label}")
+                    f"Przewidywanie: {selected} · zmierzony MSE: {label}"
+                    + ("\nODZYSKANO ACF: poprzedni stan i ponowne "
+                       "odtworzenie obserwacji."
+                       if data.get("checkpoint_recovered") else ""))
         except queue.Empty:
             pass
         if tab.winfo_exists():

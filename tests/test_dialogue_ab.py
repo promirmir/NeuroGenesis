@@ -8,7 +8,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from neurogenesis.bundled_llm import BundledModelSession
-from neurogenesis.dialogue_ab import ReadOnlyKnowledge, evaluate, load_audit
+from neurogenesis.dialogue_ab import ReadOnlyKnowledge, evaluate, load_audit, _citation_invalid
 from neurogenesis.local_knowledge import LocalKnowledge
 
 
@@ -135,6 +135,17 @@ class DialogueABTest(unittest.TestCase):
             session_factory=Hallucinates)
         for condition in result["conditions"].values():
             self.assertEqual(condition["unsupported_citations"], 4)
+
+
+class SourceCitationAuditTest(unittest.TestCase):
+    def test_citation_audit_does_not_omit_hallucinated_large_or_zero_labels(self):
+        sources = [{"label": "L1", "file": "own.txt", "sha256": "x"}]
+        for candidate in ("[L0]", "[L01]", "[L100]", "[L999]", "[L1234567]"):
+            with self.subTest(label=candidate):
+                self.assertTrue(_citation_invalid("Źródło " + candidate, sources))
+        self.assertFalse(_citation_invalid("Zobacz [L1].", sources))
+        self.assertFalse(_citation_invalid("Brak źródeł.", sources))
+        self.assertTrue(_citation_invalid("Dobre [L1], ale złe [L999]", sources))
 
 
 class BundledControlsTest(unittest.TestCase):
