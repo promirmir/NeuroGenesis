@@ -200,7 +200,10 @@ class RouterTests(unittest.TestCase):
                 use_context=False, acf_state_path=self.state)
 
 
-class ABCProtocolTests(RouterTests):
+class ABCProtocolTests(unittest.TestCase):
+    # Reuse the synthetic fixture, not the RouterTests test methods.
+    setUp = RouterTests.setUp
+
     def test_paired_abc_read_only_same_frozen_state_no_leak(self):
         cases = []
         for i in range(4):
