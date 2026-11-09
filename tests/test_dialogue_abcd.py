@@ -109,6 +109,20 @@ class ABCCase(unittest.TestCase):
         self.assertEqual(nmeta["status"], "predicted_topic_mismatch")
         self.assertEqual(cmeta["status"], "topic_control_passage_added")
 
+    def test_strong_non_neural_multi_axis_tie_break_never_uses_acf(self):
+        def classify(_):
+            classified = tag("engineering")
+            classified["axes"][AXES.index("programming")] = 1
+            return classified
+        with patch.object(self.local, "retrieve",
+                          wraps=self.local.retrieve) as lookup:
+            sources, report = route_with_topic_control(
+                self.question, [], self.local, classify)
+        self.assertEqual(report["predicted_axis"], "programming")
+        self.assertEqual(len(sources), 1)
+        self.assertEqual(lookup.call_count, 1)
+        self.assertNotIn("acf", json.dumps(report).lower())
+
     def test_do_not_replace_better_existing_fourth_source(self):
         baseline = [
             {"text": "nawigacja", "file": "a", "sha256": str(i)}
