@@ -97,9 +97,16 @@ def _contains_answer(reply: str, expected: str) -> bool:
 
 
 def _citation_invalid(reply: str, sources: list[dict[str, Any]]) -> bool:
-    allowed = {s.get("label") for s in sources}
-    return any("L" + n not in allowed for n in re.findall(
-        r"\[L([1-9][0-9]?)\]", reply))
+    """Flag every numeric [L...] citation without an EXACT supplied label.
+
+    Previous [1-99] matching missed hallucinated [L0], [L100] and [L999].
+    Literal labels are required: [L01] is not the same as [L1].
+    This metric detects unsupported numeric source references; it is not
+    a semantic truth/factual correctness judge.
+    """
+    allowed = {s.get("label") for s in sources if type(s) is dict}
+    return any("L" + number not in allowed for number in re.findall(
+        r"\[L([0-9]+)\]", reply))
 
 
 def evaluate(database: str | Path, audit_jsonl: str | Path, *,
