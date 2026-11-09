@@ -197,3 +197,8 @@ W szczególności system może błędnie cytować dokument przy pytaniu z fałsz
 - [Testy CI](https://github.com/promirmir/NeuroGenesis/actions)
 
 Wydanie Windows jest publikowane tylko z dokładnie zweryfikowanego commita `main` i zawiera plik kontrolny SHA-256. **v0.8.0 jest etapem doprowadzania istniejącej aplikacji do wyższej jakości użytkowej, a nie deklaracją osiągnięcia AGI ani ukończenia wszystkich celów badawczych.**
+
+
+### Eksperyment pomiarowy 0.12.6 — Qwen kontra Qwen + pamięć TXT
+
+Wprowadzono niezależny audyt A/B prawdziwego lokalnego Qwen (ten sam model, próba bez źródeł i z zatwierdzoną wiedzą TXT). Mierzy dosłowne trafienia odpowiedzi, odnalezione źródła, fałszywe cytowania, wyniki sparowane i koszty czasowe; nie używa sieci, nie trenuje modelu i nie publikuje prywatnych pytań. **Nie dowodzi jeszcze przewagi ACF ani AGI.** Instrukcja: [DIALOGUE_PAIRED_EVALUATION_0126.md](docs/DIALOGUE_PAIRED_EVALUATION_0126.md). Domyślne rozmowy, prywatne SQLite i pobierane EXE zachowują dotychczasowe działanie.
