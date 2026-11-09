@@ -5,6 +5,7 @@ NOT experimental evidence of superior neural learning or QA competence.
 """
 from __future__ import annotations
 
+from contextlib import closing
 import json
 import sqlite3
 from pathlib import Path
@@ -68,12 +69,15 @@ class RouterTests(unittest.TestCase):
         ledger = SemanticFabricStore(self.root)
         # Synthetic provenance fixture: validates the cursor check but must
         # NEVER be described as trained on actual Qwen classifications.
-        with sqlite3.connect(ledger.path) as con:
-            con.executemany(
-                "INSERT INTO observations(features,tagger,recorded_utc) "
-                "VALUES(?,?,?)",
-                [(json.dumps([0] * 8), VERSION, "synthetic-only")
-                 for _ in range(fabric.events)])
+        # sqlite3.Connection.__exit__ only commits; it does NOT close the
+        # Windows file handle. Explicit closing is essential for test isolation.
+        with closing(sqlite3.connect(ledger.path)) as con:
+            with con:
+                con.executemany(
+                    "INSERT INTO observations(features,tagger,recorded_utc) "
+                    "VALUES(?,?,?)",
+                    [(json.dumps([0] * 8), VERSION, "synthetic-only")
+                     for _ in range(fabric.events)])
 
     def test_measured_route_adds_actual_new_approved_passage_not_fake_source(self):
         before = self.knowledge.status()
