@@ -181,11 +181,17 @@ def route_with_topic_control(
         axes = verified_current_axes(classify(question))
         if axes is None:
             return list(baseline), _report("invalid_current_semantics")
-        # Precommitted fixed order: exactly ONE topic-query for this arm;
-        # do not cherry-pick an axis using the held-out answer.
-        axis = next((a for a in AXES if a in QUERIES and a in axes), None)
-        if axis is None:
+        # Stronger matched non-neural comparator: precommitted lexical
+        # overlap with each Qwen-tagged domain's STATIC query vocabulary.
+        # Exactly one topic-query is sent to FTS. No held-out answer,
+        # ACF state, or source passage can influence topic selection.
+        supported = [a for a in AXES if a in QUERIES and a in axes]
+        if not supported:
             return list(baseline), _report("no_supported_current_topic")
+        terms = _anchors(question)
+        axis = max(supported, key=lambda name: (
+            len(terms & _anchors(QUERIES[name])),
+            -AXES.index(name)))
         sources, added = _select_candidate(question, baseline, knowledge, axis)
     except (OSError, ValueError, KeyError, TypeError, RuntimeError,
             TimeoutError, sqlite3.DatabaseError):
