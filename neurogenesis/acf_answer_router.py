@@ -14,6 +14,7 @@ No files/network are changed, no private question or passages are logged.
 """
 from __future__ import annotations
 
+from contextlib import closing
 from pathlib import Path
 import re
 import sqlite3
@@ -58,6 +59,38 @@ def _report(status: str, *, axis: str | None = None, added: int = 0,
     }
 
 
+def validate_semantic_provenance(
+        state_path: str | Path,
+        fabric: AdaptiveCognitiveFabric) -> bool:
+    """Require cursor correspondence to the *semantic* Qwen-tag ledger.
+
+    Plain hashed sensory ACF snapshots must never become semantic decisions.
+    Only schema/tagger identity is checked; this is not cryptographic proof
+    that every row was genuinely emitted by a model.
+    """
+    path = Path(state_path)
+    ledger = path.with_name("semantic_fabric.sqlite3")
+    if (path.name != "semantic_fabric.acf.json"
+            or not ledger.is_file() or ledger.is_symlink()
+            or fabric.events <= 0 or fabric.last_event_id <= 0):
+        return False
+    try:
+        uri = ledger.resolve().as_uri() + "?mode=ro"
+        with closing(sqlite3.connect(uri, uri=True, timeout=5)) as con:
+            con.execute("PRAGMA query_only=ON")
+            count, incompatible = con.execute(
+                "SELECT COUNT(*), SUM(CASE WHEN tagger != ? THEN 1 ELSE 0 END) "
+                "FROM observations WHERE id <= ?",
+                (VERSION, fabric.last_event_id)).fetchone()
+            final = con.execute(
+                "SELECT id FROM observations WHERE id <= ? "
+                "ORDER BY id DESC LIMIT 1", (fabric.last_event_id,)).fetchone()
+        return (count == fabric.events and incompatible == 0
+                and final is not None and final[0] == fabric.last_event_id)
+    except (OSError, ValueError, sqlite3.DatabaseError):
+        return False
+
+
 def route_for_question(
         question: str,
         baseline: list[dict[str, Any]],
@@ -82,6 +115,8 @@ def route_for_question(
         return list(baseline), _report("no_valid_acf_checkpoint")
     try:
         fabric = AdaptiveCognitiveFabric.load(path)
+        if not validate_semantic_provenance(path, fabric):
+            return list(baseline), _report("missing_semantic_ledger_provenance")
         decision = decide(fabric)
     except (OSError, ValueError, TypeError, KeyError, sqlite3.DatabaseError):
         return list(baseline), _report("invalid_acf_checkpoint")
