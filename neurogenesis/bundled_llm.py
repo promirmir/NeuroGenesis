@@ -254,7 +254,8 @@ class BundledModelSession:
     def chat(self, messages: list[dict[str, str]], *,
              use_context: bool = True,
              deterministic: bool = False,
-             acf_state_path: str | Path | None = None) -> dict[str, Any]:
+             acf_state_path: str | Path | None = None,
+             topic_control: bool = False) -> dict[str, Any]:
         """Real local inference; optional controls for a paired offline audit.
 
         Defaults preserve the normal application behavior. Disabling context
@@ -264,8 +265,12 @@ class BundledModelSession:
         """
         if type(use_context) is not bool or type(deterministic) is not bool:
             raise ValueError("Trial controls must be explicit booleans.")
-        if acf_state_path is not None and not use_context:
-            raise ValueError("ACF requires the approved local TXT context.")
+        if type(topic_control) is not bool:
+            raise ValueError("Topic-control flag must be an explicit boolean.")
+        if acf_state_path is not None and topic_control:
+            raise ValueError("ACF and non-neural control are exclusive trials.")
+        if (acf_state_path is not None or topic_control) and not use_context:
+            raise ValueError("Experimental routes require approved local TXT context.")
         verified = check_chat_messages(messages)
         with self._lock:
             p, port = self._proc, self._port
@@ -307,6 +312,19 @@ class BundledModelSession:
                 results, acf_report = route_for_question(
                     verified[-1]["content"], results, self.knowledge,
                     acf_state_path, self.classify_semantics)
+        topic_control_report = None
+        if topic_control:
+            if self.knowledge is None:
+                topic_control_report = {
+                    "status": "no_approved_txt_store",
+                    "added_approved_txt_passages": 0,
+                    "neural_task_improvement_proven": False,
+                }
+            else:
+                from .acf_answer_router import route_with_topic_control
+                results, topic_control_report = route_with_topic_control(
+                    verified[-1]["content"], results, self.knowledge,
+                    self.classify_semantics)
         payload = {
             "model": "NeuroGenesis-Qwen3-1.7B",
             "messages": contextual_messages(verified, results),
@@ -342,6 +360,8 @@ class BundledModelSession:
         }
         if acf_report is not None:
             result["acf_routing"] = acf_report
+        if topic_control_report is not None:
+            result["topic_control_routing"] = topic_control_report
         return result
 
     def classify_semantics(self, message: str) -> dict[str, Any]:
@@ -403,6 +423,33 @@ def offline_complete_self_test(*, assets_root: str | Path | None = None) -> dict
         if (len(answer) < 15 or result["cloud_api_used"] or
                 result["status"] != "offline_real_gguf_inference"):
             raise RuntimeError("Pełny test modelu nie uzyskał poprawnej odpowiedzi.")
+        # The actual bundled/frozen model must ALSO exercise the matched
+        # non-neural retrieval-control pipeline, not only ordinary chat.
+        # Real local Qwen classifies the current query; approved TXT is a
+        # temporary synthetic fixture, not a claim about intelligence.
+        import tempfile
+        with tempfile.TemporaryDirectory(prefix="ng-route-ci-") as tmp:
+            fixture = Path(tmp) / "autoryzowane.txt"
+            fixture.write_text(
+                "Planowanie programowanie kod Python: jak zaplanować "
+                "napisanie programu komputerowego, harmonogram, projekt, "
+                "zadania i testy. " * 4, encoding="utf-8")
+            corpus = LocalKnowledge(Path(tmp) / "approved.sqlite3")
+            corpus.import_txt(fixture, approved=True)
+            session.knowledge = corpus
+            control = session.chat([{
+                "role": "user",
+                "content": "Jak zaplanować napisanie programu komputerowego?"
+            }], topic_control=True, deterministic=True)
+            route = control.get("topic_control_routing", {})
+            if (not isinstance(route, dict)
+                    or route.get("status") in (
+                        None, "control_classification_or_retrieval_failed",
+                        "invalid_current_semantics", "no_approved_txt_store")
+                    or control["cloud_api_used"]
+                    or len(control["reply"]) < 5):
+                raise RuntimeError("Realny Qwen nie przeszedł próby kontroli RAG.")
+            session.knowledge = None
         return {
             "model": result["model"], "engine": result["engine"],
             "response_length": len(answer),

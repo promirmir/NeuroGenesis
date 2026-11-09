@@ -91,6 +91,116 @@ def validate_semantic_provenance(
         return False
 
 
+
+
+def verified_current_axes(classified: dict[str, Any]) -> frozenset[str] | None:
+    """Attested local Qwen topic *tags*, never factual verification."""
+    if (type(classified) is not dict or set(classified) != {
+            "axes", "version", "model", "inference",
+            "cloud_api_used", "raw_text_persisted"}
+            or classified["version"] != VERSION
+            or classified["model"] != "Qwen3-1.7B-Q4_K_M"
+            or classified["inference"] != "actual_local_gguf_semantic_classification"
+            or classified["cloud_api_used"] is not False
+            or classified["raw_text_persisted"] is not False
+            or type(classified["axes"]) is not list
+            or len(classified["axes"]) != len(AXES)
+            or any(type(x) not in (int, float) or x not in (0, 1)
+                   for x in classified["axes"])):
+        return None
+    return frozenset(axis for axis, value in zip(AXES, classified["axes"])
+                     if value == 1)
+
+
+def _select_candidate(
+        question: str, baseline: list[dict[str, Any]],
+        knowledge: LocalKnowledge, axis: str
+        ) -> tuple[list[dict[str, Any]], bool]:
+    """One identical approved-TXT search and context budget for ACF/control.
+
+    Replacing the existing fourth source must strictly improve the
+    literal anchor overlap; a merely new source does not qualify.
+    This is an intentionally conservative heuristic, not truth scoring.
+    """
+    if axis not in QUERIES:
+        return list(baseline), False
+    anchors = _anchors(question)
+    if len(anchors) < MIN_ANCHORS:
+        return list(baseline), False
+    existing = {
+        (str(row.get("file")), str(row.get("sha256")), str(row.get("text")))
+        for row in baseline if type(row) is dict
+    }
+    candidates = knowledge.retrieve(QUERIES[axis], limit=3)
+    matches: list[tuple[int, dict[str, Any]]] = []
+    for candidate in candidates:
+        if (type(candidate) is not dict
+                or any(type(candidate.get(k)) is not str
+                       for k in ("text", "file", "sha256"))):
+            continue
+        key = (candidate["file"], candidate["sha256"], candidate["text"])
+        if key in existing:
+            continue
+        overlap = len(_anchors(candidate["text"]) & anchors)
+        if overlap >= MIN_ANCHORS:
+            matches.append((overlap, candidate))
+    if not matches:
+        return list(baseline), False
+    matches.sort(key=lambda pair: -pair[0])
+    # Four is the actual contextual_messages source budget.
+    # ACF/control must not crowd out a stronger existing fourth passage.
+    if len(baseline) >= 4:
+        last = baseline[3]
+        last_overlap = (len(_anchors(str(last.get("text", ""))) & anchors)
+                        if type(last) is dict else 0)
+        if matches[0][0] <= last_overlap:
+            return list(baseline), False
+    return list(baseline[:3]) + [matches[0][1]], True
+
+
+def route_with_topic_control(
+        question: str, baseline: list[dict[str, Any]],
+        knowledge: LocalKnowledge,
+        classify: Callable[[str], dict[str, Any]]
+        ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Non-neural matched retrieval control for the ACF scientific ablation.
+
+    Same actual Qwen topic classifier, approved corpus, FTS query dictionary,
+    lexical relevance threshold, one-added-passage and four-source budget.
+    No ACF checkpoint or neural predictions are consulted.
+    """
+    if (type(question) is not str or type(baseline) is not list
+            or not isinstance(knowledge, LocalKnowledge)
+            or not callable(classify)):
+        raise ValueError("Invalid non-neural topic control request.")
+    if not question.strip() or len(question) > MAX_SOURCE_CHARS:
+        return list(baseline), _report("question_outside_classifier_budget")
+    if len(_anchors(question)) < MIN_ANCHORS:
+        return list(baseline), _report("insufficient_question_anchors")
+    try:
+        axes = verified_current_axes(classify(question))
+        if axes is None:
+            return list(baseline), _report("invalid_current_semantics")
+        # Stronger matched non-neural comparator: precommitted lexical
+        # overlap with each Qwen-tagged domain's STATIC query vocabulary.
+        # Exactly one topic-query is sent to FTS. No held-out answer,
+        # ACF state, or source passage can influence topic selection.
+        supported = [a for a in AXES if a in QUERIES and a in axes]
+        if not supported:
+            return list(baseline), _report("no_supported_current_topic")
+        terms = _anchors(question)
+        axis = max(supported, key=lambda name: (
+            len(terms & _anchors(QUERIES[name])),
+            -AXES.index(name)))
+        sources, added = _select_candidate(question, baseline, knowledge, axis)
+    except (OSError, ValueError, KeyError, TypeError, RuntimeError,
+            TimeoutError, sqlite3.DatabaseError):
+        return list(baseline), _report("control_classification_or_retrieval_failed")
+    return sources, _report(
+        "topic_control_passage_added" if added else "no_new_question_grounded_source",
+        axis=axis, added=int(added))
+
+
 def route_for_question(
         question: str,
         baseline: list[dict[str, Any]],
@@ -131,55 +241,18 @@ def route_for_question(
         return list(baseline), _report("insufficient_question_anchors",
                                        axis=axis, scored=decision.scored_predictions)
     try:
-        current = classify(question)
-        if (type(current) is not dict or set(current) != {
-                "axes", "version", "model", "inference",
-                "cloud_api_used", "raw_text_persisted"}
-                or current["version"] != VERSION
-                or current["model"] != "Qwen3-1.7B-Q4_K_M"
-                or current["inference"] != "actual_local_gguf_semantic_classification"
-                or current["cloud_api_used"] is not False
-                or current["raw_text_persisted"] is not False
-                or type(current["axes"]) is not list
-                or len(current["axes"]) != len(AXES)
-                or any(type(x) not in (int, float) or x not in (0, 1)
-                       for x in current["axes"])):
+        axes = verified_current_axes(classify(question))
+        if axes is None:
             return list(baseline), _report("invalid_current_semantics",
                                            scored=decision.scored_predictions)
-        if current["axes"][AXES.index(axis)] != 1:
+        if axis not in axes:
             return list(baseline), _report("predicted_topic_mismatch",
                                            axis=axis, scored=decision.scored_predictions)
-        candidates = knowledge.retrieve(QUERIES[axis], limit=3)
+        grounded, added = _select_candidate(question, baseline, knowledge, axis)
     except (OSError, ValueError, KeyError, TypeError, RuntimeError,
             TimeoutError, sqlite3.DatabaseError):
         return list(baseline), _report("local_semantics_or_retrieval_failed",
                                        scored=decision.scored_predictions)
-    existing = {
-        (str(row.get("file")), str(row.get("sha256")), str(row.get("text")))
-        for row in baseline if type(row) is dict
-    }
-    matches = []
-    for candidate in candidates:
-        if type(candidate) is not dict:
-            continue
-        if (type(candidate.get("text")) is not str
-                or type(candidate.get("file")) is not str
-                or type(candidate.get("sha256")) is not str):
-            continue
-        key = (candidate["file"], candidate["sha256"], candidate["text"])
-        if key in existing:
-            continue
-        overlap = len(_anchors(candidate["text"]) & anchors)
-        if overlap >= MIN_ANCHORS:
-            matches.append((overlap, candidate))
-    if not matches:
-        return list(baseline), _report(
-            "no_new_question_grounded_source", axis=axis,
-            scored=decision.scored_predictions)
-    matches.sort(key=lambda p: -p[0])
-    # Keep 3 baseline passages plus at most 1 ACF candidate to respect
-    # contextual_messages()' existing 4-passage context budget.
-    grounded = list(baseline[:3]) + [matches[0][1]]
     return grounded, _report(
-        "acf_passage_added", axis=axis, added=MAX_ADDED,
-        scored=decision.scored_predictions)
+        "acf_passage_added" if added else "no_new_question_grounded_source",
+        axis=axis, added=int(added), scored=decision.scored_predictions)
