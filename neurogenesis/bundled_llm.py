@@ -254,7 +254,8 @@ class BundledModelSession:
     def chat(self, messages: list[dict[str, str]], *,
              use_context: bool = True,
              deterministic: bool = False,
-             acf_state_path: str | Path | None = None) -> dict[str, Any]:
+             acf_state_path: str | Path | None = None,
+             topic_control: bool = False) -> dict[str, Any]:
         """Real local inference; optional controls for a paired offline audit.
 
         Defaults preserve the normal application behavior. Disabling context
@@ -264,8 +265,12 @@ class BundledModelSession:
         """
         if type(use_context) is not bool or type(deterministic) is not bool:
             raise ValueError("Trial controls must be explicit booleans.")
-        if acf_state_path is not None and not use_context:
-            raise ValueError("ACF requires the approved local TXT context.")
+        if type(topic_control) is not bool:
+            raise ValueError("Topic-control flag must be an explicit boolean.")
+        if acf_state_path is not None and topic_control:
+            raise ValueError("ACF and non-neural control are exclusive trials.")
+        if (acf_state_path is not None or topic_control) and not use_context:
+            raise ValueError("Experimental routes require approved local TXT context.")
         verified = check_chat_messages(messages)
         with self._lock:
             p, port = self._proc, self._port
@@ -307,6 +312,19 @@ class BundledModelSession:
                 results, acf_report = route_for_question(
                     verified[-1]["content"], results, self.knowledge,
                     acf_state_path, self.classify_semantics)
+        topic_control_report = None
+        if topic_control:
+            if self.knowledge is None:
+                topic_control_report = {
+                    "status": "no_approved_txt_store",
+                    "added_approved_txt_passages": 0,
+                    "neural_task_improvement_proven": False,
+                }
+            else:
+                from .acf_answer_router import route_with_topic_control
+                results, topic_control_report = route_with_topic_control(
+                    verified[-1]["content"], results, self.knowledge,
+                    self.classify_semantics)
         payload = {
             "model": "NeuroGenesis-Qwen3-1.7B",
             "messages": contextual_messages(verified, results),
@@ -342,6 +360,8 @@ class BundledModelSession:
         }
         if acf_report is not None:
             result["acf_routing"] = acf_report
+        if topic_control_report is not None:
+            result["topic_control_routing"] = topic_control_report
         return result
 
     def classify_semantics(self, message: str) -> dict[str, Any]:
