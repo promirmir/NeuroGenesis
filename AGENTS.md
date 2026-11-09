@@ -315,3 +315,8 @@ chat restores the code but not personal local experience data. Back it up
 privately if continuity of learned neural state matters. `forget-event` is not
 neural unlearning. Do not claim meaningful language understanding or mental
 awareness because the database can recall exact hashes.
+
+
+## 2026-11-09 — 0.12.6 real dialogue paired evaluation candidate
+
+Base main 2e6ff6ca (verified released 0.12.5); branch feat/causal-dialogue-evaluation-20261109. Extend bundled Qwen chat with opt-in keyword-only use_context/deterministic controls, default behavior unchanged. Add read-only SQLite holdout paired evaluation Qwen-alone vs SAME Qwen+approved TXT, alternating evaluation order, literal/unsupported-source metrics only, aggregate private report no raw prompts, no web, model weights untouched. New tests for controls, no-source/privacy/paired comparisons and fail-closed data. Docs/DIALOGUE_PAIRED_EVALUATION_0126.md. This does not yet measure ACF user-task improvements and MUST NOT claim proven learning gain. Must run full five CI workflows and genuine frozen EXE before merge+public release. Author public credit ONLY Miron przy pomocy AI. Do not erase existing SQLite or break full bundled GGUF. No Work handoff.
