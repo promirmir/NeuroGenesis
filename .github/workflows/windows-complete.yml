@@ -30,14 +30,54 @@ jobs:
         run: python -m pip install "pyinstaller>=6,<7" "pillow>=11,<13"
       - name: Download pinned llama.cpp Windows CPU engine and verify release SHA-256
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           $ErrorActionPreference = 'Stop'
           New-Item -ItemType Directory -Force -Path bundle/ng_runtime | Out-Null
-          $url = 'https://github.com/ggml-org/llama.cpp/releases/download/b12211/llama-b12211-bin-win-cpu-x64.zip'
-          & curl.exe --fail --location --retry 3 --silent --show-error --output llama-cpu.zip $url
-          if ($LASTEXITCODE -ne 0) { throw 'Official llama.cpp download failed' }
+          # GitHub release CDN sometimes returns transient HTTP 504.
+          # Download ONLY the immutable official b12211 asset, trying
+          # authenticated GitHub release API first, then the release URL
+          # and official REST asset endpoint. Never relax the pinned SHA.
+          $name = 'llama-b12211-bin-win-cpu-x64.zip'
+          $expected = '23729000408c6968faf5e322afc99319d3b8c576ba872ef7663d9b89810090f3'
+          $releaseUrl = "https://github.com/ggml-org/llama.cpp/releases/download/b12211/$name"
+          $assetUrl = 'https://api.github.com/repos/ggml-org/llama.cpp/releases/assets/724569181'
+          $verified = $false
+          foreach ($method in @('gh-release-api', 'official-release-url', 'official-rest-asset')) {
+            for ($attempt = 1; $attempt -le 3 -and -not $verified; $attempt++) {
+              Remove-Item llama-cpu.zip, $name -ErrorAction SilentlyContinue
+              $code = 1
+              if ($method -eq 'gh-release-api') {
+                & gh release download b12211 --repo ggml-org/llama.cpp --pattern $name --dir . --clobber
+                $code = $LASTEXITCODE
+                if ($code -eq 0 -and (Test-Path $name)) {
+                  Move-Item $name llama-cpu.zip -Force
+                }
+              } elseif ($method -eq 'official-release-url') {
+                & curl.exe --fail --location --retry 4 --retry-all-errors --retry-delay 5 --connect-timeout 25 --max-time 240 --silent --show-error --output llama-cpu.zip $releaseUrl
+                $code = $LASTEXITCODE
+              } else {
+                & curl.exe --fail --location --retry 4 --retry-all-errors --retry-delay 5 --connect-timeout 25 --max-time 240 --silent --show-error --header 'Accept: application/octet-stream' --header "Authorization: Bearer $env:GH_TOKEN" --output llama-cpu.zip $assetUrl
+                $code = $LASTEXITCODE
+              }
+              if ($code -eq 0 -and (Test-Path llama-cpu.zip)) {
+                $hash = (Get-FileHash llama-cpu.zip -Algorithm SHA256).Hash.ToLowerInvariant()
+                if ($hash -eq $expected) {
+                  $verified = $true
+                  Write-Host "Verified official b12211 SHA-256 via $method."
+                  break
+                }
+                Write-Warning "Unverified data from $method (SHA-256 mismatch); discarding."
+                Remove-Item llama-cpu.zip -Force
+              }
+              if (-not $verified) { Start-Sleep -Seconds ([Math]::Min(24, 5 * $attempt)) }
+            }
+            if ($verified) { break }
+          }
+          if (-not $verified) { throw 'Could not obtain SHA-256-verified official llama.cpp b12211 asset' }
           $hash = (Get-FileHash llama-cpu.zip -Algorithm SHA256).Hash.ToLowerInvariant()
-          if ($hash -ne '23729000408c6968faf5e322afc99319d3b8c576ba872ef7663d9b89810090f3') { throw "Llama engine digest mismatch: $hash" }
+          if ($hash -ne $expected) { throw "Llama engine digest mismatch: $hash" }
           Expand-Archive llama-cpu.zip -DestinationPath extracted-llama -Force
           $server = Get-ChildItem extracted-llama -Recurse -File -Filter 'llama-server.exe' | Select-Object -First 1
           if ($null -eq $server) { throw 'Official archive has no llama-server.exe' }
