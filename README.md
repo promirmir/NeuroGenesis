@@ -1,3 +1,7 @@
+## NeuroGenesis 0.12.8 — czteroramienny test rzeczywistego wkładu ACF
+
+Dodano **kontrolę bez plastycznej sieci**: lokalny Qwen+TXT RAG z doborem jednego dodatkowego zatwierdzonego fragmentu na podstawie bieżącego tematu. Porównuje się ją na tej samej próbie z RAG kierowanym prognozą ACF, zwykłym RAG i samym Qwen. Kryteria doboru, budżet źródeł i klasyfikator są takie same; nowy fragment nie może wyprzeć lepiej dopasowanego czwartego dokumentu. Test A/B/C/D zbiera sparowane wyniki, test dokładny i przedziały opisowe, sprawdza zamrożenie ACF/SQLite, niczego nie wysyła ani nie trenuje. **Nie udowodniono jeszcze poprawy jakości AI**. Wbudowany test modelu sprawdza rzeczywistą ścieżkę kontrolną także z gotowego Windows EXE. [Dokumentacja](docs/ACF_MATCHED_ABLATION_0128.md). Domyślna aplikacja, wagi i lokalna pamięć pozostają niezmienione.
+
 ## NeuroGenesis 0.12.7 — aktywne, kontrolowane wykorzystanie ACF w rozmowie
 
 **Eksperyment, domyślnie wyłączony:** ACF po wykazanej przewadze prequential MSE i zgodności rozpoznanego znaczenia bieżącego pytania może dodać **jeden** nowy fragment uprzednio zatwierdzonego lokalnego TXT do rzeczywistego kontekstu Qwen3-1.7B. Brak dowodu poprawy jakości rozmowy; decyzje są wstrzymywane przy niepewności. Nowy protokół A/B/C mierzy osobno Qwen, Qwen+TXT oraz Qwen+TXT+ACF. Kod nie zmienia wag Qwen, nie modyfikuje prywatnych baz i nie udaje AGI. [Dokumentacja i bezpieczeństwo](docs/ACF_DIALOGUE_ROUTING_0127.md).
@@ -148,7 +152,7 @@ nie należy mylić starszego EXE 0.8.0 z nowymi funkcjami.
 
 # NeuroGenesis — Mission Control
 
-**research prototype v0.12.7.**  
+**research prototype v0.12.8.**  
 **Publiczne autorstwo: Miron przy pomocy AI.**
 
 NeuroGenesis to lokalny projekt badawczy AI: rzeczywista mała sieć neuronowa LIF ze strukturalną plastycznością, prywatna trwała baza SQLite, kontrolowane zdobywanie informacji ze źródeł HTTPS, ekstrakcyjne cytowanie oraz odrębny eksperymentalny model Foundation Brain trenowany w PyTorch. **System nie jest AGI, świadomością, modelem ludzkiego mózgu ani niezależnie zweryfikowanym systemem rozumienia języka naturalnego.**
