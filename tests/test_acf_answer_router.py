@@ -6,6 +6,7 @@ NOT experimental evidence of superior neural learning or QA competence.
 from __future__ import annotations
 
 import json
+import sqlite3
 from pathlib import Path
 import tempfile
 import unittest
@@ -13,6 +14,7 @@ from unittest.mock import MagicMock, patch
 
 from neurogenesis.acf import AdaptiveCognitiveFabric
 from neurogenesis.acf_semantics import AXES, VERSION
+from neurogenesis.acf_semantic_memory import SemanticFabricStore
 from neurogenesis.acf_answer_router import route_for_question
 from neurogenesis.bundled_llm import BundledModelSession
 from neurogenesis.dialogue_abc import evaluate_abc
@@ -60,7 +62,18 @@ class RouterTests(unittest.TestCase):
         self.knowledge.import_txt(path, approved=True)
         self.question = "Wyjaśnij algorytm neuronowy zastosowany w Python"
         self.state = self.root / "semantic_fabric.acf.json"
-        synthetic_gated_fabric().save(self.state)
+        fabric = synthetic_gated_fabric()
+        fabric.last_event_id = fabric.events
+        fabric.save(self.state)
+        ledger = SemanticFabricStore(self.root)
+        # Synthetic provenance fixture: validates the cursor check but must
+        # NEVER be described as trained on actual Qwen classifications.
+        with sqlite3.connect(ledger.path) as con:
+            con.executemany(
+                "INSERT INTO observations(features,tagger,recorded_utc) "
+                "VALUES(?,?,?)",
+                [(json.dumps([0] * 8), VERSION, "synthetic-only")
+                 for _ in range(fabric.events)])
 
     def test_measured_route_adds_actual_new_approved_passage_not_fake_source(self):
         before = self.knowledge.status()
@@ -82,7 +95,10 @@ class RouterTests(unittest.TestCase):
         self.assertFalse(meta["neural_task_improvement_proven"])
 
     def test_unevidenced_neural_model_never_uses_second_inference_or_source(self):
-        AdaptiveCognitiveFabric().save(self.state)
+        weak = AdaptiveCognitiveFabric()
+        weak.observe([0.0] * 8)
+        weak.last_event_id = 1
+        weak.save(self.state)
         baseline = [{"text": "bazowe", "file": "user.txt", "sha256": "x"}]
         with patch.object(self.knowledge, "retrieve",
                           side_effect=AssertionError("no speculative FTS")):
@@ -100,6 +116,21 @@ class RouterTests(unittest.TestCase):
                 lambda _: verified_current_tag("engineering"))
         self.assertEqual(sources, [])
         self.assertEqual(meta["status"], "predicted_topic_mismatch")
+
+    def test_hashed_sensor_checkpoint_cannot_masquerade_as_semantic_acf(self):
+        legacy = self.root / "adaptive_fabric.acf.json"
+        legacy.write_bytes(self.state.read_bytes())
+        sources, meta = route_for_question(
+            self.question, [], self.knowledge, legacy,
+            lambda _: self.fail("must not accept ordinary sensory ACF"))
+        self.assertEqual(sources, [])
+        self.assertEqual(meta["status"], "missing_semantic_ledger_provenance")
+        # Semantic SQLite missing or incorrectly tagged also fails closed.
+        self.root.joinpath("semantic_fabric.sqlite3").unlink()
+        _, meta = route_for_question(
+            self.question, [], self.knowledge, self.state,
+            lambda _: self.fail("must not accept missing semantic ledger"))
+        self.assertEqual(meta["status"], "missing_semantic_ledger_provenance")
 
     def test_invalid_attestation_and_corrupt_state_fail_closed(self):
         sources, meta = route_for_question(
