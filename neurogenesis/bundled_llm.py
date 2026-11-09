@@ -253,7 +253,8 @@ class BundledModelSession:
 
     def chat(self, messages: list[dict[str, str]], *,
              use_context: bool = True,
-             deterministic: bool = False) -> dict[str, Any]:
+             deterministic: bool = False,
+             acf_state_path: str | Path | None = None) -> dict[str, Any]:
         """Real local inference; optional controls for a paired offline audit.
 
         Defaults preserve the normal application behavior. Disabling context
@@ -263,6 +264,8 @@ class BundledModelSession:
         """
         if type(use_context) is not bool or type(deterministic) is not bool:
             raise ValueError("Trial controls must be explicit booleans.")
+        if acf_state_path is not None and not use_context:
+            raise ValueError("ACF requires the approved local TXT context.")
         verified = check_chat_messages(messages)
         with self._lock:
             p, port = self._proc, self._port
@@ -291,6 +294,19 @@ class BundledModelSession:
                         "sha256": str(first["sha256"]),
                         "origin": "approved_https_research",
                     })
+        acf_report = None
+        if acf_state_path is not None:
+            if self.knowledge is None:
+                acf_report = {
+                    "status": "no_approved_txt_store",
+                    "added_approved_txt_passages": 0,
+                    "neural_task_improvement_proven": False,
+                }
+            else:
+                from .acf_answer_router import route_for_question
+                results, acf_report = route_for_question(
+                    verified[-1]["content"], results, self.knowledge,
+                    acf_state_path, self.classify_semantics)
         payload = {
             "model": "NeuroGenesis-Qwen3-1.7B",
             "messages": contextual_messages(verified, results),
@@ -313,7 +329,7 @@ class BundledModelSession:
         reply = msg.get("content")
         if not isinstance(reply, str) or not reply.strip():
             raise RuntimeError("Model nie wygenerował odpowiedzi; spróbuj krótszego pytania.")
-        return {
+        result = {
             "status": "offline_real_gguf_inference",
             "reply": reply.strip(),
             "model": "Qwen3-1.7B-Q4_K_M (Unsloth quantization)",
@@ -324,6 +340,9 @@ class BundledModelSession:
                          "sha256": r["sha256"]} for i, r in enumerate(results, 1)],
             "model_was_gradient_trained_by_neurogenesis": False,
         }
+        if acf_report is not None:
+            result["acf_routing"] = acf_report
+        return result
 
     def classify_semantics(self, message: str) -> dict[str, Any]:
         """Actually infer an eight-axis meaning vector with the bundled GGUF.

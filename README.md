@@ -1,3 +1,7 @@
+## NeuroGenesis 0.12.7 — aktywne, kontrolowane wykorzystanie ACF w rozmowie
+
+**Eksperyment, domyślnie wyłączony:** ACF po wykazanej przewadze prequential MSE i zgodności rozpoznanego znaczenia bieżącego pytania może dodać **jeden** nowy fragment uprzednio zatwierdzonego lokalnego TXT do rzeczywistego kontekstu Qwen3-1.7B. Brak dowodu poprawy jakości rozmowy; decyzje są wstrzymywane przy niepewności. Nowy protokół A/B/C mierzy osobno Qwen, Qwen+TXT oraz Qwen+TXT+ACF. Kod nie zmienia wag Qwen, nie modyfikuje prywatnych baz i nie udaje AGI. [Dokumentacja i bezpieczeństwo](docs/ACF_DIALOGUE_ROUTING_0127.md).
+
 ## NeuroGenesis 0.12.6 — weryfikacja jakości odpowiedzi Qwen w warunkach kontrolnych
 
 Dodano rzeczywisty, lokalny, prywatny test A/B: ten sam Qwen3-1.7B bez źródeł vs z zaakceptowaną wiedzą TXT, z pomiarem trafień, kosztu czasu i błędnych cytowań. W ramach eksperymentu nie zmieniamy domyślnego interfejsu ani pamięci. W tej wersji nie ma jeszcze dowodu, że ACF poprawia dialog. [Protokół i instrukcja](docs/DIALOGUE_PAIRED_EVALUATION_0126.md).
@@ -144,7 +148,7 @@ nie należy mylić starszego EXE 0.8.0 z nowymi funkcjami.
 
 # NeuroGenesis — Mission Control
 
-**research prototype v0.12.6.**  
+**research prototype v0.12.7.**  
 **Publiczne autorstwo: Miron przy pomocy AI.**
 
 NeuroGenesis to lokalny projekt badawczy AI: rzeczywista mała sieć neuronowa LIF ze strukturalną plastycznością, prywatna trwała baza SQLite, kontrolowane zdobywanie informacji ze źródeł HTTPS, ekstrakcyjne cytowanie oraz odrębny eksperymentalny model Foundation Brain trenowany w PyTorch. **System nie jest AGI, świadomością, modelem ludzkiego mózgu ani niezależnie zweryfikowanym systemem rozumienia języka naturalnego.**

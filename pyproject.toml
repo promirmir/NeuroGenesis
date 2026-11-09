@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neurogenesis-research"
-version = "0.12.6"
+version = "0.12.7"
 description = "Experimental spiking network with bounded structural neuroplasticity and auditable self-state"
 readme = "README.md"
 requires-python = ">=3.11"
