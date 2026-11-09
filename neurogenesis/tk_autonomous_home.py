@@ -61,6 +61,7 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
     own_brain_enabled = brain_enabled or tk.BooleanVar(master=tab, value=True)
     auto_goals = tk.BooleanVar(master=tab, value=True)
     sensory_inputs = tk.BooleanVar(master=tab, value=True)
+    acf_answer_mode = tk.BooleanVar(master=tab, value=False)  # opt-in research
     state_model = tk.StringVar(master=tab, value="MODEL / przygotowanie...")
     state_brain = tk.StringVar(master=tab, value="MÓZG / odczyt stanu...")
     state_corpus = tk.StringVar(master=tab, value="WIEDZA / odczyt danych...")
@@ -205,8 +206,9 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
         if len(history) > 13:
             history = history[-13:]
         record_sensory = bool(sensory_inputs.get())
+        acf_path = semantic_store.state_path if acf_answer_mode.get() else None
         def run():
-            reply = model.chat(history)
+            reply = model.chat(history, acf_state_path=acf_path)
             sensory_error = None
             if record_sensory:
                 try:
@@ -232,6 +234,14 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
     ttk.Checkbutton(
         buttons, text="Uczenie LIF + semantyczne ACF (bez treści rozmów)",
         variable=sensory_inputs).pack(side="right")
+    acf_options = tk.Frame(left, bg=PANEL)
+    acf_options.pack(side="bottom", fill="x", padx=10, pady=(0, 3))
+    ttk.Checkbutton(
+        acf_options, text="BADANIE: ACF może dobrać 1 lokalny fragment TXT",
+        variable=acf_answer_mode).pack(side="left")
+    tk.Label(
+        acf_options, text="Domyślnie wyłączone · tylko przy przewadze MSE",
+        bg=PANEL, fg=MUTED, font=("Segoe UI", 8)).pack(side="right")
 
     def stop_model():
         model.stop()
@@ -586,12 +596,21 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
                             ))
                         sources = report.get("sources", [])
                         log("NEUROGENESIS", answer)
+                        acf = report.get("acf_routing")
+                        acf_note = ""
+                        if acf:
+                            acf_note = (
+                                " ACF: +1 zatwierdzony TXT (eksperyment)."
+                                if acf.get("status") == "acf_passage_added"
+                                else " ACF: bez wpływu (" +
+                                str(acf.get("status", "brak danych")) + ").")
                         conversation_status.set(
                             f"Odpowiedź z lokalnych wag; "
-                            f"{len(sources)} pasujących fragmentów TXT. "
+                            f"{len(sources)} pobranych fragmentów. "
                             + ("LIF: " + value["sensory_error"]
                                if value["sensory_error"] else "Bodźce LIF zapisane w SQLite."
-                               if sensory_inputs.get() else "Bez zapisu treści rozmowy."))
+                               if sensory_inputs.get() else "Bez zapisu treści rozmowy.")
+                            + acf_note)
                         state_model.set("MODEL / gotowy na następne pytanie")
                         if (question and value.get("record_sensory")
                                 and sensory_inputs.get()):
