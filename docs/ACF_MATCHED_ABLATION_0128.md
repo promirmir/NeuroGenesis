@@ -15,7 +15,7 @@ Wersja 0.12.8 wprowadza rzetelniejszą ablację z czwartym wariantem, bez włąc
 | C — Qwen+TXT+ACF | To samo RAG, plus ewentualna prognoza historycznie uczonego ACF |
 | D — Qwen+TXT+temat bieżący | To samo RAG i jedna dodatkowa próba wyszukiwania, ale **bez prognoz ACF**; bazuje na bieżącej klasyfikacji Qwen |
 
-**Pierwszoplanowym testem jest C kontra D.** Obydwa warianty dysponują tą samą zatwierdzoną bazą, tym samym klasyfikatorem, słownikiem zapytań FTS, progiem 2 odrębnych słów-kluczy i budżetem maksymalnie czterech źródeł. D wybiera jedną dziedzinę według z góry ustalonej kolejności ośmiu osi; nie wolno mu wybierać dziedziny na podstawie oczekiwanej odpowiedzi. C może wstrzymać się, gdy jego rzeczywiście zmierzony błąd prognozy przegrywa z modelami kontrolnymi lub przewidywany temat nie zgadza się z aktualnym pytaniem.
+**Pierwszoplanowym testem jest C kontra D.** Obydwa warianty dysponują tą samą zatwierdzoną bazą, tym samym klasyfikatorem, słownikiem zapytań FTS, progiem 2 odrębnych słów-kluczy i budżetem maksymalnie czterech źródeł. D wybiera jedną dziedzinę za pomocą z góry ustalonego dopasowania słów pytania do słowników dziedzin; przy remisie rozstrzyga stała kolejność osi. Nie wolno wybierać dziedziny na podstawie oczekiwanej odpowiedzi ani treści znalezionych źródeł. C może wstrzymać się, gdy jego rzeczywiście zmierzony błąd prognozy przegrywa z modelami kontrolnymi lub przewidywany temat nie zgadza się z aktualnym pytaniem.
 
 **Zasada antyregresyjna:** jeśli cztery fragmenty są już w kontekście, nowy fragment z C lub D może zastąpić czwarty tylko przy *ściśle większej* liczbie zgodnych słów-kluczy. Nie dopuszczamy automatycznego wypierania lepiej dopasowanego źródła.
 
