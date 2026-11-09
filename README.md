@@ -1,3 +1,7 @@
+## NeuroGenesis 0.12.6 — weryfikacja jakości odpowiedzi Qwen w warunkach kontrolnych
+
+Dodano rzeczywisty, lokalny, prywatny test A/B: ten sam Qwen3-1.7B bez źródeł vs z zaakceptowaną wiedzą TXT, z pomiarem trafień, kosztu czasu i błędnych cytowań. W ramach eksperymentu nie zmieniamy domyślnego interfejsu ani pamięci. W tej wersji nie ma jeszcze dowodu, że ACF poprawia dialog. [Protokół i instrukcja](docs/DIALOGUE_PAIRED_EVALUATION_0126.md).
+
 ## NeuroGenesis 0.12.5 — ACF podejmuje pierwszą mierzalną decyzję
 
 Nowa `semantic_policy.py` zamyka pierwszą realną pętlę działania:
@@ -140,7 +144,7 @@ nie należy mylić starszego EXE 0.8.0 z nowymi funkcjami.
 
 # NeuroGenesis — Mission Control
 
-**research prototype v0.12.5.**  
+**research prototype v0.12.6.**  
 **Publiczne autorstwo: Miron przy pomocy AI.**
 
 NeuroGenesis to lokalny projekt badawczy AI: rzeczywista mała sieć neuronowa LIF ze strukturalną plastycznością, prywatna trwała baza SQLite, kontrolowane zdobywanie informacji ze źródeł HTTPS, ekstrakcyjne cytowanie oraz odrębny eksperymentalny model Foundation Brain trenowany w PyTorch. **System nie jest AGI, świadomością, modelem ludzkiego mózgu ani niezależnie zweryfikowanym systemem rozumienia języka naturalnego.**
@@ -197,3 +201,8 @@ W szczególności system może błędnie cytować dokument przy pytaniu z fałsz
 - [Testy CI](https://github.com/promirmir/NeuroGenesis/actions)
 
 Wydanie Windows jest publikowane tylko z dokładnie zweryfikowanego commita `main` i zawiera plik kontrolny SHA-256. **v0.8.0 jest etapem doprowadzania istniejącej aplikacji do wyższej jakości użytkowej, a nie deklaracją osiągnięcia AGI ani ukończenia wszystkich celów badawczych.**
+
+
+### Eksperyment pomiarowy 0.12.6 — Qwen kontra Qwen + pamięć TXT
+
+Wprowadzono niezależny audyt A/B prawdziwego lokalnego Qwen (ten sam model, próba bez źródeł i z zatwierdzoną wiedzą TXT). Mierzy dosłowne trafienia odpowiedzi, odnalezione źródła, fałszywe cytowania, wyniki sparowane i koszty czasowe; nie używa sieci, nie trenuje modelu i nie publikuje prywatnych pytań. **Nie dowodzi jeszcze przewagi ACF ani AGI.** Instrukcja: [DIALOGUE_PAIRED_EVALUATION_0126.md](docs/DIALOGUE_PAIRED_EVALUATION_0126.md). Domyślne rozmowy, prywatne SQLite i pobierane EXE zachowują dotychczasowe działanie.
