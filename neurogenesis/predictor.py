@@ -78,7 +78,9 @@ class NextInputPredictor:
                     self.bias[i] += delta
                     for j, feature in enumerate(self.last_features):
                         self.weights[i][j] = max(-8.0, min(8.0, self.weights[i][j] + delta * feature))
-        outcome = self.brain.step(values)
+        # A holdout probe may advance transient LIF activity but must not
+        # train synapses, grow topology or register novelty patterns.
+        outcome = self.brain.step(values, learn=learn)
         new_n = len(self.brain.voltages)
         for row in self.weights:
             row.extend([0.0] * (new_n - len(row)))
