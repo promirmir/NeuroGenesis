@@ -1,3 +1,7 @@
+## NeuroGenesis 0.13.1 — rzetelny test transferu i zamrożonej walidacji sieci
+
+**Dwa konkretne wzmocnienia:** prywatny eksperyment porównujący realne odpowiedzi Qwen bez pamięci i z zatwierdzonymi korektami na nowych parafrazach oraz niepowiązanych kontrolach; naprawa błędu, przez który dotychczasowe próby `learn=False` nadal uczyły synapsy i zmieniały strukturę sieci LIF. Teraz badanie nie zmienia wag, wzorców ani topologii; rzeczywista aktywność elektryczna pozostaje. Nowe testy mierzą również fałszywe wspomnienia, regresję i zmiany prywatnej pamięci podczas audytu. Brak niezależnego prywatnego holdoutu oznacza, że nie deklarujemy jeszcze poprawy inteligencji. Domyślna rozmowa, dane i istniejący EXE zachowują dotychczasowe funkcje. [Audyt pierwotnego celu, procedura eksperymentu i kryteria ukończenia](docs/NEUROGENESIS_RESEARCH_GATES_0131.md).
+
 ## NeuroGenesis 0.13.0 — rzeczywista pamięć korekt między rozmowami
 
 W głównej aplikacji dostępny jest przycisk **„PAMIĘĆ POPRAWEK / ZAPAMIĘTAJ I POPRAW”**. Wpisz własną poprawioną odpowiedź, zatwierdź ją i wykorzystaj wiedzę w następnej rozmowie — również po zamknięciu i ponownym uruchomieniu programu. Oddzielne, prywatne SQLite zapisuje tylko pytania i poprawki **jawnie zaakceptowane** przez operatora. Korektę można później edytować lub usunąć. Qwen3-1.7B otrzymuje co najwyżej jedną trafną korektę jako oznaczone, niezaufane dane; automatyczne zapisywanie rozmów pozostaje wyłączone. Wagi Qwen się nie zmieniają. Rzeczywisty test modelu z kompletnym Windows EXE potwierdza odtwarzanie syntetycznego kodu po jego zatwierdzeniu i zapisie. [Dokładne zasady pamięci, usuwania i bezpieczeństwa](docs/DURABLE_CORRECTIVE_MEMORY_0130.md).
@@ -160,7 +164,7 @@ nie należy mylić starszego EXE 0.8.0 z nowymi funkcjami.
 
 # NeuroGenesis — Mission Control
 
-**research prototype v0.13.0.**  
+**research prototype v0.13.1.**  
 **Publiczne autorstwo: Miron przy pomocy AI.**
 
 NeuroGenesis to lokalny projekt badawczy AI: rzeczywista mała sieć neuronowa LIF ze strukturalną plastycznością, prywatna trwała baza SQLite, kontrolowane zdobywanie informacji ze źródeł HTTPS, ekstrakcyjne cytowanie oraz odrębny eksperymentalny model Foundation Brain trenowany w PyTorch. **System nie jest AGI, świadomością, modelem ludzkiego mózgu ani niezależnie zweryfikowanym systemem rozumienia języka naturalnego.**

@@ -59,8 +59,9 @@ def _checked_stream(stream: Sequence[Sequence[float]], width: int, *,
 
 def _score(model: NextInputPredictor,
            stream: tuple[tuple[float, ...], ...]) -> float:
-    # Each probe has an isolated neural substrate; learn=False freezes the
-    # readout, not STDP, matching v0.4 semantics without modifying its API.
+    # Each probe starts from an isolated saved state; learn=False now freezes
+    # BOTH the readout AND synaptic/topological learning. Dynamic voltages
+    # and spikes still evolve for authentic inference on unseen examples.
     clone = NextInputPredictor.from_dict(model.to_dict())
     errors = []
     for index, sample in enumerate(stream):
@@ -155,7 +156,7 @@ def run_self_development_cycle(
             and trials[i]["synapses"] <= trials[0]["synapses"] + limits.max_synapses_increase)]
     winner = min(selection_eligible, key=lambda i: trials[i]["selection_mse"]) if selection_eligible else None
     report: dict[str, Any] = {
-        "protocol": "neurogenesis_bounded_self_development_v1",
+        "protocol": "neurogenesis_bounded_self_development_v2_frozen_audit",
         "selected_candidate": None if winner is None else trials[winner]["candidate"],
         "trials": trials,
         "precycle_retained_skill_mse": old_guard_score,
@@ -163,8 +164,8 @@ def run_self_development_cycle(
         "promoted": False,
         "reason": "no_selection_gain" if winner is None else "pending_audit",
         "limitations": ("Only bounded neural/readout parameter tuning on predeclared samples. "
-                        "Validation evaluates cloned substrates with v0.4 STDP still active; "
-                        "not an autonomous coding agent, semantic learning, or AGI. "
+                        "Holdout evaluation freezes synapses, patterns, growth and readout; "
+                        "it retains dynamic LIF electrical activity but is not AGI. "
                         "Selection and audit must be independent and audit data never reused."),
     }
     if winner is not None:

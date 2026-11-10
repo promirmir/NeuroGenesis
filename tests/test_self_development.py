@@ -35,7 +35,7 @@ class SelfDevelopmentTests(unittest.TestCase):
         old = self.current.to_dict()
         _, report = run_self_development_cycle(self.current, **self.params)
         self.assertEqual(self.current.to_dict(), old)
-        self.assertEqual(report["protocol"], "neurogenesis_bounded_self_development_v1")
+        self.assertEqual(report["protocol"], "neurogenesis_bounded_self_development_v2_frozen_audit")
         self.assertLessEqual(len(report["trials"]), 5)
 
     def test_deterministic_replay(self):
