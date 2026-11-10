@@ -1,3 +1,7 @@
+## NeuroGenesis 0.13.2 — niezależny czasowo, zamrożony test plastycznej sieci ACF
+
+Nowy **weryfikowalny audyt własnej sieci** sprawdza, czy rozwój neuronów poprawia prognozowanie późniejszych, niewidzianych obserwacji. Na 70% rzeczywiście zapisanych lokalnych kategorii Qwen uczy dwie sieci — plastyczną i o nierosnącej strukturze — po czym na pozostałych 30% **nie pozwala im już aktualizować wag, synaps ani topologii**. Z góry ustalone pięć inicjalizacji, dwie części testu, kontrola ostatniego zdarzenia, kontrola stałej 0,5, jawny koszt neuronów i synaps oraz wynik także ujemny. Odczytuje prywatne SQLite wyłącznie read-only, nie zmienia Qwen ani zwykłej rozmowy. **To jeszcze nie jest dowód poprawy językowej inteligencji ani AGI**, a testy syntetyczne CI nie są realną ewaluacją użytkownika. [Protokół, ograniczenia i polecenie uruchomienia](docs/ACF_FROZEN_TEMPORAL_HOLDOUT_0132.md).
+
 ## NeuroGenesis 0.13.1 — rzetelny test transferu i zamrożonej walidacji sieci
 
 **Dwa konkretne wzmocnienia:** prywatny eksperyment porównujący realne odpowiedzi Qwen bez pamięci i z zatwierdzonymi korektami na nowych parafrazach oraz niepowiązanych kontrolach; naprawa błędu, przez który dotychczasowe próby `learn=False` nadal uczyły synapsy i zmieniały strukturę sieci LIF. Teraz badanie nie zmienia wag, wzorców ani topologii; rzeczywista aktywność elektryczna pozostaje. Nowe testy mierzą również fałszywe wspomnienia, regresję i zmiany prywatnej pamięci podczas audytu. Brak niezależnego prywatnego holdoutu oznacza, że nie deklarujemy jeszcze poprawy inteligencji. Domyślna rozmowa, dane i istniejący EXE zachowują dotychczasowe funkcje. [Audyt pierwotnego celu, procedura eksperymentu i kryteria ukończenia](docs/NEUROGENESIS_RESEARCH_GATES_0131.md).
@@ -164,7 +168,7 @@ nie należy mylić starszego EXE 0.8.0 z nowymi funkcjami.
 
 # NeuroGenesis — Mission Control
 
-**research prototype v0.13.1.**  
+**research prototype v0.13.2.**  
 **Publiczne autorstwo: Miron przy pomocy AI.**
 
 NeuroGenesis to lokalny projekt badawczy AI: rzeczywista mała sieć neuronowa LIF ze strukturalną plastycznością, prywatna trwała baza SQLite, kontrolowane zdobywanie informacji ze źródeł HTTPS, ekstrakcyjne cytowanie oraz odrębny eksperymentalny model Foundation Brain trenowany w PyTorch. **System nie jest AGI, świadomością, modelem ludzkiego mózgu ani niezależnie zweryfikowanym systemem rozumienia języka naturalnego.**
