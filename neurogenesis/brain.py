@@ -132,7 +132,7 @@ class Brain:
         self.rng_state = (1664525 * self.rng_state + 1013904223) % (2**32)
         return self.rng_state / (2**32)
 
-    def _novelty(self, stimulus: list[float]) -> float:
+    def _novelty(self, stimulus: list[float], *, learn: bool = True) -> float:
         if not self.patterns:
             distance = 1.0
         else:
@@ -140,7 +140,8 @@ class Brain:
                 sum(abs(a - b) for a, b in zip(stimulus, pattern)) / self.config.input_size
                 for pattern in self.patterns
             )
-        if distance >= self.config.novelty_threshold and len(self.patterns) < self.config.max_patterns:
+        if (learn and distance >= self.config.novelty_threshold
+                and len(self.patterns) < self.config.max_patterns):
             self.patterns.append(stimulus.copy())
             self.pending_novelty += 1
         return distance
@@ -162,7 +163,13 @@ class Brain:
         self.total_grown += 1
         return 1
 
-    def step(self, stimulus: Sequence[float], *, reward: float = 0.0) -> StepResult:
+    def step(self, stimulus: Sequence[float], *, reward: float = 0.0,
+             learn: bool = True) -> StepResult:
+        # Validated frozen inference still integrates voltage, traces and
+        # spikes; it never updates topology, synapse weights, age, or
+        # remembered novelty patterns. Inference must not train on audit data.
+        if type(learn) is not bool:
+            raise ValueError("learn must be a boolean.")
         c = self.config
         if len(stimulus) != c.input_size:
             raise ValueError(f"expected {c.input_size} input channels")
@@ -174,7 +181,7 @@ class Brain:
                 raise ValueError("input values must be finite numbers in [0, 1]")
             values.append(float(value))
         self.last_stimulus = values
-        novelty = self._novelty(values)
+        novelty = self._novelty(values, learn=learn)
         n = len(self.voltages)
         current = [0.0] * n
         for i, value in enumerate(values):
@@ -193,12 +200,13 @@ class Brain:
                 self.voltages[i] = 0.0
                 self.refractory[i] = 1
         # Causal pre-before-post potentiation and weaker reverse depression.
-        for edge in self.synapses:
-            potentiation = self.traces[edge.pre] * new_spikes[edge.post]
-            depression = 0.25 * self.traces[edge.post] * new_spikes[edge.pre]
-            delta = c.plasticity_rate * (1.0 + float(reward)) * (potentiation - depression)
-            edge.weight = max(0.0, min(c.weight_limit, edge.weight * (1 - c.weight_decay) + delta))
-            edge.age += 1
+        if learn:
+            for edge in self.synapses:
+                potentiation = self.traces[edge.pre] * new_spikes[edge.post]
+                depression = 0.25 * self.traces[edge.post] * new_spikes[edge.pre]
+                delta = c.plasticity_rate * (1.0 + float(reward)) * (potentiation - depression)
+                edge.weight = max(0.0, min(c.weight_limit, edge.weight * (1 - c.weight_decay) + delta))
+                edge.age += 1
         for i in range(n):
             self.traces[i] = min(5.0, self.traces[i] * c.trace_decay + new_spikes[i])
         self.spikes = new_spikes
@@ -210,7 +218,7 @@ class Brain:
         energy_proxy = spiked + 0.001 * len(self.synapses)
         self.total_energy_proxy += energy_proxy
         grown = pruned = 0
-        if self.steps % c.growth_interval == 0:
+        if learn and self.steps % c.growth_interval == 0:
             grown = self._grow()
             before = len(self.synapses)
             self.synapses = [e for e in self.synapses if not (e.age >= c.prune_min_age and e.weight < c.prune_threshold)]
