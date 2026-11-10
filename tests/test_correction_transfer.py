@@ -40,9 +40,9 @@ class TransferTests(unittest.TestCase):
              "expected_correction_id": self.a["id"],
              "expected_answer_fragment": "KOB-914"},
             {"kind": "paraphrase", "question":
-             "Identyfikacyjny urządzenia Kobalt?",
-             "expected_correction_id": self.a["id"],
-             "expected_answer_fragment": "KOB-914"},
+             "Podaj identyfikator pamięć Kosmos?",
+             "expected_correction_id": self.b["id"],
+             "expected_answer_fragment": "MEM-72"},
             {"kind": "unrelated", "question":
              "W jakiej jednostce mierzymy pole magnetyczne?",
              "forbidden_answer_fragment": "KOB-914"},
