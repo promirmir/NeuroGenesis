@@ -18,6 +18,8 @@ from .acf_memory import FabricMemoryObserver
 from .acf_semantic_memory import SemanticFabricStore
 from .bundled_llm import BundledModelSession, has_bundled_model
 from .local_knowledge import LocalKnowledge
+from .corrective_memory import CorrectiveMemory
+from .tk_corrections import open_corrections_dialog
 from .memory import ExperienceMemory
 from .neural_telemetry import snapshot_neural_telemetry
 from .tk_connectome import TkConnectome
@@ -43,8 +45,11 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
     tab = ttk.Frame(parent)
     parent.add(tab, text="  NEUROGENESIS  ")
     parent.insert(0, tab)
+    corrections = CorrectiveMemory(
+        memory.path.with_name("approved_corrections.sqlite3"))
     model = BundledModelSession(
-        knowledge=knowledge, web_memory=memory, max_tokens=240)
+        knowledge=knowledge, web_memory=memory,
+        corrections=corrections, max_tokens=240)
     # ACF is independent of the legacy LIF database schema and weights.
     # It learns from existing hashed eight-channel observations ONLY.
     fabric_observer = FabricMemoryObserver(
@@ -70,6 +75,7 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
         "Model uruchamia się sam. Wpisz wiadomość — możesz to zrobić "
         "również podczas jego pierwszego ładowania."))
     turns: list[dict[str, str]] = []
+    last_exchange = {"question": "", "answer": ""}  # RAM only until approval
     last_brain_step = {"value": None}
     last_goal_refresh = {"value": ()}
 
@@ -242,6 +248,20 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
     tk.Label(
         acf_options, text="Domyślnie wyłączone · tylko przy przewadze MSE",
         bg=PANEL, fg=MUTED, font=("Segoe UI", 8)).pack(side="right")
+    memory_options = tk.Frame(left, bg=PANEL)
+    memory_options.pack(side="bottom", fill="x", padx=10, pady=(3, 3))
+    ttk.Button(
+        memory_options, text="PAMIĘĆ POPRAWEK / ZAPAMIĘTAJ I POPRAW",
+        command=lambda: open_corrections_dialog(
+            tab, corrections, last_exchange,
+            on_change=lambda: state_corpus.set(
+                "PAMIĘĆ KOREKT / " +
+                str(corrections.status()["approved_corrections"]) +
+                " zatwierdzonych wpisów"))
+    ).pack(side="left")
+    tk.Label(
+        memory_options, text="Tylko świadomie zatwierdzone informacje",
+        bg=PANEL, fg=MUTED, font=("Segoe UI", 8)).pack(side="left", padx=(8, 0))
 
     def stop_model():
         model.stop()
@@ -257,6 +277,8 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
         if isinstance(previous, threading.Thread) and previous.is_alive():
             return
         turns.clear()
+        last_exchange["question"] = ""
+        last_exchange["answer"] = ""
         transcript.configure(state="normal")
         transcript.delete("1.0", "end")
         transcript.configure(state="disabled")
@@ -464,8 +486,10 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
             corpus = knowledge.status()
             state_brain.set(
                 f"LIF / {brain['neurons']} neuronów · {brain['steps']} kroków")
+            corrections_count = corrections.status()["approved_corrections"]
             state_corpus.set(
-                f"WIEDZA / {corpus['files']} TXT · {corpus['passages']} frag.")
+                f"WIEDZA / {corpus['files']} TXT · {corpus['passages']} frag. "
+                f"· {corrections_count} poprawek")
             state_agent.set(
                 f"AUTO / {neural['new_events']}/{WINDOW} bodźców "
                 f"· {neural['promotions']} zatwierdz.")
@@ -594,6 +618,8 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
                                 {"role": "user", "content": question},
                                 {"role": "assistant", "content": answer[:1800]},
                             ))
+                            last_exchange["question"] = question
+                            last_exchange["answer"] = answer[:1800]
                         sources = report.get("sources", [])
                         log("NEUROGENESIS", answer)
                         acf = report.get("acf_routing")
@@ -604,13 +630,19 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
                                 if acf.get("status") == "acf_passage_added"
                                 else " ACF: bez wpływu (" +
                                 str(acf.get("status", "brak danych")) + ").")
+                        correction_used = bool(
+                            report.get("correction_memory", {}).get(
+                                "approved_correction_used", False))
                         conversation_status.set(
                             f"Odpowiedź z lokalnych wag; "
                             f"{len(sources)} pobranych fragmentów. "
                             + ("LIF: " + value["sensory_error"]
                                if value["sensory_error"] else "Bodźce LIF zapisane w SQLite."
                                if sensory_inputs.get() else "Bez zapisu treści rozmowy.")
-                            + acf_note)
+                            + acf_note
+                            + (" PAMIĘĆ: wykorzystano zatwierdzoną "
+                               "poprawkę z poprzedniej rozmowy."
+                               if correction_used else ""))
                         state_model.set("MODEL / gotowy na następne pytanie")
                         if (question and value.get("record_sensory")
                                 and sensory_inputs.get()):

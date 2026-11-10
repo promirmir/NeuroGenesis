@@ -2,5 +2,5 @@
 
 from .brain import Brain, BrainConfig, StepResult, Synapse
 
-__version__ = "0.12.9"
+__version__ = "0.13.0"
 __all__ = ["Brain", "BrainConfig", "StepResult", "Synapse"]
