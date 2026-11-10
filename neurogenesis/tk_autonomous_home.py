@@ -233,15 +233,6 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
 
     send_btn = ttk.Button(buttons, text="WYŚLIJ  ↵", command=submit_chat)
     send_btn.pack(side="left")
-    ttk.Button(
-        buttons, text="POPRAW / ZAPAMIĘTAJ",
-        command=lambda: open_corrections_dialog(
-            tab, corrections, last_exchange,
-            on_change=lambda: state_corpus.set(
-                "PAMIĘĆ KOREKT / " +
-                str(corrections.status()["approved_corrections"]) +
-                " zatwierdzonych wpisów"))
-    ).pack(side="left", padx=(6, 0))
     ttk.Button(buttons, text="ZATRZYMAJ", command=lambda: stop_model()).pack(
         side="left", padx=(6, 0))
     ttk.Button(buttons, text="NOWA ROZMOWA", command=lambda: clear_chat()).pack(
@@ -257,6 +248,20 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
     tk.Label(
         acf_options, text="Domyślnie wyłączone · tylko przy przewadze MSE",
         bg=PANEL, fg=MUTED, font=("Segoe UI", 8)).pack(side="right")
+    memory_options = tk.Frame(left, bg=PANEL)
+    memory_options.pack(side="bottom", fill="x", padx=10, pady=(3, 3))
+    ttk.Button(
+        memory_options, text="PAMIĘĆ POPRAWEK / ZAPAMIĘTAJ I POPRAW",
+        command=lambda: open_corrections_dialog(
+            tab, corrections, last_exchange,
+            on_change=lambda: state_corpus.set(
+                "PAMIĘĆ KOREKT / " +
+                str(corrections.status()["approved_corrections"]) +
+                " zatwierdzonych wpisów"))
+    ).pack(side="left")
+    tk.Label(
+        memory_options, text="Tylko świadomie zatwierdzone informacje",
+        bg=PANEL, fg=MUTED, font=("Segoe UI", 8)).pack(side="left", padx=(8, 0))
 
     def stop_model():
         model.stop()
