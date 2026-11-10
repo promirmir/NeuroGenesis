@@ -86,6 +86,7 @@ def _read_audit(path: Path, known_questions: set[str],
     cases = []
     seen = set()
     positive = negative = 0
+    positive_correction_ids: set[int] = set()
     for i, raw in enumerate(data.splitlines(), 1):
         if not raw or len(raw) > MAX_ROW_BYTES:
             raise ValueError(f"Invalid held-out line size at row {i}.")
@@ -117,6 +118,7 @@ def _read_audit(path: Path, known_questions: set[str],
                     or needle.casefold() in question.casefold()):
                 raise ValueError("Paraphrase target missing from training answer or leaked into question.")
             positive += 1
+            positive_correction_ids.add(row["expected_correction_id"])
         elif row.get("kind") == "unrelated":
             if (set(row) != {"kind", "question", "forbidden_answer_fragment"}
                     or type(row["forbidden_answer_fragment"]) is not str):
@@ -134,8 +136,11 @@ def _read_audit(path: Path, known_questions: set[str],
         if len(cases) > MAX_CASES:
             raise ValueError("Too many private held-out questions.")
     if (not MIN_CASES <= len(cases) <= MAX_CASES
-            or positive < 3 or negative < 3):
-        raise ValueError("Require 6..32 cases, >=3 paraphrases and >=3 unrelated controls.")
+            or positive < 3 or negative < 3
+            or len(positive_correction_ids) < 2):
+        raise ValueError(
+            "Require 6..32 cases, >=3 paraphrases from >=2 correction IDs "
+            "and >=3 unrelated controls.")
     return cases, hashlib.sha256(data).hexdigest()
 
 
