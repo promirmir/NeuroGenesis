@@ -55,12 +55,16 @@ class TemporalHoldoutTests(unittest.TestCase):
         self.assertFalse(a["human_label_truth_verified"])
         self.assertFalse(a["multiple_seed_events_statistically_independent"])
 
-    def test_no_growth_negative_control_must_not_claim_gain(self):
-        # All identical tags do not generate sufficient novelty for
-        # structural growth; the numerical gate must remain false.
+    def test_constant_stream_can_grow_once_but_must_not_claim_gain(self):
+        # The first observation is novel even in a constant stream, so
+        # structural growth by itself is not evidence of generalisation.
+        # Persistence predicts constant zeros perfectly and must not be
+        # beaten by a neural model with non-negative prediction loss.
         values = [[0.0] * 8 for _ in range(96)]
         report = evaluate_temporal(values, seeds=(1, 2, 3))
-        self.assertFalse(report["structural_growth_observed_in_training"])
+        self.assertTrue(report["structural_growth_observed_in_training"])
+        self.assertAlmostEqual(
+            report["pooled_frozen_future_mse"]["persistence"], 0.0)
         self.assertFalse(report["predeclared_descriptive_numeric_gate_passed"])
 
     def test_invalid_or_cherry_picked_seed_protocol_refused(self):
