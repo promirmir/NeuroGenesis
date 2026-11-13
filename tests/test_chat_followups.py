@@ -128,7 +128,11 @@ class DefaultHomeMultiTurnTests(unittest.TestCase):
             if phrase in self.transcript.get("1.0", "end-1c"):
                 return
             time.sleep(0.01)
-        self.fail(f"No model reply: {phrase}")
+        self.fail(
+            f"No model reply: {phrase}; calls={len(self.calls)}; "
+            f"button={self.send.cget('state')}; "
+            f"input={self.input.get('1.0', 'end-1c')!r}; "
+            f"transcript={self.transcript.get('1.0', 'end-1c')[-900:]!r}")
 
     def test_two_sequential_questions_are_both_answered(self):
         self.input.insert("1.0", "Pierwsze pytanie?")
