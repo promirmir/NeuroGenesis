@@ -99,6 +99,26 @@ def check_chat_messages(messages: Any) -> list[dict[str, str]]:
     return out
 
 
+
+def bounded_chat_history(turns: list[dict[str, str]], message: str, *,
+                         max_chars: int = 4500) -> list[dict[str, str]]:
+    """Keep complete recent dialogue pairs within the bundled 3072-token context.
+
+    The character budget is conservative but not an exact tokenizer count.
+    Never truncate a user's message or retain a dangling assistant turn.
+    """
+    if type(max_chars) is not int or max_chars < MAX_PROMPT:
+        raise ValueError("Invalid chat history budget.")
+    if not isinstance(turns, list) or len(turns) % 2:
+        raise ValueError("Conversation history must contain complete pairs.")
+    history = list(turns) + [{"role": "user", "content": message}]
+    while len(history) > 1 and (
+            len(history) > MAX_HISTORY or
+            sum(len(turn["content"]) for turn in history) > max_chars):
+        history = history[2:]
+    return check_chat_messages(history)
+
+
 def contextual_messages(messages: list[dict[str, str]],
                         retrieved: list[dict[str, Any]]) -> list[dict[str, str]]:
     history = check_chat_messages(messages)
@@ -444,6 +464,15 @@ def offline_complete_self_test(*, assets_root: str | Path | None = None) -> dict
             {"role": "user", "content": "Odpowiedz po polsku jednym zdaniem: co to jest pamięć komputera?"},
         ])
         answer = result["reply"]
+        # The same real llama.cpp process must accept a second dependent turn.
+        followup = session.chat(bounded_chat_history([
+            {"role": "user", "content": "Odpowiedz po polsku jednym zdaniem: co to jest pamięć komputera?"},
+            {"role": "assistant", "content": answer[:MAX_PROMPT]},
+        ], "Czy taka pamięć zawsze zachowuje dane po wyłączeniu zasilania?"),
+            deterministic=True)
+        if (followup["status"] != "offline_real_gguf_inference"
+                or followup["cloud_api_used"] or len(followup["reply"]) < 5):
+            raise RuntimeError("Prawdziwy model nie obsłużył kolejnej tury rozmowy.")
         # Semantic integration MUST also work from the finished frozen EXE.
         # A broken classifier blocks the release rather than inventing tags.
         semantic = session.classify_semantics(

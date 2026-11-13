@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import queue
 import threading
+import time
 from typing import Callable
 import tkinter as tk
 from tkinter import ttk, messagebox
@@ -16,7 +17,7 @@ from .agent_goals import GoalStore, prompt_for_goal
 from .autonomy import AutonomicSupervisor, WINDOW
 from .acf_memory import FabricMemoryObserver
 from .acf_semantic_memory import SemanticFabricStore
-from .bundled_llm import BundledModelSession, has_bundled_model
+from .bundled_llm import BundledModelSession, has_bundled_model, bounded_chat_history
 from .local_knowledge import LocalKnowledge
 from .corrective_memory import CorrectiveMemory
 from .tk_corrections import open_corrections_dialog
@@ -75,6 +76,7 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
         "Model uruchamia się sam. Wpisz wiadomość — możesz to zrobić "
         "również podczas jego pierwszego ładowania."))
     turns: list[dict[str, str]] = []
+    last_chat_activity = {"at": time.monotonic()}
     last_exchange = {"question": "", "answer": ""}  # RAM only until approval
     last_brain_step = {"value": None}
     last_goal_refresh = {"value": ()}
@@ -196,6 +198,7 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
             messagebox.showwarning("NeuroGenesis", "Wpisz wiadomość: 1–1800 znaków.")
             return
         input_field.delete("1.0", "end")
+        last_chat_activity["at"] = time.monotonic()
         log("TY", message)
         running["pending_message"] = message
         send_btn.configure(state="disabled")
@@ -208,9 +211,7 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
         message = running.get("pending_message")
         if not running["ready"] or not isinstance(message, str):
             return
-        history = turns[-12:] + [{"role": "user", "content": message}]
-        if len(history) > 13:
-            history = history[-13:]
+        history = bounded_chat_history(turns, message)
         record_sensory = bool(sensory_inputs.get())
         acf_path = semantic_store.state_path if acf_answer_mode.get() else None
         def run():
@@ -553,10 +554,16 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
             tab.after(9500, autonomy_tick)
 
     def launch_semantic():
-        # Secondary inference never delays displaying the completed chat.
-        # Only operator-enabled local sensory learning may queue a message.
+        # Give real-time user dialogue priority over optional semantic inference.
+        # A follow-up must never be blocked by immediate post-answer work.
         if running["closing"] or not running["ready"] or not sensory_inputs.get():
             semantic_pending.clear()
+            return
+        if (running["pending_message"] is not None or
+                time.monotonic() - last_chat_activity["at"] < 18):
+            return
+        foreground = running["job"]
+        if isinstance(foreground, threading.Thread) and foreground.is_alive():
             return
         work = running["semantic_job"]
         if isinstance(work, threading.Thread) and work.is_alive():
@@ -609,7 +616,8 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
                         send_btn.configure(state="normal")
                 elif task == "chat":
                     send_btn.configure(state="normal")
-                    question = running.pop("pending_message", None)
+                    question = running["pending_message"]
+                    running["pending_message"] = None
                     if kind == "ok":
                         report = value["reply"]
                         answer = report["reply"]
@@ -622,6 +630,7 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
                             last_exchange["answer"] = answer[:1800]
                         sources = report.get("sources", [])
                         log("NEUROGENESIS", answer)
+                        last_chat_activity["at"] = time.monotonic()
                         acf = report.get("acf_routing")
                         acf_note = ""
                         if acf:
@@ -723,6 +732,12 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
                         state_agent.set("LIF / błąd cyklu: " + str(value)[:100])
         except queue.Empty:
             pass
+        except (KeyError, TypeError, ValueError, RuntimeError, IndexError) as exc:
+            # Optional telemetry must not kill the event poller: otherwise a
+            # subsequent chat response would never be displayed/re-enabled.
+            conversation_status.set(
+                "Błąd obsługi zdarzenia (dialog nadal aktywny): "
+                + type(exc).__name__ + ": " + str(exc)[:150])
         try:
             while True:
                 status, data = fabric_events.get_nowait()
@@ -746,6 +761,16 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
                        if data.get("checkpoint_recovered") else ""))
         except queue.Empty:
             pass
+        except (KeyError, TypeError, ValueError, RuntimeError, IndexError) as exc:
+            fabric_status.set("ACF / błąd odczytu telemetrii: " + str(exc)[:140])
+        # Queue entries can arrive before the worker thread has fully exited.
+        # Recheck on every UI tick instead of stranding the next user turn.
+        if running["ready"] and running["pending_message"] is not None:
+            foreground = running["job"]
+            if not isinstance(foreground, threading.Thread) or not foreground.is_alive():
+                flush_message()
+        elif running["ready"]:
+            launch_semantic()
         if tab.winfo_exists():
             tab.after(140, poll)
 
