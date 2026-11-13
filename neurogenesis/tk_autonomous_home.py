@@ -616,7 +616,8 @@ def install_autonomous_home(parent: ttk.Notebook, memory: ExperienceMemory,
                         send_btn.configure(state="normal")
                 elif task == "chat":
                     send_btn.configure(state="normal")
-                    question = running.pop("pending_message", None)
+                    question = running["pending_message"]
+                    running["pending_message"] = None
                     if kind == "ok":
                         report = value["reply"]
                         answer = report["reply"]
